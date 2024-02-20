@@ -1,0 +1,4 @@
+pub class Lexer {
+    priv source: java::lang::String
+    priv mut pos: i32
+}
