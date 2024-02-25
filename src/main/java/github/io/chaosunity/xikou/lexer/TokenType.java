@@ -10,9 +10,11 @@ public enum TokenType {
     OpenBrace,
     CloseBrace,
     Dot,
+    Comma,
     SemiColon,
     Colon,
     DoubleColon,
+    Equal,
     /*  KEYWORDS */
     Pub,
     Priv,
@@ -23,6 +25,7 @@ public enum TokenType {
     Const,
     Let,
     Self,
+    Impl,
     EOF;
     
     public static TokenType[] KEYWORDS = new TokenType[] {
@@ -34,6 +37,7 @@ public enum TokenType {
             Fn,
             Const,
             Let,
-            Self
+            Self,
+            Impl
     };
 }

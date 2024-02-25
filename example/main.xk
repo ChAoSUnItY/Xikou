@@ -1,4 +1,8 @@
 pub class Lexer {
-    priv source: java::lang::String
-    priv mut pos: i32
+    priv source: java::lang::String;
+    priv mut pos: i32 = 0;
+}
+
+impl Lexer {
+    pub self(source: java::lang::String) {}
 }

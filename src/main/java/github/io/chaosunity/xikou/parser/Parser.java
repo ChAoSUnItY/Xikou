@@ -4,6 +4,12 @@ import github.io.chaosunity.xikou.lexer.Lexer;
 import github.io.chaosunity.xikou.lexer.Token;
 import github.io.chaosunity.xikou.lexer.TokenType;
 import github.io.chaosunity.xikou.model.*;
+import github.io.chaosunity.xikou.model.expr.Expr;
+import github.io.chaosunity.xikou.model.expr.IntegerLiteral;
+import github.io.chaosunity.xikou.model.types.AbstractTypeRef;
+import github.io.chaosunity.xikou.model.types.PrimitiveType;
+import github.io.chaosunity.xikou.model.types.PrimitiveTypeRef;
+import github.io.chaosunity.xikou.model.types.TypeRef;
 
 import java.io.IOException;
 import java.lang.reflect.Modifier;
@@ -41,7 +47,28 @@ public class Parser {
                 continue;
             }
             
-            throw new IllegalStateException(String.format("Unexpected token %s", lexer.getCurrentToken()));
+            if (lexer.acceptToken(TokenType.Impl)) {
+                boolean bound = false;
+                ImplDecl implDecl = parseImplDecl();
+                
+                for (int i = 0; i < classCount; i++) {
+                    ClassDecl classDecl = classDecls[i];
+                    
+                    if (classDecl.className.literal.equals(implDecl.targetClass.literal)) {
+                        classDecl.boundImplDecl = implDecl;
+                        bound = true;
+                        break;
+                    }
+                }
+                
+                if (!bound) {
+                    throw new IllegalStateException(String.format("Unknown implementation to class %s", implDecl.targetClass.literal));
+                }
+                
+                continue;
+            }
+            
+            throw new IllegalStateException(String.format("Unexpected token %s", lexer.getCurrentToken().type));
         }
         
         return new XkFile(absoluteFilePath, packageRef, classCount, classDecls);
@@ -167,7 +194,90 @@ public class Parser {
         lexer.expectToken(TokenType.Colon);
         
         AbstractTypeRef typeRef = parseTypeRef();
+        Token equalToken = null;
+        Expr initialExpr = null;
         
-        return new FieldDecl(fieldModifiers, fieldNameToken, typeRef);
+        if (lexer.peekToken(TokenType.Equal)) {
+            equalToken = lexer.expectToken(TokenType.Equal);
+            initialExpr = parseExpr();
+        }
+        
+        lexer.expectToken(TokenType.SemiColon);
+
+        return new FieldDecl(fieldModifiers, fieldNameToken, typeRef, equalToken, initialExpr);
+    }
+    
+    private ImplDecl parseImplDecl() {
+        Token targetClass = lexer.expectToken(TokenType.Identifier);
+        PrimaryConstructorDecl primaryConstructorDecl = null;
+        
+        lexer.expectToken(TokenType.OpenBrace);
+        
+        while (!lexer.peekToken(TokenType.CloseBrace)) {
+            int modifiers = parseAccessModifiers();
+            
+            if (lexer.acceptToken(TokenType.Self)) {
+                primaryConstructorDecl = parsePrimaryConstructorDecl(modifiers);
+                continue;
+            }
+            
+            throw new IllegalStateException(String.format("Unexpected token %s while parsing implementation", lexer.getCurrentToken().type));
+        }
+        
+        lexer.expectToken(TokenType.CloseBrace);
+    
+        return new ImplDecl(targetClass, primaryConstructorDecl);
+    }
+    
+    private PrimaryConstructorDecl parsePrimaryConstructorDecl(int modifiers) {
+        lexer.expectToken(TokenType.OpenParenthesis);
+        
+        Parameters parameters = parseParameters();
+        
+        return new PrimaryConstructorDecl(modifiers, parameters);
+    }
+    
+    private Parameters parseParameters() {
+        int parameterCount = 0;
+        Parameter[] parameters = new Parameter[1];
+        
+        for (;;) {
+            if (lexer.peekToken(TokenType.Identifier)) {
+                Token name = lexer.expectToken(TokenType.Identifier);
+                lexer.expectToken(TokenType.Colon);
+                AbstractTypeRef typeRef = parseTypeRef();
+                
+                if (parameterCount >= parameters.length) {
+                    Parameter[] newArr = new Parameter[parameters.length * 2];
+                    System.arraycopy(parameters, 0, newArr, 0, parameters.length);
+                    parameters = newArr;
+                }
+                
+                parameters[parameterCount++] = new Parameter(name, typeRef);
+                
+                if (lexer.acceptToken(TokenType.CloseParenthesis)) {
+                    break;
+                } else {
+                    lexer.expectToken(TokenType.Comma);
+                }
+            } else {
+                lexer.expectToken(TokenType.CloseParenthesis);
+                break;
+            }
+        }
+        
+        return new Parameters(parameterCount, parameters);
+    }
+    
+    private Expr parseExpr() {
+        return parseLiteralExpr();
+    }
+    
+    private Expr parseLiteralExpr() {
+        if (lexer.peekToken(TokenType.NumberLiteral)) {
+            return new IntegerLiteral(lexer.expectToken(TokenType.NumberLiteral));
+        }
+        
+        throw new IllegalStateException(String.format("Unexpected expression token %s", lexer.getCurrentToken().type));
     }
 }

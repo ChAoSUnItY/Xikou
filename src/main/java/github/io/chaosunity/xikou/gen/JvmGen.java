@@ -1,9 +1,10 @@
 package github.io.chaosunity.xikou.gen;
 
-import github.io.chaosunity.xikou.model.ClassDecl;
-import github.io.chaosunity.xikou.model.FieldDecl;
-import github.io.chaosunity.xikou.model.XkFile;
+import github.io.chaosunity.xikou.model.*;
+import github.io.chaosunity.xikou.model.expr.Expr;
+import github.io.chaosunity.xikou.model.expr.IntegerLiteral;
 import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 import java.io.ByteArrayInputStream;
@@ -48,6 +49,7 @@ public class JvmGen {
     
     private void genClassDecl(ClassWriter cw, ClassDecl classDecl) {
         cw.visit(Opcodes.V1_8, classDecl.modifiers, classDecl.getInternalName(), null, "java/lang/Object", null);
+        MethodVisitor primaryConstructorMw = genPrimaryConstructor(cw, null, classDecl);
         
         for (int i = 0; i < classDecl.fieldCount; i++) {
             FieldDecl fieldDecl = classDecl.fieldDecls[i];
@@ -55,10 +57,49 @@ public class JvmGen {
             genFieldDecl(cw, fieldDecl);
         }
         
+        primaryConstructorMw.visitInsn(Opcodes.RETURN);
+        primaryConstructorMw.visitEnd();
+        
         cw.visitEnd();
-    } 
+    }
+    
+    private MethodVisitor genDefaultPrimaryConstructor(ClassWriter cw, ClassDecl classDecl) {
+        MethodVisitor mw = cw.visitMethod(Opcodes.ACC_PUBLIC, "<init>", "()V", null, null);
+    
+        mw.visitCode();
+        mw.visitVarInsn(Opcodes.ALOAD, 0);
+        mw.visitMethodInsn(Opcodes.INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false);
+        
+        return mw;
+    }
+    
+    private MethodVisitor genPrimaryConstructor(ClassWriter cw, MethodVisitor mw, ClassDecl classDecl) {
+        if (mw == null) mw = genDefaultPrimaryConstructor(cw, classDecl);
+        
+        for (int i = 0; i < classDecl.fieldCount; i++) {
+            FieldDecl fieldDecl = classDecl.fieldDecls[i];
+            
+            if (fieldDecl.initialExpr != null) {
+                mw.visitVarInsn(Opcodes.ALOAD, 0);
+                genExpr(mw, fieldDecl.initialExpr);
+                mw.visitFieldInsn(Opcodes.PUTFIELD, classDecl.getInternalName(), fieldDecl.name.literal, fieldDecl.typeRef.getDescriptor());
+            }
+        }
+        
+        return mw;
+    }
     
     private void genFieldDecl(ClassWriter cw, FieldDecl fieldDecl) {
         cw.visitField(fieldDecl.fieldModifiers, fieldDecl.name.literal, fieldDecl.typeRef.getDescriptor(), null, null);
+    }
+    
+    private void genExpr(MethodVisitor mw, Expr expr) {
+        if (expr instanceof IntegerLiteral) {
+            genIntegerLiteral(mw, (IntegerLiteral) expr);
+        }
+    }
+    
+    private void genIntegerLiteral(MethodVisitor mw, IntegerLiteral integerLiteral) {
+        mw.visitLdcInsn(integerLiteral.asConstant());
     }
 }

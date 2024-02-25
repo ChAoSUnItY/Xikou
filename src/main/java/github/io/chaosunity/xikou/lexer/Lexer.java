@@ -72,6 +72,11 @@ public class Lexer {
             return new Token(TokenType.Dot, ".");
         }
         
+        if (currentChar == ',') {
+            readChar(1);
+            return new Token(TokenType.Comma, ",");
+        }
+        
         if (currentChar == ';') {
             readChar(1);
             return new Token(TokenType.SemiColon, ";");
@@ -85,6 +90,11 @@ public class Lexer {
             
             readChar(1);
             return new Token(TokenType.Colon, ":");
+        }
+        
+        if (currentChar == '=') {
+            readChar(1);
+            return new Token(TokenType.Equal, "=");
         }
         
         if (isIdentStart(currentChar)) {

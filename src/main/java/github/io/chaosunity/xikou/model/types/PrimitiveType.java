@@ -1,4 +1,4 @@
-package github.io.chaosunity.xikou.model;
+package github.io.chaosunity.xikou.model.types;
 
 public enum PrimitiveType {
     Void("unit", 'V'),

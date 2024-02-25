@@ -10,6 +10,7 @@ public class ClassDecl {
     public final Token className;
     public final int fieldCount;
     public final FieldDecl[] fieldDecls;
+    public ImplDecl boundImplDecl;
     
     public ClassDecl(PackageRef packageRef, int modifiers, Token className, int fieldCount, FieldDecl[] fieldDecls) {
         this.packageRef = packageRef;

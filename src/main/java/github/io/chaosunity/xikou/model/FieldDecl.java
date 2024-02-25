@@ -1,16 +1,22 @@
 package github.io.chaosunity.xikou.model;
 
 import github.io.chaosunity.xikou.lexer.Token;
+import github.io.chaosunity.xikou.model.expr.Expr;
+import github.io.chaosunity.xikou.model.types.AbstractTypeRef;
 
 public class FieldDecl {
     public final int fieldModifiers;
     public final Token name;
     public final AbstractTypeRef typeRef;
+    public final Token equalToken;
+    public final Expr initialExpr;
     
-    public FieldDecl(int fieldModifiers, Token name, AbstractTypeRef typeRef) {
+    public FieldDecl(int fieldModifiers, Token name, AbstractTypeRef typeRef, Token equalToken, Expr initialExpr) {
         this.fieldModifiers = fieldModifiers;
         this.name = name;
         this.typeRef = typeRef;
+        this.equalToken = equalToken;
+        this.initialExpr = initialExpr;
     }
 
     @Override
