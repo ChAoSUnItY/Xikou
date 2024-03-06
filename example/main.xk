@@ -8,3 +8,40 @@ impl Lexer {
         self.source = source;
     }
 }
+
+pub enum TokenType {
+    CharLiteral,
+    StringLiteral,
+    NumberLiteral,
+    Identifier,
+    OpenParenthesis,
+    CloseParenthesis,
+    OpenBrace,
+    CloseBrace,
+    Dot,
+    Comma,
+    SemiColon,
+    Colon,
+    DoubleColon,
+    Equal,
+    Pub,
+    Priv,
+    Mut,
+    Pkg,
+    Class,
+    Enum,
+    Fn,
+    Const,
+    Let,
+    Self,
+    Impl,
+    EOF
+}
+
+pub class Token {
+    pub literal: java::lang::String;
+}
+
+impl Token {
+
+}

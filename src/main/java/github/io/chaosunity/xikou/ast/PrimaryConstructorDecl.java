@@ -9,6 +9,7 @@ public class PrimaryConstructorDecl {
     public final int exprCount;
     public final Expr[] exprs;
 
+    public ImplDecl implDecl;
     public final Scope scope;
 
     public PrimaryConstructorDecl(int constructorModifiers, Parameters parameters, int exprCount, Expr[] exprs) {
@@ -17,9 +18,5 @@ public class PrimaryConstructorDecl {
         this.exprCount = exprCount;
         this.exprs = exprs;
         this.scope = new Scope();
-    }
-
-    public void bind(ClassDecl classDecl) {
-        scope.addLocalVar("self", classDecl.getClassType());
     }
 }

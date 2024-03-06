@@ -1,6 +1,6 @@
 package github.io.chaosunity.xikou.resolver.types;
 
-public final class ObjectType extends Type {
+public final class ObjectType implements Type {
     public final String internalName;
 
     public ObjectType(String internalName) {

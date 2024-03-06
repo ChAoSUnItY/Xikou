@@ -16,36 +16,36 @@ public class Resolver {
     }
 
     public XkFile resolve() {
-        for (int i = 0; i < file.classCount; i++) {
-            ClassDecl classDecl = file.classDecls[i];
-
-            for (int j = 0; j < classDecl.fieldCount; j++) {
-                resolveFieldDecl(classDecl.fieldDecls[j]);
-            }
-
-            if (classDecl.boundImplDecl.primaryConstructorDecl != null) {
-                classDecl.boundImplDecl.primaryConstructorDecl.bind(classDecl);
-            }
-
-            table.registerClassDecl(classDecl);
-        }
-
-        for (int i = 0; i < file.classCount; i++) {
-            ClassDecl classDecl = file.classDecls[i];
-
-            if (classDecl.boundImplDecl.primaryConstructorDecl != null) {
-                resolvePrimaryConstructorDecl(classDecl.boundImplDecl.primaryConstructorDecl);
-            }
-        }
+        resolveEarly();
+        resolveLate();
 
         return file;
     }
 
-    public void resolveFieldDecl(FieldDecl fieldDecl) {
-        resolveTypeRef(fieldDecl.typeRef);
+    private void resolveEarly() {
+        for (int i = 0; i < file.declCount; i++) {
+            BoundableDecl decl = file.decls[i];
+
+            if (decl instanceof ClassDecl) {
+                resolveClassDeclEarly((ClassDecl) decl);
+            }
+        }
     }
 
-    public void resolvePrimaryConstructorDecl(PrimaryConstructorDecl constructorDecl) {
+    private void resolveClassDeclEarly(ClassDecl classDecl) {
+        PrimaryConstructorDecl constructorDecl = classDecl.boundImplDecl.primaryConstructorDecl;
+
+        if (constructorDecl != null)
+            resolvePrimaryConstructorDeclEarly(constructorDecl);
+
+        for (int j = 0; j < classDecl.fieldCount; j++) {
+            resolveFieldDecl(classDecl.fieldDecls[j]);
+        }
+
+        table.registerClassDecl(classDecl);
+    }
+
+    private void resolvePrimaryConstructorDeclEarly(PrimaryConstructorDecl constructorDecl) {
         Parameters parameters = constructorDecl.parameters;
 
         for (int i = 0; i < parameters.parameterCount; i++) {
@@ -55,13 +55,38 @@ public class Resolver {
 
             constructorDecl.scope.addLocalVar(parameter.name.literal, parameter.typeRef.getType());
         }
+    }
+
+    private void resolveLate() {
+        for (int i = 0; i < file.declCount; i++) {
+            BoundableDecl decl = file.decls[i];
+
+            if (decl instanceof ClassDecl) {
+                resolveClassDecl((ClassDecl) decl);
+            }
+        }
+    }
+
+    private void resolveClassDecl(ClassDecl classDecl) {
+        PrimaryConstructorDecl constructorDecl = classDecl.boundImplDecl.primaryConstructorDecl;
+
+        if (constructorDecl != null)
+            resolvePrimaryConstructorDecl(constructorDecl);
+    }
+
+    private void resolveFieldDecl(FieldDecl fieldDecl) {
+        resolveTypeRef(fieldDecl.typeRef);
+    }
+
+    private void resolvePrimaryConstructorDecl(PrimaryConstructorDecl constructorDecl) {
+        constructorDecl.scope.addLocalVar("self", constructorDecl.implDecl.boundDecl.getType());
 
         for (int i = 0; i < constructorDecl.exprCount; i++) {
             resolveExpr(constructorDecl.exprs[i], constructorDecl.scope);
         }
     }
 
-    public void resolveExpr(Expr expr, Scope scope) {
+    private void resolveExpr(Expr expr, Scope scope) {
         if (expr instanceof InfixExpr) {
             InfixExpr infixExpr = (InfixExpr) expr;
 
@@ -100,7 +125,7 @@ public class Resolver {
         }
     }
 
-    public void resolveTypeRef(AbstractTypeRef typeRef) {
+    private void resolveTypeRef(AbstractTypeRef typeRef) {
         // Primitive type is already resolved in parser phase
 
         if (typeRef instanceof ObjectTypeRef) {

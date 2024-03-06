@@ -6,23 +6,13 @@ import java.util.Arrays;
 public class XkFile {
     public final Path absoluteFilePath;
     public final PackageRef packageRef;
-    public final int classCount;
-    public final ClassDecl[] classDecls;
+    public final int declCount;
+    public final BoundableDecl[] decls;
     
-    public XkFile(Path absoluteFilePath, PackageRef packageRef, int classCount, ClassDecl[] classDecls) {
+    public XkFile(Path absoluteFilePath, PackageRef packageRef, int declCount, BoundableDecl[] decls) {
         this.absoluteFilePath = absoluteFilePath;
         this.packageRef = packageRef;
-        this.classCount = classCount;
-        this.classDecls = classDecls;
-    }
-
-    @Override
-    public String toString() {
-        return "XkFile{" +
-                "absoluteFilePath=" + absoluteFilePath +
-                ", packageRef=" + packageRef +
-                ", classCount=" + classCount +
-                ", classDecls=" + Arrays.toString(classDecls) +
-                '}';
+        this.declCount = declCount;
+        this.decls = decls;
     }
 }

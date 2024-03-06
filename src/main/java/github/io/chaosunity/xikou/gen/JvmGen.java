@@ -40,19 +40,21 @@ public class JvmGen {
     public void gen() throws IOException {
         init();
 
-        for (int i = 0; i < file.classCount; i++) {
-            ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS);
-            ClassDecl classDecl = file.classDecls[i];
+        for (int i = 0; i < file.declCount; i++) {
+            ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS); // Must be non-null
+            BoundableDecl decl = file.decls[i];
 
-            genClassDecl(cw, classDecl);
+            if (decl instanceof ClassDecl) {
+                genClassDecl(cw, (ClassDecl) decl);
+            }
 
-            Path targetFilePath = outputFolder.resolve(classDecl.className.literal + ".class");
+            Path targetFilePath = outputFolder.resolve(decl.getNameToken().literal + ".class");
             Files.copy(new ByteArrayInputStream(cw.toByteArray()), targetFilePath);
         }
     }
 
     private void genClassDecl(ClassWriter cw, ClassDecl classDecl) {
-        cw.visit(Opcodes.V1_8, classDecl.modifiers, classDecl.getClassType().getInternalName(), null, "java/lang/Object", null);
+        cw.visit(Opcodes.V1_8, classDecl.modifiers, classDecl.getType().getInternalName(), null, "java/lang/Object", null);
         MethodVisitor primaryConstructorMw = genPrimaryConstructor(cw, classDecl);
 
         for (int i = 0; i < classDecl.fieldCount; i++) {
@@ -82,7 +84,7 @@ public class JvmGen {
         MethodVisitor mw;
 
         if (primaryConstructorDecl != null) {
-            mw = cw.visitMethod(Opcodes.ACC_PUBLIC, "<init>", genMethodDescriptor(String.valueOf(PrimitiveType.VOID.descriptor), primaryConstructorDecl.parameters), null, null);
+            mw = cw.visitMethod(Opcodes.ACC_PUBLIC, "<init>", Utils.getMethodDescriptor(PrimitiveType.VOID, primaryConstructorDecl.parameters), null, null);
 
             mw.visitCode();
             mw.visitVarInsn(Opcodes.ALOAD, 0);
@@ -97,7 +99,7 @@ public class JvmGen {
             if (fieldDecl.initialExpr != null) {
                 mw.visitVarInsn(Opcodes.ALOAD, 0);
                 genExpr(mw, fieldDecl.initialExpr);
-                mw.visitFieldInsn(Opcodes.PUTFIELD, classDecl.getClassType().getInternalName(), fieldDecl.name.literal, fieldDecl.typeRef.getType().getDescriptor());
+                mw.visitFieldInsn(Opcodes.PUTFIELD, classDecl.getType().getInternalName(), fieldDecl.name.literal, fieldDecl.typeRef.getType().getDescriptor());
             }
         }
 
@@ -175,19 +177,5 @@ public class JvmGen {
 
     private void genIntegerLiteral(MethodVisitor mw, IntegerLiteral integerLiteral) {
         mw.visitLdcInsn(integerLiteral.asConstant());
-    }
-
-    private static String genMethodDescriptor(String returnType, Parameters parameters) {
-        StringBuilder builder = new StringBuilder("(");
-
-        for (int i = 0; i < parameters.parameterCount; i++) {
-            Parameter parameter = parameters.parameters[i];
-
-            builder.append(parameter.typeRef.getType().getDescriptor());
-        }
-
-        builder.append(")");
-        builder.append(returnType);
-        return builder.toString();
     }
 }

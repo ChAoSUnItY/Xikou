@@ -1,9 +1,9 @@
 package github.io.chaosunity.xikou.resolver.types;
 
-public abstract class Type {
-    public abstract String getInternalName();
+public interface Type {
+    String getInternalName();
 
-    public abstract String getDescriptor();
+    String getDescriptor();
 
-    public abstract int getSize();
+    int getSize();
 }

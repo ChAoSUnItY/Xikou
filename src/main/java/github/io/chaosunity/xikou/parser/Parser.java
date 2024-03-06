@@ -29,32 +29,42 @@ public class Parser {
     
     public XkFile parseFile() {
         PackageRef packageRef = parsePackageRef();
-        int classCount = 0;
-        ClassDecl[] classDecls = new ClassDecl[1];
+        int declCount = 0;
+        BoundableDecl[] decls = new BoundableDecl[1];
         
         while (!lexer.peekToken(TokenType.EOF)) {
-            int classModifiers = parseClassModifiers();
+            int declModifiers = parseClassModifiers();
             
             if (lexer.acceptToken(TokenType.Class)) {
-                if (classCount >= classDecls.length) {
-                    ClassDecl[] newArr = new ClassDecl[classDecls.length * 2];
-                    System.arraycopy(classDecls, 0, newArr, 0, classDecls.length);
-                    classDecls = newArr;
+                if (declCount >= decls.length) {
+                    BoundableDecl[] newArr = new BoundableDecl[decls.length * 2];
+                    System.arraycopy(decls, 0, newArr, 0, decls.length);
+                    decls = newArr;
                 }
                 
-                classDecls[classCount++] = parseClassDecl(packageRef, classModifiers);
+                decls[declCount++] = parseClassDecl(packageRef, declModifiers);
                 continue;
+            }
+
+            if (lexer.acceptToken(TokenType.Enum)) {
+                if (declCount >= decls.length) {
+                    BoundableDecl[] newArr = new BoundableDecl[decls.length * 2];
+                    System.arraycopy(decls, 0, newArr, 0, decls.length);
+                    decls = newArr;
+                }
+
+                decls[declCount++] = parseEnumDecl(packageRef, declModifiers);
             }
             
             if (lexer.acceptToken(TokenType.Impl)) {
                 boolean bound = false;
                 ImplDecl implDecl = parseImplDecl();
                 
-                for (int i = 0; i < classCount; i++) {
-                    ClassDecl classDecl = classDecls[i];
+                for (int i = 0; i < declCount; i++) {
+                    BoundableDecl classDecl = decls[i];
                     
-                    if (classDecl.className.literal.equals(implDecl.targetClass.literal)) {
-                        classDecl.boundImplDecl = implDecl;
+                    if (classDecl.getNameToken().literal.equals(implDecl.targetClass.literal)) {
+                        classDecl.bindImplbidirectionally(implDecl);
                         bound = true;
                         break;
                     }
@@ -70,7 +80,7 @@ public class Parser {
             throw new IllegalStateException(String.format("Unexpected token %s", lexer.getCurrentToken().type));
         }
         
-        return new XkFile(absoluteFilePath, packageRef, classCount, classDecls);
+        return new XkFile(absoluteFilePath, packageRef, declCount, decls);
     }
 
     private PackageRef parsePackageRef() {
@@ -138,7 +148,7 @@ public class Parser {
         
         lexer.expectToken(TokenType.OpenBrace);
         
-        while (!lexer.peekToken(TokenType.CloseBrace)) {
+        while (!lexer.acceptToken(TokenType.CloseBrace)) {
             if (fieldCount >= fieldDecls.length) {
                 FieldDecl[] newArr = new FieldDecl[fieldDecls.length * 2];
                 System.arraycopy(fieldDecls, 0, newArr, 0, fieldDecls.length);
@@ -148,40 +158,53 @@ public class Parser {
             fieldDecls[fieldCount++] = parseFieldDecl();
         }
         
-        lexer.expectToken(TokenType.CloseBrace);
-        
         return new ClassDecl(packageRef, modifiers, classNameToken, fieldCount, fieldDecls);
     }
-    
-    private AbstractTypeRef parseTypeRef() {
-        int typeRefCount = 0;
-        Token[] typeRefs = new Token[1];
-        
-        while (true) {
-            if (typeRefCount >= typeRefs.length) {
-                Token[] newArr = new Token[typeRefs.length * 2];
-                System.arraycopy(typeRefs, 0, newArr, 0, typeRefs.length);
-                typeRefs = newArr;
+
+    private EnumDecl parseEnumDecl(PackageRef packageRef, int modifiers) {
+        Token enumNameToken = lexer.expectToken(TokenType.Identifier);
+        int enumVariantCount = 0;
+        EnumVariantDecl[] enumVariantDecls = new EnumVariantDecl[1];
+
+        lexer.expectToken(TokenType.OpenBrace);
+
+        while (!lexer.acceptToken(TokenType.CloseBrace)) {
+            if (enumVariantCount >= enumVariantDecls.length) {
+                EnumVariantDecl[] newArr = new EnumVariantDecl[enumVariantDecls.length * 2];
+                System.arraycopy(enumVariantDecls, 0, newArr, 0, enumVariantDecls.length);
+                enumVariantDecls =  newArr;
             }
-            
-            typeRefs[typeRefCount++] = lexer.expectToken(TokenType.Identifier);
-            
-            if (!lexer.acceptToken(TokenType.DoubleColon)) {
-                break;
+
+            enumVariantDecls[enumVariantCount++] = parseEnumVariantDecl();
+
+            if (!lexer.peekToken(TokenType.CloseBrace)) {
+                lexer.expectToken(TokenType.Comma);
             }
         }
-        
-        if (typeRefs.length == 1) {
-            PrimitiveType[] primitiveTypes = PrimitiveType.ENTRIES;
 
-            for (PrimitiveType type : primitiveTypes) {
-                if (type.xkTypeName.equals(typeRefs[0].literal)) {
-                    return new PrimitiveTypeRef(typeRefs[0], type);
+        return new EnumDecl(packageRef, modifiers, enumNameToken, enumVariantCount, enumVariantDecls);
+    }
+
+    private EnumVariantDecl parseEnumVariantDecl() {
+        Token variantNameToken = lexer.expectToken(TokenType.Identifier);
+        int argumentCount = 0;
+        Expr[] arguments = new Expr[1];
+
+        if (lexer.acceptToken(TokenType.OpenParenthesis)) {
+            while (!lexer.acceptToken(TokenType.CloseParenthesis)) {
+                if (argumentCount >= arguments.length) {
+                    Expr[] newArr = new Expr[arguments.length * 2];
+                    System.arraycopy(arguments, 0, newArr, 0, arguments.length);
+                    arguments =  newArr;
+                }
+
+                if (!lexer.peekToken(TokenType.CloseParenthesis)) {
+                    lexer.expectToken(TokenType.Comma);
                 }
             }
         }
-        
-        return new ObjectTypeRef(typeRefCount, typeRefs);
+
+        return new EnumVariantDecl(variantNameToken, argumentCount, arguments);
     }
     
     private FieldDecl parseFieldDecl() {
@@ -337,5 +360,36 @@ public class Parser {
 
     private VarExpr parseSelfVarExpr() {
         return new VarExpr(lexer.expectToken(TokenType.Self));
+    }
+
+    private AbstractTypeRef parseTypeRef() {
+        int typeRefCount = 0;
+        Token[] typeRefs = new Token[1];
+
+        while (true) {
+            if (typeRefCount >= typeRefs.length) {
+                Token[] newArr = new Token[typeRefs.length * 2];
+                System.arraycopy(typeRefs, 0, newArr, 0, typeRefs.length);
+                typeRefs = newArr;
+            }
+
+            typeRefs[typeRefCount++] = lexer.expectToken(TokenType.Identifier);
+
+            if (!lexer.acceptToken(TokenType.DoubleColon)) {
+                break;
+            }
+        }
+
+        if (typeRefs.length == 1) {
+            PrimitiveType[] primitiveTypes = PrimitiveType.values();
+
+            for (PrimitiveType type : primitiveTypes) {
+                if (type.xkTypeName.equals(typeRefs[0].literal)) {
+                    return new PrimitiveTypeRef(typeRefs[0], type);
+                }
+            }
+        }
+
+        return new ObjectTypeRef(typeRefCount, typeRefs);
     }
 }

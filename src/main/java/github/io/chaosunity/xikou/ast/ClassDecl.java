@@ -6,37 +6,42 @@ import github.io.chaosunity.xikou.resolver.types.Type;
 
 import java.util.Arrays;
 
-public class ClassDecl {
+public class ClassDecl extends BoundableDecl {
     public final PackageRef packageRef;
     public final int modifiers;
-    public final Token className;
+    public final Token classNameToken;
     public final int fieldCount;
     public final FieldDecl[] fieldDecls;
     public ImplDecl boundImplDecl;
     private Type classType;
     
-    public ClassDecl(PackageRef packageRef, int modifiers, Token className, int fieldCount, FieldDecl[] fieldDecls) {
+    public ClassDecl(PackageRef packageRef, int modifiers, Token classNameToken, int fieldCount, FieldDecl[] fieldDecls) {
         this.packageRef = packageRef;
         this.modifiers = modifiers;
-        this.className = className;
+        this.classNameToken = classNameToken;
         this.fieldCount = fieldCount;
         this.fieldDecls = fieldDecls;
     }
-    
-    public Type getClassType() {
-        if (classType == null) {
-            String internalPath;
 
-            if (packageRef.qualifiedPath.isEmpty()) {
-                internalPath = className.literal;
-            } else {
-                internalPath = packageRef.qualifiedPath.replace('.', '/') + "/" + className.literal;
-            }
+    @Override
+    public PackageRef getPackageRef() {
+        return packageRef;
+    }
 
-            classType = new ObjectType(internalPath);
-        }
+    @Override
+    public Token getNameToken() {
+        return classNameToken;
+    }
 
-        return classType;
+    @Override
+    public Type getType() {
+        return classType == null ? (classType = super.getType()) : classType;
+    }
+
+    @Override
+    public void bindImplbidirectionally(ImplDecl implDecl) {
+        boundImplDecl = implDecl;
+        implDecl.boundDecl = this;
     }
 
     @Override
@@ -44,7 +49,7 @@ public class ClassDecl {
         return "ClassDecl{" +
                 "packageRef=" + packageRef +
                 ", modifiers=" + modifiers +
-                ", className='" + className + '\'' +
+                ", className='" + classNameToken + '\'' +
                 ", fieldCount=" + fieldCount +
                 ", fieldDecls=" + Arrays.toString(fieldDecls) +
                 '}';

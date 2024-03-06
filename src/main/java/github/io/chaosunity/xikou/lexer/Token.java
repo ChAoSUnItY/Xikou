@@ -8,8 +8,4 @@ public class Token {
         this.type = type;
         this.literal = literal;
     }
-    
-    public int length() {
-        return literal.length();
-    }
 }

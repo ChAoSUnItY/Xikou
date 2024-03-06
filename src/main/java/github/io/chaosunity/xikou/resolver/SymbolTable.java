@@ -26,7 +26,7 @@ public class SymbolTable {
         for (int i = 0; i < classDeclCount; i++) {
             ClassDecl classDecl = classDecls[i];
 
-            if (classDecl.getClassType().equals(ownerClassType)) {
+            if (classDecl.getType().equals(ownerClassType)) {
                 for (int j = 0; j < classDecl.fieldCount; j++) {
                     FieldDecl fieldDecl = classDecl.fieldDecls[j];
 
@@ -58,7 +58,7 @@ public class SymbolTable {
         Type fieldType = null;
 
         if (fieldTypeClazz.isPrimitive()) {
-            for (PrimitiveType primitiveType : PrimitiveType.ENTRIES) {
+            for (PrimitiveType primitiveType : PrimitiveType.values()) {
                 if (fieldTypeClazz.getCanonicalName().equals(primitiveType.internalName)) {
                     fieldType = primitiveType;
                     break;
