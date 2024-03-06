@@ -4,5 +4,7 @@ pub class Lexer {
 }
 
 impl Lexer {
-    pub self(source: java::lang::String) {}
+    pub self(source: java::lang::String) {
+        self.source = source;
+    }
 }

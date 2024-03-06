@@ -1,4 +1,4 @@
-package github.io.chaosunity.xikou.model;
+package github.io.chaosunity.xikou.ast;
 
 import github.io.chaosunity.xikou.lexer.Token;
 

@@ -1,4 +1,4 @@
-package github.io.chaosunity.xikou.model;
+package github.io.chaosunity.xikou.ast;
 
 public class Parameters {
     public final int parameterCount;

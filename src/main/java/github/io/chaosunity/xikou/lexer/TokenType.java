@@ -40,4 +40,13 @@ public enum TokenType {
             Self,
             Impl
     };
+
+    public int getInfixPrecedence() {
+        switch (this) {
+            case Equal:
+                return 1;
+            default:
+                return 0;
+        }
+    }
 }

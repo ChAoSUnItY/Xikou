@@ -136,8 +136,10 @@ public class Lexer {
         throw new IllegalStateException("Unexpected character");
     }
     
-    public void advanceToken() {
+    public Token advanceToken() {
+        Token token = currentToken;
         currentToken = nextToken();
+        return token;
     }
     
     public Token expectToken(TokenType type) {

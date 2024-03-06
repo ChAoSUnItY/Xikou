@@ -1,4 +1,4 @@
-package github.io.chaosunity.xikou.model;
+package github.io.chaosunity.xikou.ast;
 
 import java.nio.file.Path;
 import java.util.Arrays;

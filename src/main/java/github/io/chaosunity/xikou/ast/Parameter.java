@@ -1,7 +1,7 @@
-package github.io.chaosunity.xikou.model;
+package github.io.chaosunity.xikou.ast;
 
 import github.io.chaosunity.xikou.lexer.Token;
-import github.io.chaosunity.xikou.model.types.AbstractTypeRef;
+import github.io.chaosunity.xikou.ast.types.AbstractTypeRef;
 
 public class Parameter {
     public final Token name;

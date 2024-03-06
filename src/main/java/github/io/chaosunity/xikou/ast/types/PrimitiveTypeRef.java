@@ -1,6 +1,7 @@
-package github.io.chaosunity.xikou.model.types;
+package github.io.chaosunity.xikou.ast.types;
 
 import github.io.chaosunity.xikou.lexer.Token;
+import github.io.chaosunity.xikou.resolver.types.PrimitiveType;
 
 public class PrimitiveTypeRef extends AbstractTypeRef {
     public final PrimitiveType type;
@@ -12,7 +13,7 @@ public class PrimitiveTypeRef extends AbstractTypeRef {
     }
 
     @Override
-    public String getDescriptor() {
-        return String.valueOf(type.descriptor);
+    public PrimitiveType getType() {
+        return type;
     }
 }

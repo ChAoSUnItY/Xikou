@@ -1,6 +1,8 @@
-package github.io.chaosunity.xikou.model;
+package github.io.chaosunity.xikou.ast;
 
 import github.io.chaosunity.xikou.lexer.Token;
+import github.io.chaosunity.xikou.resolver.types.ObjectType;
+import github.io.chaosunity.xikou.resolver.types.Type;
 
 import java.util.Arrays;
 
@@ -11,6 +13,7 @@ public class ClassDecl {
     public final int fieldCount;
     public final FieldDecl[] fieldDecls;
     public ImplDecl boundImplDecl;
+    private Type classType;
     
     public ClassDecl(PackageRef packageRef, int modifiers, Token className, int fieldCount, FieldDecl[] fieldDecls) {
         this.packageRef = packageRef;
@@ -20,12 +23,20 @@ public class ClassDecl {
         this.fieldDecls = fieldDecls;
     }
     
-    public String getInternalName() {
-        if (packageRef.qualifiedPath.isEmpty()) {
-            return className.literal;
-        } else {
-            return packageRef.qualifiedPath.replace('.', '/') + "/" + className.literal;
+    public Type getClassType() {
+        if (classType == null) {
+            String internalPath;
+
+            if (packageRef.qualifiedPath.isEmpty()) {
+                internalPath = className.literal;
+            } else {
+                internalPath = packageRef.qualifiedPath.replace('.', '/') + "/" + className.literal;
+            }
+
+            classType = new ObjectType(internalPath);
         }
+
+        return classType;
     }
 
     @Override
