@@ -162,31 +162,57 @@ public class Parser {
     }
 
     private EnumDecl parseEnumDecl(PackageRef packageRef, int modifiers) {
-        Token enumNameToken = lexer.expectToken(TokenType.Identifier);
+        Token enumNameToken = lexer.expectToken(TokenType.Identifier), cachedIdentifierToken = null;
+        int fieldCount = 0;
+        FieldDecl[] fieldDecls = new FieldDecl[1];
         int enumVariantCount = 0;
         EnumVariantDecl[] enumVariantDecls = new EnumVariantDecl[1];
 
         lexer.expectToken(TokenType.OpenBrace);
 
-        while (!lexer.acceptToken(TokenType.CloseBrace)) {
+        while (!lexer.peekToken(TokenType.CloseBrace)) {
+            int fieldModifiers = parseFieldModifiers();
+
+            cachedIdentifierToken = lexer.expectToken(TokenType.Identifier);
+
+            if (!lexer.acceptToken(TokenType.Colon))
+                break;
+
+            AbstractTypeRef fieldTypeRef = parseTypeRef();
+
+            lexer.expectToken(TokenType.SemiColon);
+
+            if (fieldCount >= fieldDecls.length) {
+                FieldDecl[] newArr = new FieldDecl[fieldDecls.length * 2];
+                System.arraycopy(fieldDecls, 0, newArr, 0, fieldDecls.length);
+                fieldDecls = newArr;
+            }
+
+            fieldDecls[fieldCount++] = new FieldDecl(fieldModifiers, cachedIdentifierToken, fieldTypeRef, null, null);
+        }
+
+        while (!lexer.peekToken(TokenType.CloseBrace)) {
             if (enumVariantCount >= enumVariantDecls.length) {
                 EnumVariantDecl[] newArr = new EnumVariantDecl[enumVariantDecls.length * 2];
                 System.arraycopy(enumVariantDecls, 0, newArr, 0, enumVariantDecls.length);
                 enumVariantDecls =  newArr;
             }
 
-            enumVariantDecls[enumVariantCount++] = parseEnumVariantDecl();
+            enumVariantDecls[enumVariantCount++] = parseEnumVariantDecl(cachedIdentifierToken);
+            cachedIdentifierToken = null;
 
             if (!lexer.peekToken(TokenType.CloseBrace)) {
                 lexer.expectToken(TokenType.Comma);
             }
         }
 
-        return new EnumDecl(packageRef, modifiers, enumNameToken, enumVariantCount, enumVariantDecls);
+        lexer.expectToken(TokenType.CloseBrace);
+
+        return new EnumDecl(packageRef, modifiers, enumNameToken, fieldCount, fieldDecls, enumVariantCount, enumVariantDecls);
     }
 
-    private EnumVariantDecl parseEnumVariantDecl() {
-        Token variantNameToken = lexer.expectToken(TokenType.Identifier);
+    private EnumVariantDecl parseEnumVariantDecl(Token cachedIdentifierToken) {
+        Token variantNameToken = cachedIdentifierToken != null ? cachedIdentifierToken : lexer.expectToken(TokenType.Identifier);
         int argumentCount = 0;
         Expr[] arguments = new Expr[1];
 

@@ -1,0 +1,11 @@
+pub enum Num {
+    value: i32;
+    Zero(0),
+    One(1)
+}
+
+impl Num {
+    self(value: i32) {
+        self.value = value;
+    }
+}

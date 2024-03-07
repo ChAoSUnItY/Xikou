@@ -26,7 +26,7 @@ public class ExprGen {
                         genExpr(mw, memberAccessLhs.ownerExpr);
                         genExpr(mw, rhs);
 
-                        mw.visitFieldInsn(Opcodes.PUTFIELD, memberAccessLhs.ownerExpr.getType().getInternalName(), memberAccessLhs.selectedVarExpr.varIdentifier.literal, memberAccessLhs.selectedVarExpr.getType().getInternalName());
+                        mw.visitFieldInsn(Opcodes.PUTFIELD, memberAccessLhs.ownerExpr.getType().getInternalName(), memberAccessLhs.selectedVarExpr.varIdentifier.literal, memberAccessLhs.selectedVarExpr.getType().getDescriptor());
                     }
                     break;
                 default:

@@ -54,11 +54,14 @@ public class Resolver {
         ImplDecl implDecl = enumDecl.getImplDecl();
         PrimaryConstructorDecl constructorDecl = null;
 
-        if (implDecl != null) {
+        if (implDecl != null)
             constructorDecl = implDecl.primaryConstructorDecl;
+
+        for (int j = 0; j < enumDecl.fieldCount; j++) {
+            resolveFieldDecl(enumDecl.fieldDecls[j]);
         }
 
-        for (int i = 0; i < enumDecl.variantCounts; i++) {
+        for (int i = 0; i < enumDecl.variantCount; i++) {
             resolveEnumVariantDecl(enumDecl, constructorDecl, enumDecl.enumVariantDecls[i]);
         }
 
@@ -72,8 +75,6 @@ public class Resolver {
             Parameter parameter = parameters.parameters[i];
 
             resolveTypeRef(parameter.typeRef);
-
-            constructorDecl.scope.addLocalVar(parameter.name.literal, parameter.typeRef.getType());
         }
     }
 
@@ -83,12 +84,23 @@ public class Resolver {
 
             if (decl instanceof ClassDecl) {
                 resolveClassDecl((ClassDecl) decl);
+            } else if (decl instanceof EnumDecl) {
+                resolveEnumDecl((EnumDecl) decl);
             }
         }
     }
 
     private void resolveClassDecl(ClassDecl classDecl) {
-        PrimaryConstructorDecl constructorDecl = classDecl.boundImplDecl.primaryConstructorDecl;
+        ImplDecl implDecl = classDecl.boundImplDecl;
+        PrimaryConstructorDecl constructorDecl = implDecl != null ? implDecl.primaryConstructorDecl : null;
+
+        if (constructorDecl != null)
+            resolvePrimaryConstructorDecl(constructorDecl);
+    }
+
+    private void resolveEnumDecl(EnumDecl enumDecl) {
+        ImplDecl implDecl = enumDecl.boundImplDecl;
+        PrimaryConstructorDecl constructorDecl = implDecl != null ? implDecl.primaryConstructorDecl : null;
 
         if (constructorDecl != null)
             resolvePrimaryConstructorDecl(constructorDecl);
@@ -108,6 +120,14 @@ public class Resolver {
 
     private void resolvePrimaryConstructorDecl(PrimaryConstructorDecl constructorDecl) {
         constructorDecl.scope.addLocalVar("self", constructorDecl.implDecl.boundDecl.getType());
+
+        Parameters parameters = constructorDecl.parameters;
+
+        for (int i = 0; i < parameters.parameterCount; i++) {
+            Parameter parameter = parameters.parameters[i];
+
+            constructorDecl.scope.addLocalVar(parameter.name.literal, parameter.typeRef.getType());
+        }
 
         for (int i = 0; i < constructorDecl.exprCount; i++) {
             resolveExpr(constructorDecl.exprs[i], constructorDecl.scope);

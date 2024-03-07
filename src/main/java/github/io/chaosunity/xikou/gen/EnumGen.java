@@ -29,7 +29,7 @@ public class EnumGen extends ClassFileGen {
         genValueOf(cw);
         genValues(cw);
         genPrimaryConstructor(cw);
-        genFields(cw, enumDecl);
+        genFields(cw);
 
         cw.visitEnd();
         return cw.toByteArray();
@@ -55,14 +55,14 @@ public class EnumGen extends ClassFileGen {
                 parameterTypes[i] = parameters.parameters[i].typeRef.getType();
             }
 
-            System.arraycopy(new Type[]{new ObjectType("java/lang/String"), PrimitiveType.INT}, 0, parameterTypes, parameterCount - 2, 2);
+            System.arraycopy(new Type[]{new ObjectType("java/lang/String"), PrimitiveType.INT}, 0, parameterTypes, parameterCount, 2);
 
             mw = cw.visitMethod(Opcodes.ACC_PUBLIC, "<init>", Utils.getMethodDescriptor(PrimitiveType.VOID, parameterTypes), null, null);
 
             mw.visitCode();
             mw.visitVarInsn(Opcodes.ALOAD, 0);
-            mw.visitVarInsn(Opcodes.ALOAD, parameterCount);
-            mw.visitVarInsn(Opcodes.ILOAD, parameterCount + 1);
+            mw.visitVarInsn(Opcodes.ALOAD, parameterCount + 1);
+            mw.visitVarInsn(Opcodes.ILOAD, parameterCount + 2);
             mw.visitMethodInsn(Opcodes.INVOKESPECIAL, "java/lang/Enum", "<init>", Utils.getMethodDescriptor(PrimitiveType.VOID, new Type[]{new ObjectType("java/lang/String"), PrimitiveType.INT}), false);
         } else {
             mw = genDefaultPrimaryConstructor(cw);
@@ -93,16 +93,22 @@ public class EnumGen extends ClassFileGen {
         return mw;
     }
 
-    private void genFields(ClassWriter cw, EnumDecl enumDecl) {
+    private void genFields(ClassWriter cw) {
         Type enumType = enumDecl.getType();
 
-        for (int i = 0; i < enumDecl.variantCounts; i++) {
+        for (int i = 0; i < enumDecl.variantCount; i++) {
             EnumVariantDecl variantDecl = enumDecl.enumVariantDecls[i];
 
             cw.visitField(Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC | Opcodes.ACC_FINAL | Opcodes.ACC_ENUM, variantDecl.name.literal, enumType.getDescriptor(), null, null);
         }
 
         cw.visitField(Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC | Opcodes.ACC_FINAL | Opcodes.ACC_SYNTHETIC, VALUES_FIELD_NAME, enumType.asArrayType().getDescriptor(), null, null);
+
+        for (int i = 0; i < enumDecl.fieldCount; i++) {
+            FieldDecl fieldDecl = enumDecl.fieldDecls[i];
+
+            cw.visitField(fieldDecl.fieldModifiers, fieldDecl.name.literal, fieldDecl.typeRef.getType().getDescriptor(), null, null);
+        }
     }
 
     private void genStaticInit(ClassWriter cw) {
@@ -121,11 +127,16 @@ public class EnumGen extends ClassFileGen {
         MethodVisitor mw = cw.visitMethod(Opcodes.ACC_STATIC, "<clinit>", "()V", null, null);
         mw.visitCode();
 
-        for (int i = 0; i < enumDecl.variantCounts; i++) {
+        for (int i = 0; i < enumDecl.variantCount; i++) {
             EnumVariantDecl variantDecl = enumDecl.enumVariantDecls[i];
 
             mw.visitTypeInsn(Opcodes.NEW, enumType.getInternalName());
             mw.visitInsn(Opcodes.DUP);
+
+            for (int j = 0; j < variantDecl.argumentCount; j++) {
+                exprGen.genExpr(mw, variantDecl.arguments[j]);
+            }
+
             mw.visitLdcInsn(variantDecl.name.literal);
             mw.visitLdcInsn(i);
             mw.visitMethodInsn(Opcodes.INVOKESPECIAL, enumType.getInternalName(), "<init>", constructorDescriptor, false);
@@ -133,10 +144,10 @@ public class EnumGen extends ClassFileGen {
         }
 
         // Generate $VALUES
-        mw.visitLdcInsn(enumDecl.variantCounts);
+        mw.visitLdcInsn(enumDecl.variantCount);
         mw.visitTypeInsn(Opcodes.ANEWARRAY, enumType.getInternalName());
 
-        for (int i = 0; i < enumDecl.variantCounts; i++) {
+        for (int i = 0; i < enumDecl.variantCount; i++) {
             EnumVariantDecl variantDecl = enumDecl.enumVariantDecls[i];
 
             mw.visitInsn(Opcodes.DUP);

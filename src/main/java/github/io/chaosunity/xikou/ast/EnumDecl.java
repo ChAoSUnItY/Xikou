@@ -7,16 +7,20 @@ public class EnumDecl extends BoundableDecl {
     public final PackageRef packageRef;
     public final int modifiers;
     public final Token enumNameToken;
-    public final int variantCounts;
+    public final int fieldCount;
+    public final FieldDecl[] fieldDecls;
+    public final int variantCount;
     public final EnumVariantDecl[] enumVariantDecls;
     public ImplDecl boundImplDecl;
     public Type enumType;
 
-    public EnumDecl(PackageRef packageRef, int modifiers, Token enumNameToken, int variantCounts, EnumVariantDecl[] enumVariantDecls) {
+    public EnumDecl(PackageRef packageRef, int modifiers, Token enumNameToken, int fieldCount, FieldDecl[] fieldDecls, int variantCount, EnumVariantDecl[] enumVariantDecls) {
         this.packageRef = packageRef;
         this.modifiers = modifiers;
         this.enumNameToken = enumNameToken;
-        this.variantCounts = variantCounts;
+        this.fieldCount = fieldCount;
+        this.fieldDecls = fieldDecls;
+        this.variantCount = variantCount;
         this.enumVariantDecls = enumVariantDecls;
     }
 

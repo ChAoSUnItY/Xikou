@@ -41,6 +41,18 @@ public class SymbolTable {
                 }
 
                 return null;
+            } else if (decl instanceof EnumDecl) {
+                EnumDecl enumDecl = (EnumDecl) decl;
+
+                for (int j = 0; j < enumDecl.fieldCount; j++) {
+                    FieldDecl fieldDecl = enumDecl.fieldDecls[j];
+
+                    if (fieldDecl.name.literal.equals(name)) {
+                        return new FieldRef(ownerType, name, fieldDecl.typeRef.getType());
+                    }
+                }
+
+                return null;
             }
         }
 
