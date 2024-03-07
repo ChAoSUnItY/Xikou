@@ -1,37 +1,42 @@
 package github.io.chaosunity.xikou.resolver;
 
-import github.io.chaosunity.xikou.ast.ClassDecl;
-import github.io.chaosunity.xikou.ast.FieldDecl;
+import github.io.chaosunity.xikou.ast.*;
 import github.io.chaosunity.xikou.resolver.types.ObjectType;
 import github.io.chaosunity.xikou.resolver.types.PrimitiveType;
 import github.io.chaosunity.xikou.resolver.types.Type;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 
 public class SymbolTable {
-    public int classDeclCount = 0;
-    public ClassDecl[] classDecls = new ClassDecl[1];
+    public int declCount = 0;
+    public BoundableDecl[] decls = new BoundableDecl[1];
 
-    public void registerClassDecl(ClassDecl classDecl) {
-        if (classDeclCount >= classDecls.length) {
-            ClassDecl[] newArr = new ClassDecl[classDecls.length * 2];
-            System.arraycopy(classDecls, 0, newArr, 0, classDecls.length);
-            classDecls = newArr;
+    public void registerDecl(BoundableDecl decl) {
+        if (declCount >= decls.length) {
+            BoundableDecl[] newArr = new BoundableDecl[decls.length * 2];
+            System.arraycopy(decls, 0, newArr, 0, decls.length);
+            decls = newArr;
         }
 
-        classDecls[classDeclCount++] = classDecl;
+        decls[declCount++] = decl;
     }
 
-    public FieldRef getField(Type ownerClassType, String name) {
-        for (int i = 0; i < classDeclCount; i++) {
-            ClassDecl classDecl = classDecls[i];
+    public FieldRef getField(Type ownerType, String name) {
+        for (int i = 0; i < declCount; i++) {
+            BoundableDecl decl = decls[i];
 
-            if (classDecl.getType().equals(ownerClassType)) {
+            if (!decl.getType().equals(ownerType))
+                continue;
+
+            if (decl instanceof ClassDecl) {
+                ClassDecl classDecl = (ClassDecl) decl;
+
                 for (int j = 0; j < classDecl.fieldCount; j++) {
                     FieldDecl fieldDecl = classDecl.fieldDecls[j];
 
                     if (fieldDecl.name.literal.equals(name)) {
-                        return new FieldRef(ownerClassType, name, fieldDecl.typeRef.getType());
+                        return new FieldRef(ownerType, name, fieldDecl.typeRef.getType());
                     }
                 }
 
@@ -40,11 +45,11 @@ public class SymbolTable {
         }
 
         try {
-            String ownerClassInternalName = ownerClassType.getInternalName();
+            String ownerClassInternalName = ownerType.getInternalName();
             Class clazz = Class.forName(ownerClassInternalName.replace('/', '.'));
             Type fieldType = getFieldType(name, clazz);
 
-            return new FieldRef(ownerClassType, name, fieldType);
+            return new FieldRef(ownerType, name, fieldType);
         } catch (ClassNotFoundException | NoSuchFieldException e) {
             e.printStackTrace();
         }
@@ -52,24 +57,71 @@ public class SymbolTable {
         return null;
     }
 
+    private MethodRef[] getConstructors(Type ownerType) {
+        for (int i = 0; i < declCount; i++) {
+            BoundableDecl decl = decls[i];
+
+            if (!decl.getType().equals(ownerType))
+                continue;
+
+            PrimaryConstructorDecl constructorDecl = decl.getImplDecl().primaryConstructorDecl;
+            Parameters parameters = constructorDecl.parameters;
+            Type[] parameterTypes = new Type[parameters.parameterCount];
+
+            for (int j = 0; j < parameters.parameterCount; j++) {
+                parameterTypes[j] = parameters.parameters[j].typeRef.getType();
+            }
+
+            return new MethodRef[] { new MethodRef(ownerType, "<init>", constructorDecl.exprCount, parameterTypes, constructorDecl.implDecl.boundDecl.getType()) };
+        }
+
+        try {
+            String ownerClassInternalName = ownerType.getInternalName();
+            Class clazz = Class.forName(ownerClassInternalName.replace('/', '.'));
+            Constructor[] constructors = clazz.getConstructors();
+            MethodRef[] constuctorMethodRefs = new MethodRef[constructors.length];
+
+            for (int i = 0; i < constructors.length; i++) {
+                constuctorMethodRefs[i] = getMethodRefFromConstrutor(ownerType, constructors[i]);
+            }
+
+            return constuctorMethodRefs;
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
+    private static MethodRef getMethodRefFromConstrutor(Type ownerType, Constructor constructor) {
+        int parameterCount = constructor.getParameterCount();
+        Class[] parameterReflectionTypes = constructor.getParameterTypes();
+        Type[] parameterTypes = new Type[parameterCount];
+
+        for (int i = 0; i < parameterCount; i++) {
+            parameterTypes[i] = getTypeFromClass(parameterReflectionTypes[i]);
+        }
+
+        return new MethodRef(ownerType, "<init>", parameterCount, parameterTypes, ownerType);
+    }
+
     private static Type getFieldType(String name, Class clazz) throws NoSuchFieldException {
         Field field = clazz.getField(name);
-        Class fieldTypeClazz = field.getType();
-        Type fieldType = null;
 
-        if (fieldTypeClazz.isPrimitive()) {
+        return getTypeFromClass(field.getType());
+    }
+
+    private static Type getTypeFromClass(Class clazz) {
+        if (clazz.isPrimitive()) {
             for (PrimitiveType primitiveType : PrimitiveType.values()) {
-                if (fieldTypeClazz.getCanonicalName().equals(primitiveType.internalName)) {
-                    fieldType = primitiveType;
-                    break;
+                if (clazz.getCanonicalName().equals(primitiveType.internalName)) {
+                    return primitiveType;
                 }
             }
 
-            if (fieldType == null)
-                throw new IllegalStateException("Unreachable");
+            throw new IllegalStateException("Unreachable");
         } else {
-            fieldType = new ObjectType(fieldTypeClazz.getCanonicalName().replace(".", "/"));
+            return new ObjectType(clazz.getCanonicalName().replace(".", "/"));
         }
-        return fieldType;
     }
 }

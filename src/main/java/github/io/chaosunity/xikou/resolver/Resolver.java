@@ -26,23 +26,43 @@ public class Resolver {
         for (int i = 0; i < file.declCount; i++) {
             BoundableDecl decl = file.decls[i];
 
-            if (decl instanceof ClassDecl) {
-                resolveClassDeclEarly((ClassDecl) decl);
+            ImplDecl implDecl = decl.getImplDecl();
+
+            if (implDecl != null) {
+                PrimaryConstructorDecl constructorDecl = implDecl.primaryConstructorDecl;
+
+                if (constructorDecl != null)
+                    resolvePrimaryConstructorDeclEarly(constructorDecl);
             }
+
+            if (decl instanceof ClassDecl)
+                resolveClassDeclEarly((ClassDecl) decl);
+            else if (decl instanceof EnumDecl)
+                resolveEnumDeclEarly((EnumDecl) decl);
         }
     }
 
     private void resolveClassDeclEarly(ClassDecl classDecl) {
-        PrimaryConstructorDecl constructorDecl = classDecl.boundImplDecl.primaryConstructorDecl;
-
-        if (constructorDecl != null)
-            resolvePrimaryConstructorDeclEarly(constructorDecl);
-
         for (int j = 0; j < classDecl.fieldCount; j++) {
             resolveFieldDecl(classDecl.fieldDecls[j]);
         }
 
-        table.registerClassDecl(classDecl);
+        table.registerDecl(classDecl);
+    }
+
+    private void resolveEnumDeclEarly(EnumDecl enumDecl) {
+        ImplDecl implDecl = enumDecl.getImplDecl();
+        PrimaryConstructorDecl constructorDecl = null;
+
+        if (implDecl != null) {
+            constructorDecl = implDecl.primaryConstructorDecl;
+        }
+
+        for (int i = 0; i < enumDecl.variantCounts; i++) {
+            resolveEnumVariantDecl(enumDecl, constructorDecl, enumDecl.enumVariantDecls[i]);
+        }
+
+        table.registerDecl(enumDecl);
     }
 
     private void resolvePrimaryConstructorDeclEarly(PrimaryConstructorDecl constructorDecl) {
@@ -76,6 +96,14 @@ public class Resolver {
 
     private void resolveFieldDecl(FieldDecl fieldDecl) {
         resolveTypeRef(fieldDecl.typeRef);
+    }
+
+    private void resolveEnumVariantDecl(EnumDecl enumDecl, PrimaryConstructorDecl constructorDecl, EnumVariantDecl variantDecl) {
+        MethodRef constructorRef = constructorDecl != null ? constructorDecl.asMethodRef() : Utils.genImplcicitPrimaryConstructorRef(enumDecl.getType());
+        boolean isApplicable = Utils.isInvocationApplicable(variantDecl.argumentCount, variantDecl.arguments, constructorRef);
+
+        if (!isApplicable)
+            throw new IllegalStateException("Incompatible primary constructor invocation on enum variant initialization");
     }
 
     private void resolvePrimaryConstructorDecl(PrimaryConstructorDecl constructorDecl) {

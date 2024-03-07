@@ -9,6 +9,8 @@ public abstract class BoundableDecl {
 
     public abstract PackageRef getPackageRef();
 
+    public abstract ImplDecl getImplDecl();
+
     public abstract void bindImplbidirectionally(ImplDecl implDecl);
 
     public Type getType() {

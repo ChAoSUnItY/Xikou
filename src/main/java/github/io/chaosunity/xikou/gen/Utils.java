@@ -5,13 +5,11 @@ import github.io.chaosunity.xikou.ast.Parameters;
 import github.io.chaosunity.xikou.resolver.types.Type;
 
 public final class Utils {
-    public static String getMethodDescriptor(Type returnType, Parameters parameters) {
+    public static String getMethodDescriptor(Type returnType, Type[] parameters) {
         StringBuilder builder = new StringBuilder("(");
 
-        for (int i = 0; i < parameters.parameterCount; i++) {
-            Parameter parameter = parameters.parameters[i];
-
-            builder.append(parameter.typeRef.getType().getDescriptor());
+        for (Type parameter : parameters) {
+            builder.append(parameter.getDescriptor());
         }
 
         builder.append(")");

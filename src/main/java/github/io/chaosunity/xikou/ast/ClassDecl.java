@@ -34,6 +34,11 @@ public class ClassDecl extends BoundableDecl {
     }
 
     @Override
+    public ImplDecl getImplDecl() {
+        return boundImplDecl;
+    }
+
+    @Override
     public Type getType() {
         return classType == null ? (classType = super.getType()) : classType;
     }
@@ -42,16 +47,5 @@ public class ClassDecl extends BoundableDecl {
     public void bindImplbidirectionally(ImplDecl implDecl) {
         boundImplDecl = implDecl;
         implDecl.boundDecl = this;
-    }
-
-    @Override
-    public String toString() {
-        return "ClassDecl{" +
-                "packageRef=" + packageRef +
-                ", modifiers=" + modifiers +
-                ", className='" + classNameToken + '\'' +
-                ", fieldCount=" + fieldCount +
-                ", fieldDecls=" + Arrays.toString(fieldDecls) +
-                '}';
     }
 }

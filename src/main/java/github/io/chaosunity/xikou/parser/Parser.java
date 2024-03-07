@@ -54,6 +54,7 @@ public class Parser {
                 }
 
                 decls[declCount++] = parseEnumDecl(packageRef, declModifiers);
+                continue;
             }
             
             if (lexer.acceptToken(TokenType.Impl)) {
@@ -70,9 +71,8 @@ public class Parser {
                     }
                 }
                 
-                if (!bound) {
+                if (!bound)
                     throw new IllegalStateException(String.format("Unknown implementation to class %s", implDecl.targetClass.literal));
-                }
                 
                 continue;
             }
@@ -197,6 +197,8 @@ public class Parser {
                     System.arraycopy(arguments, 0, newArr, 0, arguments.length);
                     arguments =  newArr;
                 }
+
+                arguments[argumentCount++] = parseExpr();
 
                 if (!lexer.peekToken(TokenType.CloseParenthesis)) {
                     lexer.expectToken(TokenType.Comma);

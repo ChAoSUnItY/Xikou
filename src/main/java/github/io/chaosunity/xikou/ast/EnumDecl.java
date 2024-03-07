@@ -31,6 +31,11 @@ public class EnumDecl extends BoundableDecl {
     }
 
     @Override
+    public ImplDecl getImplDecl() {
+        return boundImplDecl;
+    }
+
+    @Override
     public void bindImplbidirectionally(ImplDecl implDecl) {
         boundImplDecl = implDecl;
         implDecl.boundDecl = this;

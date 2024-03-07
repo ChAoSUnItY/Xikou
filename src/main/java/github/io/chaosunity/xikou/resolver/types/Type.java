@@ -6,4 +6,8 @@ public interface Type {
     String getDescriptor();
 
     int getSize();
+
+    default ArrayType asArrayType() {
+        return new ArrayType(this);
+    }
 }
