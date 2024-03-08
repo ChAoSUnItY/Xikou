@@ -6,12 +6,11 @@ public class ImplDecl {
     public final Token targetClass;
     public final PrimaryConstructorDecl primaryConstructorDecl;
     public BoundableDecl boundDecl;
-    
+
     public ImplDecl(Token targetClass, PrimaryConstructorDecl primaryConstructorDecl) {
         this.targetClass = targetClass;
         this.primaryConstructorDecl = primaryConstructorDecl;
 
-        if (primaryConstructorDecl != null)
-            primaryConstructorDecl.implDecl = this;
+        if (primaryConstructorDecl != null) primaryConstructorDecl.implDecl = this;
     }
 }

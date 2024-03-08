@@ -26,11 +26,16 @@ public class ExprGen {
                         genExpr(mw, memberAccessLhs.ownerExpr);
                         genExpr(mw, rhs);
 
-                        mw.visitFieldInsn(Opcodes.PUTFIELD, memberAccessLhs.ownerExpr.getType().getInternalName(), memberAccessLhs.selectedVarExpr.varIdentifier.literal, memberAccessLhs.selectedVarExpr.getType().getDescriptor());
+                        mw.visitFieldInsn(Opcodes.PUTFIELD,
+                                          memberAccessLhs.ownerExpr.getType().getInternalName(),
+                                          memberAccessLhs.selectedVarExpr.varIdentifier.literal,
+                                          memberAccessLhs.selectedVarExpr.getType()
+                                                                         .getDescriptor());
                     }
                     break;
                 default:
-                    throw new IllegalStateException(String.format("Token %s is not an valid infix operator", operatorType));
+                    throw new IllegalStateException(
+                            String.format("Token %s is not an valid infix operator", operatorType));
             }
         } else if (expr instanceof MemberAccessExpr) {
             MemberAccessExpr memberAccessExpr = (MemberAccessExpr) expr;
@@ -57,9 +62,8 @@ public class ExprGen {
     private static int getPrimitiveLoadOpcode(PrimitiveType varType) {
         int loadOpcode = 0;
 
-        if (varType.equals(PrimitiveType.CHAR) ||
-                varType.equals(PrimitiveType.BOOL) ||
-                varType.equals(PrimitiveType.INT)) {
+        if (varType.equals(PrimitiveType.CHAR) || varType.equals(
+                PrimitiveType.BOOL) || varType.equals(PrimitiveType.INT)) {
             loadOpcode = Opcodes.ILOAD;
         } else if (varType.equals(PrimitiveType.LONG)) {
             loadOpcode = Opcodes.LLOAD;

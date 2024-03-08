@@ -1,5 +1,6 @@
 package github.io.chaosunity.xikou.gen;
 
+import github.io.chaosunity.xikou.ast.PrimaryConstructorDecl;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.MethodVisitor;
 
@@ -29,6 +30,15 @@ public abstract class ClassFileGen {
     protected abstract Path getClassFilePath();
 
     protected abstract void genPrimaryConstructor(ClassWriter cw);
+
+    protected void genPrimaryConstrcutorBody(ClassWriter cw, MethodVisitor mw,
+                                             PrimaryConstructorDecl constructorDecl) {
+        if (constructorDecl != null) {
+            for (int i = 0; i < constructorDecl.exprCount; i++) {
+                exprGen.genExpr(mw, constructorDecl.exprs[i]);
+            }
+        }
+    }
 
     protected abstract MethodVisitor genDefaultPrimaryConstructor(ClassWriter cw);
 }

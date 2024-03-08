@@ -4,8 +4,7 @@ public class TypeResolver {
     // TODO: Complete it
     public static boolean isInstanceOf(Type fromType, Type targetType) {
         if (fromType instanceof PrimitiveType) {
-            if (targetType instanceof PrimitiveType)
-                return fromType.equals(targetType);
+            if (targetType instanceof PrimitiveType) return fromType.equals(targetType);
 
             return false;
         }

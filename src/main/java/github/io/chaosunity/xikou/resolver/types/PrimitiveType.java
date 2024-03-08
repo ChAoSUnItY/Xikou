@@ -1,18 +1,15 @@
 package github.io.chaosunity.xikou.resolver.types;
 
 public enum PrimitiveType implements Type {
-    VOID ("unit", "void", 'V'),
-    CHAR ("char", "char", 'C'),
-    BOOL ("bool", "bool", 'Z'),
-    INT ("i32", "int", 'I'),
-    LONG ("i64", "long", 'J'),
-    FLOAT ("f32", "float", 'F'),
-    DOUBLE ("f64", "double", 'D');
+    VOID("unit", "void", 'V'), CHAR("char", "char", 'C'), BOOL("bool", "bool", 'Z'), INT("i32",
+                                                                                         "int",
+                                                                                         'I'), LONG(
+            "i64", "long", 'J'), FLOAT("f32", "float", 'F'), DOUBLE("f64", "double", 'D');
 
     public final String xkTypeName;
     public final String internalName;
     public final char descriptor;
-    
+
     PrimitiveType(String xkTypeName, String internalName, char descriptor) {
         this.xkTypeName = xkTypeName;
         this.internalName = internalName;

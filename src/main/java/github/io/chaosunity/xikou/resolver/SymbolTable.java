@@ -26,8 +26,7 @@ public class SymbolTable {
         for (int i = 0; i < declCount; i++) {
             BoundableDecl decl = decls[i];
 
-            if (!decl.getType().equals(ownerType))
-                continue;
+            if (!decl.getType().equals(ownerType)) continue;
 
             if (decl instanceof ClassDecl) {
                 ClassDecl classDecl = (ClassDecl) decl;
@@ -73,8 +72,7 @@ public class SymbolTable {
         for (int i = 0; i < declCount; i++) {
             BoundableDecl decl = decls[i];
 
-            if (!decl.getType().equals(ownerType))
-                continue;
+            if (!decl.getType().equals(ownerType)) continue;
 
             PrimaryConstructorDecl constructorDecl = decl.getImplDecl().primaryConstructorDecl;
             Parameters parameters = constructorDecl.parameters;
@@ -84,7 +82,9 @@ public class SymbolTable {
                 parameterTypes[j] = parameters.parameters[j].typeRef.getType();
             }
 
-            return new MethodRef[] { new MethodRef(ownerType, "<init>", constructorDecl.exprCount, parameterTypes, constructorDecl.implDecl.boundDecl.getType()) };
+            return new MethodRef[]{new MethodRef(ownerType, "<init>", constructorDecl.exprCount,
+                                                 parameterTypes,
+                                                 constructorDecl.implDecl.boundDecl.getType())};
         }
 
         try {

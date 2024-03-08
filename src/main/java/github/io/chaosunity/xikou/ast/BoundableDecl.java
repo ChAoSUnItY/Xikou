@@ -7,9 +7,18 @@ import github.io.chaosunity.xikou.resolver.types.Type;
 public abstract class BoundableDecl {
     public abstract Token getNameToken();
 
+    public String getName() {
+        return getNameToken().literal;
+    }
+
     public abstract PackageRef getPackageRef();
 
     public abstract ImplDecl getImplDecl();
+
+    public PrimaryConstructorDecl getPrimaryConstructorDecl() {
+        ImplDecl implDecl = getImplDecl();
+        return implDecl != null ? implDecl.primaryConstructorDecl : null;
+    }
 
     public abstract void bindImplbidirectionally(ImplDecl implDecl);
 

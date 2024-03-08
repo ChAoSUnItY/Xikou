@@ -1,10 +1,7 @@
 package github.io.chaosunity.xikou.ast;
 
 import github.io.chaosunity.xikou.lexer.Token;
-import github.io.chaosunity.xikou.resolver.types.ObjectType;
 import github.io.chaosunity.xikou.resolver.types.Type;
-
-import java.util.Arrays;
 
 public class ClassDecl extends BoundableDecl {
     public final PackageRef packageRef;
@@ -14,8 +11,9 @@ public class ClassDecl extends BoundableDecl {
     public final FieldDecl[] fieldDecls;
     public ImplDecl boundImplDecl;
     private Type classType;
-    
-    public ClassDecl(PackageRef packageRef, int modifiers, Token classNameToken, int fieldCount, FieldDecl[] fieldDecls) {
+
+    public ClassDecl(PackageRef packageRef, int modifiers, Token classNameToken, int fieldCount,
+                     FieldDecl[] fieldDecls) {
         this.packageRef = packageRef;
         this.modifiers = modifiers;
         this.classNameToken = classNameToken;

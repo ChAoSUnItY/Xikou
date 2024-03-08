@@ -9,7 +9,8 @@ public class MethodRef {
     public final Type[] parameterType;
     public final Type returnType;
 
-    public MethodRef(Type ownerClassType, String name, int parameterCount, Type[] parameterType, Type returnType) {
+    public MethodRef(Type ownerClassType, String name, int parameterCount, Type[] parameterType,
+                     Type returnType) {
         this.ownerClassType = ownerClassType;
         this.name = name;
         this.parameterCount = parameterCount;

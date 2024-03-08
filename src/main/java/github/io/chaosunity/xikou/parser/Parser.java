@@ -1,14 +1,14 @@
 package github.io.chaosunity.xikou.parser;
 
-import github.io.chaosunity.xikou.lexer.Lexer;
-import github.io.chaosunity.xikou.lexer.Token;
-import github.io.chaosunity.xikou.lexer.TokenType;
 import github.io.chaosunity.xikou.ast.*;
 import github.io.chaosunity.xikou.ast.expr.*;
 import github.io.chaosunity.xikou.ast.types.AbstractTypeRef;
-import github.io.chaosunity.xikou.resolver.types.PrimitiveType;
-import github.io.chaosunity.xikou.ast.types.PrimitiveTypeRef;
 import github.io.chaosunity.xikou.ast.types.ObjectTypeRef;
+import github.io.chaosunity.xikou.ast.types.PrimitiveTypeRef;
+import github.io.chaosunity.xikou.lexer.Lexer;
+import github.io.chaosunity.xikou.lexer.Token;
+import github.io.chaosunity.xikou.lexer.TokenType;
+import github.io.chaosunity.xikou.resolver.types.PrimitiveType;
 
 import java.io.IOException;
 import java.lang.reflect.Modifier;
@@ -19,29 +19,29 @@ import java.nio.file.Path;
 public class Parser {
     private final Path absoluteFilePath;
     private final Lexer lexer;
-    
+
     public Parser(Path absoluteFilePath) throws IOException {
         byte[] fileBytes = Files.readAllBytes(absoluteFilePath);
         String source = new String(fileBytes, StandardCharsets.UTF_8);
         this.absoluteFilePath = absoluteFilePath;
         this.lexer = new Lexer(source);
     }
-    
+
     public XkFile parseFile() {
         PackageRef packageRef = parsePackageRef();
         int declCount = 0;
         BoundableDecl[] decls = new BoundableDecl[1];
-        
+
         while (!lexer.peekToken(TokenType.EOF)) {
             int declModifiers = parseClassModifiers();
-            
+
             if (lexer.acceptToken(TokenType.Class)) {
                 if (declCount >= decls.length) {
                     BoundableDecl[] newArr = new BoundableDecl[decls.length * 2];
                     System.arraycopy(decls, 0, newArr, 0, decls.length);
                     decls = newArr;
                 }
-                
+
                 decls[declCount++] = parseClassDecl(packageRef, declModifiers);
                 continue;
             }
@@ -56,30 +56,32 @@ public class Parser {
                 decls[declCount++] = parseEnumDecl(packageRef, declModifiers);
                 continue;
             }
-            
+
             if (lexer.acceptToken(TokenType.Impl)) {
                 boolean bound = false;
                 ImplDecl implDecl = parseImplDecl();
-                
+
                 for (int i = 0; i < declCount; i++) {
                     BoundableDecl classDecl = decls[i];
-                    
-                    if (classDecl.getNameToken().literal.equals(implDecl.targetClass.literal)) {
+
+                    if (classDecl.getName().equals(implDecl.targetClass.literal)) {
                         classDecl.bindImplbidirectionally(implDecl);
                         bound = true;
                         break;
                     }
                 }
-                
-                if (!bound)
-                    throw new IllegalStateException(String.format("Unknown implementation to class %s", implDecl.targetClass.literal));
-                
+
+                if (!bound) throw new IllegalStateException(
+                        String.format("Unknown implementation to class %s",
+                                      implDecl.targetClass.literal));
+
                 continue;
             }
-            
-            throw new IllegalStateException(String.format("Unexpected token %s", lexer.getCurrentToken().type));
+
+            throw new IllegalStateException(
+                    String.format("Unexpected token %s", lexer.getCurrentToken().type));
         }
-        
+
         return new XkFile(absoluteFilePath, packageRef, declCount, decls);
     }
 
@@ -87,11 +89,11 @@ public class Parser {
         StringBuilder qualifiedPackagePathBuilder = new StringBuilder();
 
         if (lexer.acceptToken(TokenType.Pkg)) {
-            for (;;) {
+            for (; ; ) {
                 Token indent = lexer.expectToken(TokenType.Identifier);
 
                 qualifiedPackagePathBuilder.append(indent.literal);
-                
+
                 if (lexer.acceptToken(TokenType.DoubleColon)) {
                     qualifiedPackagePathBuilder.append(".");
                 } else {
@@ -103,7 +105,7 @@ public class Parser {
 
         return new PackageRef(qualifiedPackagePathBuilder.toString());
     }
-    
+
     private int parseAccessModifiers() {
         int modifiers = 0;
 
@@ -117,15 +119,15 @@ public class Parser {
         } else if (lexer.acceptToken(TokenType.Priv)) {
             modifiers |= Modifier.PRIVATE;
         }
-        
+
         return modifiers;
     }
 
     private int parseClassModifiers() {
         int modifiers = 0;
-        
+
         modifiers |= parseAccessModifiers();
-        
+
         return modifiers;
     }
 
@@ -133,11 +135,11 @@ public class Parser {
         int modifiers = 0;
 
         modifiers |= parseAccessModifiers();
-        
+
         if (!lexer.acceptToken(TokenType.Mut)) {
             modifiers |= Modifier.FINAL;
         }
-        
+
         return modifiers;
     }
 
@@ -145,9 +147,9 @@ public class Parser {
         Token classNameToken = lexer.expectToken(TokenType.Identifier);
         int fieldCount = 0;
         FieldDecl[] fieldDecls = new FieldDecl[1];
-        
+
         lexer.expectToken(TokenType.OpenBrace);
-        
+
         while (!lexer.acceptToken(TokenType.CloseBrace)) {
             if (fieldCount >= fieldDecls.length) {
                 FieldDecl[] newArr = new FieldDecl[fieldDecls.length * 2];
@@ -157,7 +159,7 @@ public class Parser {
 
             fieldDecls[fieldCount++] = parseFieldDecl();
         }
-        
+
         return new ClassDecl(packageRef, modifiers, classNameToken, fieldCount, fieldDecls);
     }
 
@@ -175,8 +177,7 @@ public class Parser {
 
             cachedIdentifierToken = lexer.expectToken(TokenType.Identifier);
 
-            if (!lexer.acceptToken(TokenType.Colon))
-                break;
+            if (!lexer.acceptToken(TokenType.Colon)) break;
 
             AbstractTypeRef fieldTypeRef = parseTypeRef();
 
@@ -188,14 +189,15 @@ public class Parser {
                 fieldDecls = newArr;
             }
 
-            fieldDecls[fieldCount++] = new FieldDecl(fieldModifiers, cachedIdentifierToken, fieldTypeRef, null, null);
+            fieldDecls[fieldCount++] = new FieldDecl(fieldModifiers, cachedIdentifierToken,
+                                                     fieldTypeRef, null, null);
         }
 
         while (!lexer.peekToken(TokenType.CloseBrace)) {
             if (enumVariantCount >= enumVariantDecls.length) {
                 EnumVariantDecl[] newArr = new EnumVariantDecl[enumVariantDecls.length * 2];
                 System.arraycopy(enumVariantDecls, 0, newArr, 0, enumVariantDecls.length);
-                enumVariantDecls =  newArr;
+                enumVariantDecls = newArr;
             }
 
             enumVariantDecls[enumVariantCount++] = parseEnumVariantDecl(cachedIdentifierToken);
@@ -208,11 +210,13 @@ public class Parser {
 
         lexer.expectToken(TokenType.CloseBrace);
 
-        return new EnumDecl(packageRef, modifiers, enumNameToken, fieldCount, fieldDecls, enumVariantCount, enumVariantDecls);
+        return new EnumDecl(packageRef, modifiers, enumNameToken, fieldCount, fieldDecls,
+                            enumVariantCount, enumVariantDecls);
     }
 
     private EnumVariantDecl parseEnumVariantDecl(Token cachedIdentifierToken) {
-        Token variantNameToken = cachedIdentifierToken != null ? cachedIdentifierToken : lexer.expectToken(TokenType.Identifier);
+        Token variantNameToken = cachedIdentifierToken != null ? cachedIdentifierToken : lexer.expectToken(
+                TokenType.Identifier);
         int argumentCount = 0;
         Expr[] arguments = new Expr[1];
 
@@ -221,7 +225,7 @@ public class Parser {
                 if (argumentCount >= arguments.length) {
                     Expr[] newArr = new Expr[arguments.length * 2];
                     System.arraycopy(arguments, 0, newArr, 0, arguments.length);
-                    arguments =  newArr;
+                    arguments = newArr;
                 }
 
                 arguments[argumentCount++] = parseExpr();
@@ -234,52 +238,54 @@ public class Parser {
 
         return new EnumVariantDecl(variantNameToken, argumentCount, arguments);
     }
-    
+
     private FieldDecl parseFieldDecl() {
         int fieldModifiers = parseFieldModifiers();
         Token fieldNameToken = lexer.expectToken(TokenType.Identifier);
-        
+
         lexer.expectToken(TokenType.Colon);
-        
+
         AbstractTypeRef typeRef = parseTypeRef();
         Token equalToken = null;
         Expr initialExpr = null;
-        
+
         if (lexer.peekToken(TokenType.Equal)) {
             equalToken = lexer.expectToken(TokenType.Equal);
             initialExpr = parseExpr();
         }
-        
+
         lexer.expectToken(TokenType.SemiColon);
 
         return new FieldDecl(fieldModifiers, fieldNameToken, typeRef, equalToken, initialExpr);
     }
-    
+
     private ImplDecl parseImplDecl() {
         Token targetClass = lexer.expectToken(TokenType.Identifier);
         PrimaryConstructorDecl primaryConstructorDecl = null;
-        
+
         lexer.expectToken(TokenType.OpenBrace);
-        
+
         while (!lexer.peekToken(TokenType.CloseBrace)) {
             int modifiers = parseAccessModifiers();
-            
+
             if (lexer.acceptToken(TokenType.Self)) {
                 primaryConstructorDecl = parsePrimaryConstructorDecl(modifiers);
                 continue;
             }
-            
-            throw new IllegalStateException(String.format("Unexpected token %s while parsing implementation", lexer.getCurrentToken().type));
+
+            throw new IllegalStateException(
+                    String.format("Unexpected token %s while parsing implementation",
+                                  lexer.getCurrentToken().type));
         }
-        
+
         lexer.expectToken(TokenType.CloseBrace);
-    
+
         return new ImplDecl(targetClass, primaryConstructorDecl);
     }
-    
+
     private PrimaryConstructorDecl parsePrimaryConstructorDecl(int modifiers) {
         lexer.expectToken(TokenType.OpenParenthesis);
-        
+
         Parameters parameters = parseParameters();
 
         int exprCount = 0;
@@ -297,28 +303,28 @@ public class Parser {
             exprs[exprCount++] = parseExpr();
             lexer.expectToken(TokenType.SemiColon);
         }
-        
+
         return new PrimaryConstructorDecl(modifiers, parameters, exprCount, exprs);
     }
-    
+
     private Parameters parseParameters() {
         int parameterCount = 0;
         Parameter[] parameters = new Parameter[1];
-        
-        for (;;) {
+
+        for (; ; ) {
             if (lexer.peekToken(TokenType.Identifier)) {
                 Token name = lexer.expectToken(TokenType.Identifier);
                 lexer.expectToken(TokenType.Colon);
                 AbstractTypeRef typeRef = parseTypeRef();
-                
+
                 if (parameterCount >= parameters.length) {
                     Parameter[] newArr = new Parameter[parameters.length * 2];
                     System.arraycopy(parameters, 0, newArr, 0, parameters.length);
                     parameters = newArr;
                 }
-                
+
                 parameters[parameterCount++] = new Parameter(name, typeRef);
-                
+
                 if (lexer.acceptToken(TokenType.CloseParenthesis)) {
                     break;
                 } else {
@@ -329,10 +335,10 @@ public class Parser {
                 break;
             }
         }
-        
+
         return new Parameters(parameterCount, parameters);
     }
-    
+
     private Expr parseExpr() {
         return parseInfixExpr(0);
     }
@@ -343,8 +349,7 @@ public class Parser {
         while (true) {
             Token operatorToken = lexer.getCurrentToken();
             int precedence = operatorToken.type.getInfixPrecedence();
-            if (precedence == 0 || precedence <= parentPrecedence)
-                break;
+            if (precedence == 0 || precedence <= parentPrecedence) break;
 
             lexer.advanceToken();
             Expr rhs = parseInfixExpr(precedence);
@@ -365,7 +370,7 @@ public class Parser {
 
         return lhs;
     }
-    
+
     private Expr parseLiteralExpr() {
         if (lexer.peekToken(TokenType.Identifier)) {
             return parseVarExpr();
@@ -378,8 +383,9 @@ public class Parser {
         if (lexer.peekToken(TokenType.NumberLiteral)) {
             return new IntegerLiteral(lexer.expectToken(TokenType.NumberLiteral));
         }
-        
-        throw new IllegalStateException(String.format("Unexpected expression token %s", lexer.getCurrentToken().type));
+
+        throw new IllegalStateException(
+                String.format("Unexpected expression token %s", lexer.getCurrentToken().type));
     }
 
     private VarExpr parseVarExpr() {

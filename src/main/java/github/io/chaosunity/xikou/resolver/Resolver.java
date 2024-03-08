@@ -1,10 +1,10 @@
 package github.io.chaosunity.xikou.resolver;
 
+import github.io.chaosunity.xikou.ast.*;
+import github.io.chaosunity.xikou.ast.expr.*;
 import github.io.chaosunity.xikou.ast.types.AbstractTypeRef;
 import github.io.chaosunity.xikou.ast.types.ObjectTypeRef;
 import github.io.chaosunity.xikou.lexer.TokenType;
-import github.io.chaosunity.xikou.ast.*;
-import github.io.chaosunity.xikou.ast.expr.*;
 import github.io.chaosunity.xikou.resolver.types.ObjectType;
 
 public class Resolver {
@@ -31,14 +31,11 @@ public class Resolver {
             if (implDecl != null) {
                 PrimaryConstructorDecl constructorDecl = implDecl.primaryConstructorDecl;
 
-                if (constructorDecl != null)
-                    resolvePrimaryConstructorDeclEarly(constructorDecl);
+                if (constructorDecl != null) resolvePrimaryConstructorDeclEarly(constructorDecl);
             }
 
-            if (decl instanceof ClassDecl)
-                resolveClassDeclEarly((ClassDecl) decl);
-            else if (decl instanceof EnumDecl)
-                resolveEnumDeclEarly((EnumDecl) decl);
+            if (decl instanceof ClassDecl) resolveClassDeclEarly((ClassDecl) decl);
+            else if (decl instanceof EnumDecl) resolveEnumDeclEarly((EnumDecl) decl);
         }
     }
 
@@ -54,8 +51,7 @@ public class Resolver {
         ImplDecl implDecl = enumDecl.getImplDecl();
         PrimaryConstructorDecl constructorDecl = null;
 
-        if (implDecl != null)
-            constructorDecl = implDecl.primaryConstructorDecl;
+        if (implDecl != null) constructorDecl = implDecl.primaryConstructorDecl;
 
         for (int j = 0; j < enumDecl.fieldCount; j++) {
             resolveFieldDecl(enumDecl.fieldDecls[j]);
@@ -94,28 +90,29 @@ public class Resolver {
         ImplDecl implDecl = classDecl.boundImplDecl;
         PrimaryConstructorDecl constructorDecl = implDecl != null ? implDecl.primaryConstructorDecl : null;
 
-        if (constructorDecl != null)
-            resolvePrimaryConstructorDecl(constructorDecl);
+        if (constructorDecl != null) resolvePrimaryConstructorDecl(constructorDecl);
     }
 
     private void resolveEnumDecl(EnumDecl enumDecl) {
         ImplDecl implDecl = enumDecl.boundImplDecl;
         PrimaryConstructorDecl constructorDecl = implDecl != null ? implDecl.primaryConstructorDecl : null;
 
-        if (constructorDecl != null)
-            resolvePrimaryConstructorDecl(constructorDecl);
+        if (constructorDecl != null) resolvePrimaryConstructorDecl(constructorDecl);
     }
 
     private void resolveFieldDecl(FieldDecl fieldDecl) {
         resolveTypeRef(fieldDecl.typeRef);
     }
 
-    private void resolveEnumVariantDecl(EnumDecl enumDecl, PrimaryConstructorDecl constructorDecl, EnumVariantDecl variantDecl) {
-        MethodRef constructorRef = constructorDecl != null ? constructorDecl.asMethodRef() : Utils.genImplcicitPrimaryConstructorRef(enumDecl.getType());
-        boolean isApplicable = Utils.isInvocationApplicable(variantDecl.argumentCount, variantDecl.arguments, constructorRef);
+    private void resolveEnumVariantDecl(EnumDecl enumDecl, PrimaryConstructorDecl constructorDecl,
+                                        EnumVariantDecl variantDecl) {
+        MethodRef constructorRef = constructorDecl != null ? constructorDecl.asMethodRef() : Utils.genImplcicitPrimaryConstructorRef(
+                enumDecl.getType());
+        boolean isApplicable = Utils.isInvocationApplicable(variantDecl.argumentCount,
+                                                            variantDecl.arguments, constructorRef);
 
-        if (!isApplicable)
-            throw new IllegalStateException("Incompatible primary constructor invocation on enum variant initialization");
+        if (!isApplicable) throw new IllegalStateException(
+                "Incompatible primary constructor invocation on enum variant initialization");
     }
 
     private void resolvePrimaryConstructorDecl(PrimaryConstructorDecl constructorDecl) {
@@ -150,7 +147,8 @@ public class Resolver {
             resolveExpr(memberAccessExpr.ownerExpr, scope);
 
             // TODO: Handle functions later
-            FieldRef fieldRef = table.getField(memberAccessExpr.ownerExpr.getType(), memberAccessExpr.selectedVarExpr.varIdentifier.literal);
+            FieldRef fieldRef = table.getField(memberAccessExpr.ownerExpr.getType(),
+                                               memberAccessExpr.selectedVarExpr.varIdentifier.literal);
 
             if (fieldRef != null) {
                 memberAccessExpr.selectedVarExpr.resolvedType = fieldRef.fieldType;

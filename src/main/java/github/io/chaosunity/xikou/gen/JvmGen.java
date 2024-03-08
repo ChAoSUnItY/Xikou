@@ -1,17 +1,10 @@
 package github.io.chaosunity.xikou.gen;
 
-import github.io.chaosunity.xikou.lexer.TokenType;
-import github.io.chaosunity.xikou.ast.*;
-import github.io.chaosunity.xikou.ast.expr.*;
-import github.io.chaosunity.xikou.resolver.LocalVarRef;
-import github.io.chaosunity.xikou.resolver.types.ObjectType;
-import github.io.chaosunity.xikou.resolver.types.PrimitiveType;
-import github.io.chaosunity.xikou.resolver.types.Type;
-import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
+import github.io.chaosunity.xikou.ast.BoundableDecl;
+import github.io.chaosunity.xikou.ast.ClassDecl;
+import github.io.chaosunity.xikou.ast.EnumDecl;
+import github.io.chaosunity.xikou.ast.XkFile;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;

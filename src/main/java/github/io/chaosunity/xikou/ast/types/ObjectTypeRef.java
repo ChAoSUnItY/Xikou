@@ -8,7 +8,7 @@ public class ObjectTypeRef extends AbstractTypeRef {
     public final int selectorCount;
     public final Token[] selectors;
     public ObjectType resolvedType;
-    
+
     public ObjectTypeRef(int selectorCount, Token[] selectors) {
         this.selectorCount = selectorCount;
         this.selectors = selectors;

@@ -6,11 +6,11 @@ import github.io.chaosunity.xikou.resolver.types.Type;
 
 public class IntegerLiteral extends Expr {
     public final Token integerToken;
-    
+
     public IntegerLiteral(Token integerToken) {
         this.integerToken = integerToken;
     }
-    
+
     public int asConstant() {
         return Integer.parseInt(integerToken.literal);
     }

@@ -13,7 +13,8 @@ public class Scope {
     public void addLocalVar(String name, Type type) {
         for (int i = 0; i < localVarCount; i++) {
             if (localVarRefs[i].name.equals(name)) {
-                throw new IllegalStateException(String.format("Redeclaration of local variable %s", name));
+                throw new IllegalStateException(
+                        String.format("Redeclaration of local variable %s", name));
             }
         }
 
@@ -31,11 +32,9 @@ public class Scope {
         for (int i = 0; i < localVarCount; i++) {
             LocalVarRef localVarRef = localVarRefs[i];
 
-            if (localVarRef == null)
-                continue;
+            if (localVarRef == null) continue;
 
-            if (localVarRef.name.equals(name))
-                return localVarRef;
+            if (localVarRef.name.equals(name)) return localVarRef;
         }
 
         return null;
