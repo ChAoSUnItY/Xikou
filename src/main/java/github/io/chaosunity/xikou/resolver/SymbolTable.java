@@ -7,10 +7,31 @@ import github.io.chaosunity.xikou.resolver.types.Type;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 
 public class SymbolTable {
     public int declCount = 0;
     public BoundableDecl[] decls = new BoundableDecl[1];
+
+    public Type getType(String path) {
+        for (int i = 0; i < declCount; i++) {
+            BoundableDecl decl = decls[i];
+            Type type = decl.getType();
+
+            if (type.getInternalName().equals(path)) {
+                return type;
+            }
+        }
+
+        try {
+            Class ignored = Class.forName(path);
+
+            return new ObjectType(path);
+        } catch (ClassNotFoundException ignored) {
+        }
+
+        return null;
+    }
 
     public void registerDecl(BoundableDecl decl) {
         if (declCount >= decls.length) {
@@ -35,7 +56,7 @@ public class SymbolTable {
                     FieldDecl fieldDecl = classDecl.fieldDecls[j];
 
                     if (fieldDecl.name.literal.equals(name)) {
-                        return new FieldRef(ownerType, name, fieldDecl.typeRef.getType());
+                        return new FieldRef(ownerType, false, name, fieldDecl.typeRef.getType());
                     }
                 }
 
@@ -43,11 +64,19 @@ public class SymbolTable {
             } else if (decl instanceof EnumDecl) {
                 EnumDecl enumDecl = (EnumDecl) decl;
 
+                for (int j = 0; j < enumDecl.variantCount; j++) {
+                    EnumVariantDecl variantDecl = enumDecl.enumVariantDecls[j];
+
+                    if (variantDecl.name.literal.equals(name)) {
+                        return new FieldRef(ownerType, true, name, enumDecl.enumType);
+                    }
+                }
+
                 for (int j = 0; j < enumDecl.fieldCount; j++) {
                     FieldDecl fieldDecl = enumDecl.fieldDecls[j];
 
                     if (fieldDecl.name.literal.equals(name)) {
-                        return new FieldRef(ownerType, name, fieldDecl.typeRef.getType());
+                        return new FieldRef(ownerType, false, name, fieldDecl.typeRef.getType());
                     }
                 }
 
@@ -58,11 +87,11 @@ public class SymbolTable {
         try {
             String ownerClassInternalName = ownerType.getInternalName();
             Class clazz = Class.forName(ownerClassInternalName.replace('/', '.'));
+            Field field = clazz.getField(name);
             Type fieldType = getFieldType(name, clazz);
 
-            return new FieldRef(ownerType, name, fieldType);
-        } catch (ClassNotFoundException | NoSuchFieldException e) {
-            e.printStackTrace();
+            return new FieldRef(ownerType, Modifier.isStatic(field.getModifiers()), name, fieldType);
+        } catch (ClassNotFoundException | NoSuchFieldException ignored) {
         }
 
         return null;
@@ -98,8 +127,7 @@ public class SymbolTable {
             }
 
             return constuctorMethodRefs;
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
+        } catch (ClassNotFoundException ignored) {
         }
 
         return null;

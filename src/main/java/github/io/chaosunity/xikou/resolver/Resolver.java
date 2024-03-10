@@ -6,6 +6,7 @@ import github.io.chaosunity.xikou.ast.types.AbstractTypeRef;
 import github.io.chaosunity.xikou.ast.types.ObjectTypeRef;
 import github.io.chaosunity.xikou.lexer.TokenType;
 import github.io.chaosunity.xikou.resolver.types.ObjectType;
+import github.io.chaosunity.xikou.resolver.types.Type;
 
 public class Resolver {
     private final SymbolTable table = new SymbolTable();
@@ -16,52 +17,44 @@ public class Resolver {
     }
 
     public XkFile resolve() {
-        resolveEarly();
-        resolveLate();
+        resolveTypeDecls();
+        resolveDeclMembers();
+        resolveDeclBody();
 
         return file;
     }
 
-    private void resolveEarly() {
+    private void resolveTypeDecls() {
+        for (int i = 0; i < file.declCount; i++) {
+            table.registerDecl(file.decls[i]);
+        }
+    }
+
+    private void resolveDeclMembers() {
         for (int i = 0; i < file.declCount; i++) {
             BoundableDecl decl = file.decls[i];
+            PrimaryConstructorDecl constructorDecl = decl.getPrimaryConstructorDecl();
 
-            ImplDecl implDecl = decl.getImplDecl();
+            if (constructorDecl != null) resolvePrimaryConstructorDeclEarly(constructorDecl);
 
-            if (implDecl != null) {
-                PrimaryConstructorDecl constructorDecl = implDecl.primaryConstructorDecl;
+            if (decl instanceof ClassDecl) {
+                ClassDecl classDecl = (ClassDecl) decl;
 
-                if (constructorDecl != null) resolvePrimaryConstructorDeclEarly(constructorDecl);
+                for (int j = 0; j < classDecl.fieldCount; j++) {
+                    resolveFieldDecl(classDecl.fieldDecls[j]);
+                }
+            } else if (decl instanceof EnumDecl) {
+                EnumDecl enumDecl = (EnumDecl) decl;
+
+                for (int j = 0; j < enumDecl.variantCount; j++) {
+
+                }
+
+                for (int j = 0; j < enumDecl.fieldCount; j++) {
+                    resolveFieldDecl(enumDecl.fieldDecls[j]);
+                }
             }
-
-            if (decl instanceof ClassDecl) resolveClassDeclEarly((ClassDecl) decl);
-            else if (decl instanceof EnumDecl) resolveEnumDeclEarly((EnumDecl) decl);
         }
-    }
-
-    private void resolveClassDeclEarly(ClassDecl classDecl) {
-        for (int j = 0; j < classDecl.fieldCount; j++) {
-            resolveFieldDecl(classDecl.fieldDecls[j]);
-        }
-
-        table.registerDecl(classDecl);
-    }
-
-    private void resolveEnumDeclEarly(EnumDecl enumDecl) {
-        ImplDecl implDecl = enumDecl.getImplDecl();
-        PrimaryConstructorDecl constructorDecl = null;
-
-        if (implDecl != null) constructorDecl = implDecl.primaryConstructorDecl;
-
-        for (int j = 0; j < enumDecl.fieldCount; j++) {
-            resolveFieldDecl(enumDecl.fieldDecls[j]);
-        }
-
-        for (int i = 0; i < enumDecl.variantCount; i++) {
-            resolveEnumVariantDecl(enumDecl, constructorDecl, enumDecl.enumVariantDecls[i]);
-        }
-
-        table.registerDecl(enumDecl);
     }
 
     private void resolvePrimaryConstructorDeclEarly(PrimaryConstructorDecl constructorDecl) {
@@ -74,7 +67,7 @@ public class Resolver {
         }
     }
 
-    private void resolveLate() {
+    private void resolveDeclBody() {
         for (int i = 0; i < file.declCount; i++) {
             BoundableDecl decl = file.decls[i];
 
@@ -87,15 +80,17 @@ public class Resolver {
     }
 
     private void resolveClassDecl(ClassDecl classDecl) {
-        ImplDecl implDecl = classDecl.boundImplDecl;
-        PrimaryConstructorDecl constructorDecl = implDecl != null ? implDecl.primaryConstructorDecl : null;
+        PrimaryConstructorDecl constructorDecl = classDecl.getPrimaryConstructorDecl();
 
         if (constructorDecl != null) resolvePrimaryConstructorDecl(constructorDecl);
     }
 
     private void resolveEnumDecl(EnumDecl enumDecl) {
-        ImplDecl implDecl = enumDecl.boundImplDecl;
-        PrimaryConstructorDecl constructorDecl = implDecl != null ? implDecl.primaryConstructorDecl : null;
+        PrimaryConstructorDecl constructorDecl = enumDecl.getPrimaryConstructorDecl();
+
+        for (int i = 0; i < enumDecl.variantCount; i++) {
+            resolveEnumVariantInitialization(enumDecl, constructorDecl, enumDecl.enumVariantDecls[i]);
+        }
 
         if (constructorDecl != null) resolvePrimaryConstructorDecl(constructorDecl);
     }
@@ -104,8 +99,8 @@ public class Resolver {
         resolveTypeRef(fieldDecl.typeRef);
     }
 
-    private void resolveEnumVariantDecl(EnumDecl enumDecl, PrimaryConstructorDecl constructorDecl,
-                                        EnumVariantDecl variantDecl) {
+    private void resolveEnumVariantInitialization(EnumDecl enumDecl, PrimaryConstructorDecl constructorDecl,
+                                                  EnumVariantDecl variantDecl) {
         MethodRef constructorRef = constructorDecl != null ? constructorDecl.asMethodRef() : Utils.genImplcicitPrimaryConstructorRef(
                 enumDecl.getType());
         boolean isApplicable = Utils.isInvocationApplicable(variantDecl.argumentCount,
@@ -144,6 +139,23 @@ public class Resolver {
         } else if (expr instanceof MemberAccessExpr) {
             MemberAccessExpr memberAccessExpr = (MemberAccessExpr) expr;
 
+            if (memberAccessExpr.ownerExpr instanceof VarExpr) {
+                VarExpr ownerVarExpr = (VarExpr) memberAccessExpr.ownerExpr;
+                // Special check for type ref
+                Type ownerType = table.getType(ownerVarExpr.varIdentifier.literal);
+
+                if (ownerType != null) {
+                    FieldRef fieldRef = table.getField(ownerType, memberAccessExpr.selectedVarExpr.varIdentifier.literal);
+
+                    if (fieldRef != null) {
+                        ownerVarExpr.resolvedType = ownerType;
+                        memberAccessExpr.selectedVarExpr.resolvedType = fieldRef.fieldType;
+                        memberAccessExpr.fieldRef = fieldRef;
+                        return;
+                    }
+                }
+            }
+
             resolveExpr(memberAccessExpr.ownerExpr, scope);
 
             // TODO: Handle functions later
@@ -152,6 +164,7 @@ public class Resolver {
 
             if (fieldRef != null) {
                 memberAccessExpr.selectedVarExpr.resolvedType = fieldRef.fieldType;
+                memberAccessExpr.fieldRef = fieldRef;
             } else {
                 throw new IllegalStateException("Unknown reference to field");
             }

@@ -53,9 +53,8 @@ public class ClassGen extends ClassFileGen {
             int parameterCount = parameters.parameterCount;
             Type[] parameterTypes = new Type[parameterCount];
 
-            for (int i = 0; i < parameterCount; i++) {
+            for (int i = 0; i < parameterCount; i++)
                 parameterTypes[i] = parameters.parameters[i].typeRef.getType();
-            }
 
             mw = cw.visitMethod(Opcodes.ACC_PUBLIC, "<init>",
                                 Utils.getMethodDescriptor(PrimitiveType.VOID, parameterTypes), null,

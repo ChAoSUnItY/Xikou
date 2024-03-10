@@ -1,10 +1,12 @@
 package github.io.chaosunity.xikou.ast.expr;
 
+import github.io.chaosunity.xikou.resolver.FieldRef;
 import github.io.chaosunity.xikou.resolver.types.Type;
 
 public class MemberAccessExpr extends Expr {
     public final Expr ownerExpr;
     public final VarExpr selectedVarExpr;
+    public FieldRef fieldRef;
 
     public MemberAccessExpr(Expr ownerExpr, VarExpr selectedVarExpr) {
         this.ownerExpr = ownerExpr;

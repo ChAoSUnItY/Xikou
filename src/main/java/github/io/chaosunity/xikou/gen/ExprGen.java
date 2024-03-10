@@ -2,6 +2,7 @@ package github.io.chaosunity.xikou.gen;
 
 import github.io.chaosunity.xikou.ast.expr.*;
 import github.io.chaosunity.xikou.lexer.TokenType;
+import github.io.chaosunity.xikou.resolver.FieldRef;
 import github.io.chaosunity.xikou.resolver.LocalVarRef;
 import github.io.chaosunity.xikou.resolver.types.ObjectType;
 import github.io.chaosunity.xikou.resolver.types.PrimitiveType;
@@ -39,9 +40,15 @@ public class ExprGen {
             }
         } else if (expr instanceof MemberAccessExpr) {
             MemberAccessExpr memberAccessExpr = (MemberAccessExpr) expr;
+            FieldRef fieldRef = memberAccessExpr.fieldRef;
+
+            if (fieldRef.isStatic) {
+                mw.visitFieldInsn(Opcodes.GETSTATIC, fieldRef.ownerClassType.getInternalName(), fieldRef.name, fieldRef.fieldType.getDescriptor());
+                return;
+            }
 
             genExpr(mw, memberAccessExpr.ownerExpr);
-            genExpr(mw, memberAccessExpr.selectedVarExpr);
+            mw.visitFieldInsn(Opcodes.GETFIELD, fieldRef.ownerClassType.getInternalName(), fieldRef.name, fieldRef.fieldType.getDescriptor());
         } else if (expr instanceof VarExpr) {
             VarExpr varExpr = (VarExpr) expr;
             LocalVarRef localVarRef = varExpr.localVarRef;
