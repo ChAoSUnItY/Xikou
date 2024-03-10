@@ -145,11 +145,10 @@ public class Resolver {
                 Type ownerType = table.getType(ownerVarExpr.varIdentifier.literal);
 
                 if (ownerType != null) {
-                    FieldRef fieldRef = table.getField(ownerType, memberAccessExpr.selectedVarExpr.varIdentifier.literal);
+                    FieldRef fieldRef = table.getField(ownerType, memberAccessExpr.targetMember.literal);
 
                     if (fieldRef != null) {
                         ownerVarExpr.resolvedType = ownerType;
-                        memberAccessExpr.selectedVarExpr.resolvedType = fieldRef.fieldType;
                         memberAccessExpr.fieldRef = fieldRef;
                         return;
                     }
@@ -160,10 +159,9 @@ public class Resolver {
 
             // TODO: Handle functions later
             FieldRef fieldRef = table.getField(memberAccessExpr.ownerExpr.getType(),
-                                               memberAccessExpr.selectedVarExpr.varIdentifier.literal);
+                                               memberAccessExpr.targetMember.literal);
 
             if (fieldRef != null) {
-                memberAccessExpr.selectedVarExpr.resolvedType = fieldRef.fieldType;
                 memberAccessExpr.fieldRef = fieldRef;
             } else {
                 throw new IllegalStateException("Unknown reference to field");

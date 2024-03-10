@@ -363,9 +363,7 @@ public class Parser {
         Expr lhs = parseLiteralExpr();
 
         while (lexer.acceptToken(TokenType.Dot)) {
-            VarExpr memberVar = parseVarExpr();
-
-            lhs = new MemberAccessExpr(lhs, memberVar);
+            lhs = new MemberAccessExpr(lhs, lexer.expectToken(TokenType.Identifier));
         }
 
         return lhs;

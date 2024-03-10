@@ -29,9 +29,8 @@ public class ExprGen {
 
                         mw.visitFieldInsn(Opcodes.PUTFIELD,
                                           memberAccessLhs.ownerExpr.getType().getInternalName(),
-                                          memberAccessLhs.selectedVarExpr.varIdentifier.literal,
-                                          memberAccessLhs.selectedVarExpr.getType()
-                                                                         .getDescriptor());
+                                          memberAccessLhs.targetMember.literal,
+                                          memberAccessLhs.getType().getDescriptor());
                     }
                     break;
                 default:
@@ -43,12 +42,14 @@ public class ExprGen {
             FieldRef fieldRef = memberAccessExpr.fieldRef;
 
             if (fieldRef.isStatic) {
-                mw.visitFieldInsn(Opcodes.GETSTATIC, fieldRef.ownerClassType.getInternalName(), fieldRef.name, fieldRef.fieldType.getDescriptor());
+                mw.visitFieldInsn(Opcodes.GETSTATIC, fieldRef.ownerClassType.getInternalName(),
+                                  fieldRef.name, fieldRef.fieldType.getDescriptor());
                 return;
             }
 
             genExpr(mw, memberAccessExpr.ownerExpr);
-            mw.visitFieldInsn(Opcodes.GETFIELD, fieldRef.ownerClassType.getInternalName(), fieldRef.name, fieldRef.fieldType.getDescriptor());
+            mw.visitFieldInsn(Opcodes.GETFIELD, fieldRef.ownerClassType.getInternalName(),
+                              fieldRef.name, fieldRef.fieldType.getDescriptor());
         } else if (expr instanceof VarExpr) {
             VarExpr varExpr = (VarExpr) expr;
             LocalVarRef localVarRef = varExpr.localVarRef;
