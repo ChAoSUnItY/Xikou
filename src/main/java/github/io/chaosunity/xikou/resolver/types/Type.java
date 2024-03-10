@@ -8,6 +8,6 @@ public interface Type {
     int getSize();
 
     default ArrayType asArrayType() {
-        return new ArrayType(this);
+        return new ArrayType(this, null);
     }
 }

@@ -23,11 +23,12 @@ public class ExprGen {
                 case Equal:
                     if (lhs instanceof MemberAccessExpr) {
                         MemberAccessExpr memberAccessLhs = (MemberAccessExpr) lhs;
+                        FieldRef fieldRef = memberAccessLhs.fieldRef;
 
                         genExpr(mw, memberAccessLhs.ownerExpr);
                         genExpr(mw, rhs);
 
-                        mw.visitFieldInsn(Opcodes.PUTFIELD,
+                        mw.visitFieldInsn(fieldRef.isStatic ? Opcodes.PUTSTATIC : Opcodes.PUTFIELD,
                                           memberAccessLhs.ownerExpr.getType().getInternalName(),
                                           memberAccessLhs.targetMember.literal,
                                           memberAccessLhs.getType().getDescriptor());

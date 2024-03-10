@@ -66,6 +66,16 @@ public class Lexer {
             return new Token(TokenType.CloseBrace, "}");
         }
 
+        if (currentChar == '[') {
+            readChar(1);
+            return new Token(TokenType.OpenBracket, "[");
+        }
+
+        if (currentChar == ']') {
+            readChar(1);
+            return new Token(TokenType.CloseBracket, "]");
+        }
+
         if (currentChar == '.') {
             readChar(1);
             return new Token(TokenType.Dot, ".");

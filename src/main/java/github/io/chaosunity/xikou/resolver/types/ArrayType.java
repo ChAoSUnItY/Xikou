@@ -1,12 +1,17 @@
 package github.io.chaosunity.xikou.resolver.types;
 
+import github.io.chaosunity.xikou.ast.expr.Expr;
+
 import java.util.Objects;
 
 public class ArrayType implements Type {
     private final Type componentType;
+    // indicates the actual size of array if present, only used in array initialization.
+    private final Expr arraySizeExpr;
 
-    public ArrayType(Type componentType) {
+    public ArrayType(Type componentType, Expr arraySizeExpr) {
         this.componentType = componentType;
+        this.arraySizeExpr = arraySizeExpr;
     }
 
     public Type getComponentType() {

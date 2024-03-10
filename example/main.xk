@@ -1,13 +1,24 @@
 pub class Lexer {
     priv source: java::lang::String;
     priv mut pos: i32 = 0;
-    priv mut current_token: TokenType;
+    priv mut current_token: Token;
 }
 
 impl Lexer {
     pub self(source: java::lang::String) {
-        self.source = source;
-        self.current_token = TokenType.CharLiteral;
+        self.source = self.current_token.literal;
+    }
+}
+
+pub class Token {
+    pub type: TokenType;
+    pub literal: java::lang::String;
+}
+
+impl Token {
+    pub self(type: TokenType, literal: java::lang::String) {
+        self.type = type;
+        self.literal = literal;
     }
 }
 
@@ -38,12 +49,4 @@ pub enum TokenType {
     Self,
     Impl,
     EOF
-}
-
-pub class Token {
-    pub literal: java::lang::String;
-}
-
-impl Token {
-
 }

@@ -51,21 +51,30 @@ public class EnumGen extends ClassFileGen {
         if (constructorDecl != null) {
             Parameters parameters = constructorDecl.parameters;
             int parameterCount = parameters.parameterCount;
+            String[] parameterNames = new String[parameterCount + 2];
             Type[] parameterTypes = new Type[parameterCount + 2];
 
             for (int i = 0; i < parameterCount; i++) {
-                parameterTypes[i] = parameters.parameters[i].typeRef.getType();
+                Parameter parameter = parameters.parameters[i];
+
+                parameterNames[i] = parameter.name.literal;
+                parameterTypes[i] = parameter.typeRef.getType();
             }
 
+            System.arraycopy(new String[]{"name", "ordinal"}, 0, parameterNames, parameterCount, 2);
             System.arraycopy(new Type[]{new ObjectType("java/lang/String"), PrimitiveType.INT}, 0,
                              parameterTypes, parameterCount, 2);
 
             int[] localRefsIndicies = Utils.genLocalRefIndicesFromMethodDesc(enumDecl.getType(),
                                                                              parameterTypes);
 
-            mw = cw.visitMethod(Opcodes.ACC_PUBLIC, "<init>",
+            mw = cw.visitMethod(Opcodes.ACC_PRIVATE, "<init>",
                                 Utils.getMethodDescriptor(PrimitiveType.VOID, parameterTypes), null,
                                 null);
+
+            for (int i = 0; i < parameterCount; i++) {
+                mw.visitParameter(parameterNames[i], 0);
+            }
 
             mw.visitCode();
             mw.visitVarInsn(Opcodes.ALOAD, 0);
@@ -91,7 +100,10 @@ public class EnumGen extends ClassFileGen {
         String descriptor = Utils.getMethodDescriptor(PrimitiveType.VOID,
                                                       new ObjectType("java/lang/String"),
                                                       PrimitiveType.INT);
-        MethodVisitor mw = cw.visitMethod(Opcodes.ACC_PUBLIC, "<init>", descriptor, null, null);
+        MethodVisitor mw = cw.visitMethod(Opcodes.ACC_PRIVATE, "<init>", descriptor, null, null);
+
+        mw.visitParameter("name", 0);
+        mw.visitParameter("ordinal", 0);
 
         mw.visitCode();
         mw.visitVarInsn(Opcodes.ALOAD, 0);

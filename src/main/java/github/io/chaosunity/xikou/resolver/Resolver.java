@@ -3,8 +3,10 @@ package github.io.chaosunity.xikou.resolver;
 import github.io.chaosunity.xikou.ast.*;
 import github.io.chaosunity.xikou.ast.expr.*;
 import github.io.chaosunity.xikou.ast.types.AbstractTypeRef;
+import github.io.chaosunity.xikou.ast.types.ArrayTypeRef;
 import github.io.chaosunity.xikou.ast.types.ObjectTypeRef;
 import github.io.chaosunity.xikou.lexer.TokenType;
+import github.io.chaosunity.xikou.resolver.types.ArrayType;
 import github.io.chaosunity.xikou.resolver.types.ObjectType;
 import github.io.chaosunity.xikou.resolver.types.Type;
 
@@ -63,7 +65,7 @@ public class Resolver {
         for (int i = 0; i < parameters.parameterCount; i++) {
             Parameter parameter = parameters.parameters[i];
 
-            resolveTypeRef(parameter.typeRef);
+            resolveTypeRef(parameter.typeRef, new Scope());
         }
     }
 
@@ -96,7 +98,7 @@ public class Resolver {
     }
 
     private void resolveFieldDecl(FieldDecl fieldDecl) {
-        resolveTypeRef(fieldDecl.typeRef);
+        resolveTypeRef(fieldDecl.typeRef, new Scope());
     }
 
     private void resolveEnumVariantInitialization(EnumDecl enumDecl, PrimaryConstructorDecl constructorDecl,
@@ -182,7 +184,7 @@ public class Resolver {
         }
     }
 
-    private void resolveTypeRef(AbstractTypeRef typeRef) {
+    private void resolveTypeRef(AbstractTypeRef typeRef, Scope scope) {
         // Primitive type is already resolved in parser phase
 
         if (typeRef instanceof ObjectTypeRef) {
@@ -198,6 +200,14 @@ public class Resolver {
             }
 
             objectTypeRef.resolvedType = new ObjectType(builder.toString());
+        } else if (typeRef instanceof ArrayTypeRef) {
+            ArrayTypeRef arrayTypeRef = (ArrayTypeRef) typeRef;
+            resolveTypeRef(arrayTypeRef.componentTypeRef, scope);
+
+            if (arrayTypeRef.sizeExpr != null)
+                resolveExpr(arrayTypeRef.sizeExpr, scope);
+
+            arrayTypeRef.resolvedType = new ArrayType(arrayTypeRef.componentTypeRef.getType(), arrayTypeRef.sizeExpr);
         }
     }
 }

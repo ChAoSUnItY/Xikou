@@ -1,11 +1,8 @@
 pub enum Num {
-    pub value: i32;
-    Zero(0),
-    One(1)
+    pub mut value: [i32;];
+    Zero,
+    One
 }
 
 impl Num {
-    self(value: i32) {
-        self.value = value;
-    }
 }

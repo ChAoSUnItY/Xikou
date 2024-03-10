@@ -60,6 +60,10 @@ public class ClassGen extends ClassFileGen {
                                 Utils.getMethodDescriptor(PrimitiveType.VOID, parameterTypes), null,
                                 null);
 
+            for (int i = 0; i < parameterCount; i++) {
+                mw.visitParameter(parameters.parameters[i].name.literal, 0);
+            }
+
             mw.visitCode();
             mw.visitVarInsn(Opcodes.ALOAD, 0);
             mw.visitMethodInsn(Opcodes.INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false);

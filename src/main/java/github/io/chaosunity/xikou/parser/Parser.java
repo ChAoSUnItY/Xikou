@@ -3,6 +3,7 @@ package github.io.chaosunity.xikou.parser;
 import github.io.chaosunity.xikou.ast.*;
 import github.io.chaosunity.xikou.ast.expr.*;
 import github.io.chaosunity.xikou.ast.types.AbstractTypeRef;
+import github.io.chaosunity.xikou.ast.types.ArrayTypeRef;
 import github.io.chaosunity.xikou.ast.types.ObjectTypeRef;
 import github.io.chaosunity.xikou.ast.types.PrimitiveTypeRef;
 import github.io.chaosunity.xikou.lexer.Lexer;
@@ -397,6 +398,19 @@ public class Parser {
     private AbstractTypeRef parseTypeRef() {
         int typeRefCount = 0;
         Token[] typeRefs = new Token[1];
+
+        if (lexer.acceptToken(TokenType.OpenBracket)) {
+            AbstractTypeRef componentType = parseTypeRef();
+            lexer.expectToken(TokenType.SemiColon);
+
+            if (lexer.acceptToken(TokenType.CloseBracket)) {
+                return new ArrayTypeRef(componentType, null);
+            } else {
+                Expr sizeExpr = parseExpr();
+                lexer.expectToken(TokenType.CloseBracket);
+                return new ArrayTypeRef(componentType, sizeExpr);
+            }
+        }
 
         while (true) {
             if (typeRefCount >= typeRefs.length) {
