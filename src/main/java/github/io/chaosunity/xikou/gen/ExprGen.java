@@ -4,10 +4,10 @@ import github.io.chaosunity.xikou.ast.expr.*;
 import github.io.chaosunity.xikou.lexer.TokenType;
 import github.io.chaosunity.xikou.resolver.FieldRef;
 import github.io.chaosunity.xikou.resolver.LocalVarRef;
-import github.io.chaosunity.xikou.resolver.types.ArrayType;
-import github.io.chaosunity.xikou.resolver.types.ObjectType;
-import github.io.chaosunity.xikou.resolver.types.PrimitiveType;
 import github.io.chaosunity.xikou.resolver.types.AbstractType;
+import github.io.chaosunity.xikou.resolver.types.ArrayType;
+import github.io.chaosunity.xikou.resolver.types.ClassType;
+import github.io.chaosunity.xikou.resolver.types.PrimitiveType;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
@@ -19,10 +19,12 @@ public class ExprGen {
             genInfixExpr(mw, (InfixExpr) expr);
         } else if (expr instanceof MemberAccessExpr) {
             genMemberAccessExpr(mw, (MemberAccessExpr) expr);
+        } else if (expr instanceof ConstructorCallExpr) {
+            genConstructorCallExpr(mw, (ConstructorCallExpr) expr);
         } else if (expr instanceof ArrayInitExpr) {
             genArrayInitExpr(mw, (ArrayInitExpr) expr);
-        } else if (expr instanceof VarExpr) {
-            genVarExpr(mw, (VarExpr) expr);
+        } else if (expr instanceof NameExpr) {
+            genVarExpr(mw, (NameExpr) expr);
         }
     }
 
@@ -69,17 +71,30 @@ public class ExprGen {
                           fieldRef.name, fieldRef.fieldType.getDescriptor());
     }
 
+    private void genConstructorCallExpr(MethodVisitor mw, ConstructorCallExpr constructorCallExpr) {
+        AbstractType[] types = new AbstractType[constructorCallExpr.argumentCount];
+
+        mw.visitTypeInsn(Opcodes.NEW, constructorCallExpr.getType().getInternalName());
+        mw.visitInsn(Opcodes.DUP);
+
+        for (int i = 0; i < constructorCallExpr.argumentCount; i++) {
+            genExpr(mw, constructorCallExpr.arguments[i]);
+            types[i] = constructorCallExpr.arguments[i].getType();
+        }
+
+        mw.visitMethodInsn(Opcodes.INVOKESPECIAL, constructorCallExpr.getType().getInternalName(),
+                           "<init>", Utils.getMethodDescriptor(PrimitiveType.VOID, types), false);
+    }
+
     private void genArrayInitExpr(MethodVisitor mw, ArrayInitExpr arrayInitExpr) {
         AbstractType componentType = arrayInitExpr.getComponentType();
 
-        if (arrayInitExpr.initExprCount > 0)
-            mw.visitLdcInsn(arrayInitExpr.initExprCount);
-        else
-            genExpr(mw, arrayInitExpr.sizeExpr);
+        if (arrayInitExpr.initExprCount > 0) mw.visitLdcInsn(arrayInitExpr.initExprCount);
+        else genExpr(mw, arrayInitExpr.sizeExpr);
 
         if (componentType instanceof PrimitiveType) {
             mw.visitIntInsn(Opcodes.NEWARRAY, getArrayTypeOperand((PrimitiveType) componentType));
-        } else if (componentType instanceof ObjectType) {
+        } else if (componentType instanceof ClassType) {
             mw.visitTypeInsn(Opcodes.ANEWARRAY, componentType.getInternalName());
         } else {
             // Must be array type
@@ -96,9 +111,9 @@ public class ExprGen {
         }
     }
 
-    private void genVarExpr(MethodVisitor mw, VarExpr varExpr) {
-        LocalVarRef localVarRef = varExpr.localVarRef;
-        AbstractType varType = varExpr.getType();
+    private void genVarExpr(MethodVisitor mw, NameExpr nameExpr) {
+        LocalVarRef localVarRef = nameExpr.localVarRef;
+        AbstractType varType = nameExpr.getType();
 
         mw.visitVarInsn(getLoadOpcode(varType), localVarRef.index);
     }

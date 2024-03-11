@@ -2,8 +2,8 @@ package github.io.chaosunity.xikou.lexer;
 
 public enum TokenType {
     CharLiteral, StringLiteral, NumberLiteral, Identifier, OpenParenthesis, CloseParenthesis,
-    OpenBrace, CloseBrace, OpenBracket, CloseBracket, Dot, Comma, SemiColon, Colon, DoubleColon, Equal,
-    Pub, Priv, Mut, Pkg, Class, Enum, Fn, Const, Let, Self, Impl, EOF;
+    OpenBrace, CloseBrace, OpenBracket, CloseBracket, Dot, Comma, SemiColon, Colon, DoubleColon,
+    Equal, Pub, Priv, Mut, Pkg, Class, Enum, Fn, Const, Let, Self, Impl, EOF;
 
     public static final TokenType[] KEYWORDS = new TokenType[]{Pub, Priv, Mut, Pkg, Class, Enum, Fn, Const, Let, Self, Impl};
 

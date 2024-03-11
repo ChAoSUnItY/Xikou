@@ -1,8 +1,8 @@
 package github.io.chaosunity.xikou.ast.expr;
 
 import github.io.chaosunity.xikou.lexer.Token;
-import github.io.chaosunity.xikou.resolver.types.PrimitiveType;
 import github.io.chaosunity.xikou.resolver.types.AbstractType;
+import github.io.chaosunity.xikou.resolver.types.PrimitiveType;
 
 public class IntegerLiteral extends Expr {
     public final Token integerToken;

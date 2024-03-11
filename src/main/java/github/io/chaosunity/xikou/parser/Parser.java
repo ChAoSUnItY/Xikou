@@ -4,7 +4,7 @@ import github.io.chaosunity.xikou.ast.*;
 import github.io.chaosunity.xikou.ast.expr.*;
 import github.io.chaosunity.xikou.ast.types.AbstractTypeRef;
 import github.io.chaosunity.xikou.ast.types.ArrayTypeRef;
-import github.io.chaosunity.xikou.ast.types.ObjectTypeRef;
+import github.io.chaosunity.xikou.ast.types.ClassTypeRef;
 import github.io.chaosunity.xikou.ast.types.PrimitiveTypeRef;
 import github.io.chaosunity.xikou.lexer.Lexer;
 import github.io.chaosunity.xikou.lexer.Token;
@@ -218,26 +218,14 @@ public class Parser {
     private EnumVariantDecl parseEnumVariantDecl(Token cachedIdentifierToken) {
         Token variantNameToken = cachedIdentifierToken != null ? cachedIdentifierToken : lexer.expectToken(
                 TokenType.Identifier);
-        int argumentCount = 0;
-        Expr[] arguments = new Expr[1];
+        Arguments arguments;
 
-        if (lexer.acceptToken(TokenType.OpenParenthesis)) {
-            while (!lexer.acceptToken(TokenType.CloseParenthesis)) {
-                if (argumentCount >= arguments.length) {
-                    Expr[] newArr = new Expr[arguments.length * 2];
-                    System.arraycopy(arguments, 0, newArr, 0, arguments.length);
-                    arguments = newArr;
-                }
+        if (lexer.acceptToken(TokenType.OpenParenthesis) && !lexer.acceptToken(
+                TokenType.CloseParenthesis)) {
+            arguments = parseArguments();
+        } else arguments = new Arguments(0, new Expr[0]);
 
-                arguments[argumentCount++] = parseExpr();
-
-                if (!lexer.peekToken(TokenType.CloseParenthesis)) {
-                    lexer.expectToken(TokenType.Comma);
-                }
-            }
-        }
-
-        return new EnumVariantDecl(variantNameToken, argumentCount, arguments);
+        return new EnumVariantDecl(variantNameToken, arguments.argumentCount, arguments.arguments);
     }
 
     private FieldDecl parseFieldDecl() {
@@ -305,14 +293,15 @@ public class Parser {
             lexer.expectToken(TokenType.SemiColon);
         }
 
-        return new PrimaryConstructorDecl(modifiers, parameters, exprCount, exprs);
+        return new PrimaryConstructorDecl(modifiers, parameters.parameterCount,
+                                          parameters.parameters, exprCount, exprs);
     }
 
     private Parameters parseParameters() {
         int parameterCount = 0;
         Parameter[] parameters = new Parameter[1];
 
-        for (; ; ) {
+        while (!lexer.acceptToken(TokenType.CloseParenthesis)) {
             if (lexer.peekToken(TokenType.Identifier)) {
                 Token name = lexer.expectToken(TokenType.Identifier);
                 lexer.expectToken(TokenType.Colon);
@@ -326,18 +315,31 @@ public class Parser {
 
                 parameters[parameterCount++] = new Parameter(name, typeRef);
 
-                if (lexer.acceptToken(TokenType.CloseParenthesis)) {
-                    break;
-                } else {
+                if (!lexer.peekToken(TokenType.CloseParenthesis))
                     lexer.expectToken(TokenType.Comma);
-                }
-            } else {
-                lexer.expectToken(TokenType.CloseParenthesis);
-                break;
             }
         }
 
         return new Parameters(parameterCount, parameters);
+    }
+
+    private Arguments parseArguments() {
+        int argumentCount = 0;
+        Expr[] arguments = new Expr[1];
+
+        while (!lexer.acceptToken(TokenType.CloseParenthesis)) {
+            if (argumentCount >= arguments.length) {
+                Expr[] newArr = new Expr[arguments.length * 2];
+                System.arraycopy(arguments, 0, newArr, 0, arguments.length);
+                arguments = newArr;
+            }
+
+            arguments[argumentCount++] = parseExpr();
+
+            if (!lexer.peekToken(TokenType.CloseParenthesis)) lexer.expectToken(TokenType.Comma);
+        }
+
+        return new Arguments(argumentCount, arguments);
     }
 
     private Expr parseExpr() {
@@ -345,7 +347,7 @@ public class Parser {
     }
 
     private Expr parseInfixExpr(int parentPrecedence) {
-        Expr lhs = parseMemberAccessExpr();
+        Expr lhs = parseDotSuffixExpr();
 
         while (true) {
             Token operatorToken = lexer.getCurrentToken();
@@ -360,54 +362,64 @@ public class Parser {
         return lhs;
     }
 
-    private Expr parseMemberAccessExpr() {
-        Expr lhs = parseLiteralExpr();
+    private Expr parseDotSuffixExpr() {
+        Expr lhs = parsePrimaryStart();
 
         while (lexer.acceptToken(TokenType.Dot)) {
-            lhs = new MemberAccessExpr(lhs, lexer.expectToken(TokenType.Identifier));
+            if (lexer.peekToken(TokenType.Identifier)) {
+                // (Instance / Static) Member access / Method call
+                Token memberNameToken = lexer.expectToken(TokenType.Identifier);
+
+                if (lexer.acceptToken(TokenType.OpenParenthesis)) {
+                    // (Instance / Static) Method call
+                } else {
+                    // (Instance / Static) Member access
+                    lhs = new MemberAccessExpr(lhs, memberNameToken);
+                }
+            } else {
+                // Constructor call, e.g. Integer.self(...)
+                Arguments arguments;
+                if (!(lhs instanceof TypeableExpr)) throw new IllegalStateException(
+                        "Unable to invoke constructor with non typeable expression");
+
+                lexer.expectToken(TokenType.Self);
+                lexer.expectToken(TokenType.OpenParenthesis);
+
+                if (!lexer.acceptToken(TokenType.CloseParenthesis)) arguments = parseArguments();
+                else arguments = new Arguments(0, new Expr[0]);
+
+                lhs = new ConstructorCallExpr((TypeableExpr) lhs, arguments.argumentCount,
+                                              arguments.arguments);
+
+            }
         }
 
         return lhs;
     }
 
-    private Expr parseLiteralExpr() {
-        if (lexer.acceptToken(TokenType.OpenBracket)) {
-            AbstractTypeRef componentTypeRef = parseTypeRef();
-            Expr sizeExpr = null;
-            int initExprCount = 0;
-            Expr[] initExprs = new Expr[1];
+    private Expr parsePrimaryStart() {
+        if (lexer.peekToken(TokenType.OpenBracket)) return parseArrayInitExpr();
 
-            lexer.expectToken(TokenType.SemiColon);
+        if (lexer.peekToken(TokenType.Identifier)) {
+            int identifierStartPos = lexer.getPos();
+            Token identifierStartToken = lexer.getCurrentToken();
+            AbstractTypeRef typeRef = parseNonArrayTypeRef();
 
-            if (!lexer.peekToken(TokenType.CloseBracket))
-                sizeExpr = parseExpr();
+            if (typeRef instanceof ClassTypeRef) {
+                ClassTypeRef classTypeRef = (ClassTypeRef) typeRef;
 
-            lexer.expectToken(TokenType.CloseBracket);
-
-            if (lexer.acceptToken(TokenType.OpenBrace)) {
-                while (!lexer.acceptToken(TokenType.CloseBrace)) {
-                    if (initExprCount >= initExprs.length) {
-                        Expr[] newArr = new Expr[initExprs.length * 2];
-                        System.arraycopy(initExprs, 0, newArr, 0, initExprs.length);
-                        initExprs = newArr;
-                    }
-
-                    initExprs[initExprCount++] = parseExpr();
-
-                    if (!lexer.peekToken(TokenType.CloseBrace))
-                        lexer.expectToken(TokenType.Comma);
+                if (classTypeRef.selectorCount > 1) {
+                    return new TypeExpr(classTypeRef);
                 }
             }
 
-            return new ArrayInitExpr(componentTypeRef, sizeExpr, initExprCount, initExprs);
-        }
+            lexer.rewindPos(identifierStartPos, identifierStartToken);
 
-        if (lexer.peekToken(TokenType.Identifier)) {
-            return parseVarExpr();
+            return parseNameExpr();
         }
 
         if (lexer.peekToken(TokenType.Self)) {
-            return parseSelfVarExpr();
+            return parseSelfNameExpr();
         }
 
         if (lexer.peekToken(TokenType.NumberLiteral)) {
@@ -418,24 +430,77 @@ public class Parser {
                 String.format("Unexpected expression token %s", lexer.getCurrentToken().type));
     }
 
-    private VarExpr parseVarExpr() {
-        return new VarExpr(lexer.expectToken(TokenType.Identifier));
+    private ArrayInitExpr parseArrayInitExpr() {
+        lexer.expectToken(TokenType.OpenBracket);
+
+        AbstractTypeRef componentTypeRef = parseTypeRef();
+        Expr sizeExpr = null;
+        int initExprCount = 0;
+        Expr[] initExprs = new Expr[1];
+
+        lexer.expectToken(TokenType.SemiColon);
+
+        if (!lexer.peekToken(TokenType.CloseBracket)) sizeExpr = parseExpr();
+
+        lexer.expectToken(TokenType.CloseBracket);
+
+        if (lexer.acceptToken(TokenType.OpenBrace)) {
+            while (!lexer.acceptToken(TokenType.CloseBrace)) {
+                if (initExprCount >= initExprs.length) {
+                    Expr[] newArr = new Expr[initExprs.length * 2];
+                    System.arraycopy(initExprs, 0, newArr, 0, initExprs.length);
+                    initExprs = newArr;
+                }
+
+                initExprs[initExprCount++] = parseExpr();
+
+                if (!lexer.peekToken(TokenType.CloseBrace)) lexer.expectToken(TokenType.Comma);
+            }
+        }
+
+        return new ArrayInitExpr(componentTypeRef, sizeExpr, initExprCount, initExprs);
     }
 
-    private VarExpr parseSelfVarExpr() {
-        return new VarExpr(lexer.expectToken(TokenType.Self));
+    private NameExpr parseNameExpr() {
+        return new NameExpr(lexer.expectToken(TokenType.Identifier));
+    }
+
+    private NameExpr parseSelfNameExpr() {
+        return new NameExpr(lexer.expectToken(TokenType.Self));
     }
 
     private AbstractTypeRef parseTypeRef() {
+        if (lexer.peekToken(TokenType.OpenBracket)) return parseArrayTypeRef();
+        else return parseNonArrayTypeRef();
+    }
+
+    private ArrayTypeRef parseArrayTypeRef() {
+        lexer.expectToken(TokenType.OpenBracket);
+        AbstractTypeRef componentType = parseTypeRef();
+        lexer.expectToken(TokenType.CloseBracket);
+
+        return new ArrayTypeRef(componentType);
+    }
+
+    private AbstractTypeRef parseNonArrayTypeRef() {
+        ClassTypeRef classTypeRef = parseClassTypeRef();
+
+        if (classTypeRef.selectorCount == 1) {
+            PrimitiveType[] primitiveTypes = PrimitiveType.values();
+
+            for (PrimitiveType type : primitiveTypes) {
+                if (type.xkTypeName.equals(classTypeRef.selectors[0].literal)) {
+                    return new PrimitiveTypeRef(classTypeRef.selectors[0], type);
+                }
+            }
+        }
+
+        return classTypeRef;
+    }
+
+    private ClassTypeRef parseClassTypeRef() {
         int typeRefCount = 0;
         Token[] typeRefs = new Token[1];
-
-        if (lexer.acceptToken(TokenType.OpenBracket)) {
-            AbstractTypeRef componentType = parseTypeRef();
-            lexer.expectToken(TokenType.CloseBracket);
-
-            return new ArrayTypeRef(componentType);
-        }
 
         while (true) {
             if (typeRefCount >= typeRefs.length) {
@@ -451,16 +516,6 @@ public class Parser {
             }
         }
 
-        if (typeRefs.length == 1) {
-            PrimitiveType[] primitiveTypes = PrimitiveType.values();
-
-            for (PrimitiveType type : primitiveTypes) {
-                if (type.xkTypeName.equals(typeRefs[0].literal)) {
-                    return new PrimitiveTypeRef(typeRefs[0], type);
-                }
-            }
-        }
-
-        return new ObjectTypeRef(typeRefCount, typeRefs);
+        return new ClassTypeRef(typeRefCount, typeRefs);
     }
 }

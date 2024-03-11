@@ -1,15 +1,15 @@
 package github.io.chaosunity.xikou.ast.types;
 
 import github.io.chaosunity.xikou.lexer.Token;
-import github.io.chaosunity.xikou.resolver.types.ObjectType;
 import github.io.chaosunity.xikou.resolver.types.AbstractType;
+import github.io.chaosunity.xikou.resolver.types.ClassType;
 
-public class ObjectTypeRef extends AbstractTypeRef {
+public class ClassTypeRef extends AbstractTypeRef {
     public final int selectorCount;
     public final Token[] selectors;
-    public ObjectType resolvedType;
+    public ClassType resolvedType;
 
-    public ObjectTypeRef(int selectorCount, Token[] selectors) {
+    public ClassTypeRef(int selectorCount, Token[] selectors) {
         this.selectorCount = selectorCount;
         this.selectors = selectors;
     }

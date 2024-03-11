@@ -1,8 +1,8 @@
 package github.io.chaosunity.xikou.ast;
 
 import github.io.chaosunity.xikou.lexer.Token;
-import github.io.chaosunity.xikou.resolver.types.ObjectType;
 import github.io.chaosunity.xikou.resolver.types.AbstractType;
+import github.io.chaosunity.xikou.resolver.types.ClassType;
 
 public abstract class BoundableDecl {
     public abstract Token getNameToken();
@@ -33,6 +33,6 @@ public abstract class BoundableDecl {
             internalPath = packageRef.qualifiedPath.replace('.', '/') + "/" + declNameToken.literal;
         }
 
-        return new ObjectType(internalPath);
+        return new ClassType(internalPath);
     }
 }

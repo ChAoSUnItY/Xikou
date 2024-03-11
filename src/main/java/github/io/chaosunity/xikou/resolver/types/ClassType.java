@@ -2,10 +2,10 @@ package github.io.chaosunity.xikou.resolver.types;
 
 import java.util.Objects;
 
-public final class ObjectType implements AbstractType {
+public final class ClassType implements AbstractType {
     public final String internalName;
 
-    public ObjectType(String internalName) {
+    public ClassType(String internalName) {
         this.internalName = internalName;
     }
 
@@ -28,7 +28,7 @@ public final class ObjectType implements AbstractType {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        ObjectType that = (ObjectType) o;
+        ClassType that = (ClassType) o;
         return Objects.equals(internalName, that.internalName);
     }
 

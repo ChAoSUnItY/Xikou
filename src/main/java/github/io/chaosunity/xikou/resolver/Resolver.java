@@ -4,11 +4,11 @@ import github.io.chaosunity.xikou.ast.*;
 import github.io.chaosunity.xikou.ast.expr.*;
 import github.io.chaosunity.xikou.ast.types.AbstractTypeRef;
 import github.io.chaosunity.xikou.ast.types.ArrayTypeRef;
-import github.io.chaosunity.xikou.ast.types.ObjectTypeRef;
+import github.io.chaosunity.xikou.ast.types.ClassTypeRef;
 import github.io.chaosunity.xikou.lexer.TokenType;
 import github.io.chaosunity.xikou.resolver.types.AbstractType;
 import github.io.chaosunity.xikou.resolver.types.ArrayType;
-import github.io.chaosunity.xikou.resolver.types.ObjectType;
+import github.io.chaosunity.xikou.resolver.types.ClassType;
 
 public class Resolver {
     private final SymbolTable table = new SymbolTable();
@@ -60,10 +60,8 @@ public class Resolver {
     }
 
     private void resolvePrimaryConstructorDeclEarly(PrimaryConstructorDecl constructorDecl) {
-        Parameters parameters = constructorDecl.parameters;
-
-        for (int i = 0; i < parameters.parameterCount; i++) {
-            Parameter parameter = parameters.parameters[i];
+        for (int i = 0; i < constructorDecl.parameterCount; i++) {
+            Parameter parameter = constructorDecl.parameters[i];
 
             resolveTypeRef(parameter.typeRef);
         }
@@ -117,10 +115,8 @@ public class Resolver {
     private void resolvePrimaryConstructorDecl(PrimaryConstructorDecl constructorDecl) {
         constructorDecl.scope.addLocalVar("self", constructorDecl.implDecl.boundDecl.getType());
 
-        Parameters parameters = constructorDecl.parameters;
-
-        for (int i = 0; i < parameters.parameterCount; i++) {
-            Parameter parameter = parameters.parameters[i];
+        for (int i = 0; i < constructorDecl.parameterCount; i++) {
+            Parameter parameter = constructorDecl.parameters[i];
 
             constructorDecl.scope.addLocalVar(parameter.name.literal, parameter.typeRef.getType());
         }
@@ -143,17 +139,17 @@ public class Resolver {
         } else if (expr instanceof MemberAccessExpr) {
             MemberAccessExpr memberAccessExpr = (MemberAccessExpr) expr;
 
-            if (memberAccessExpr.ownerExpr instanceof VarExpr) {
-                VarExpr ownerVarExpr = (VarExpr) memberAccessExpr.ownerExpr;
+            if (memberAccessExpr.ownerExpr instanceof NameExpr) {
+                NameExpr ownerNameExpr = (NameExpr) memberAccessExpr.ownerExpr;
                 // Special check for type ref
-                AbstractType ownerType = table.getType(ownerVarExpr.varIdentifier.literal);
+                AbstractType ownerType = table.getType(ownerNameExpr.varIdentifier.literal);
 
                 if (ownerType != null) {
                     FieldRef fieldRef = table.getField(ownerType,
                                                        memberAccessExpr.targetMember.literal);
 
                     if (fieldRef != null) {
-                        ownerVarExpr.resolvedType = ownerType;
+                        ownerNameExpr.resolvedType = ownerType;
                         memberAccessExpr.fieldRef = fieldRef;
                         return;
                     } else {
@@ -167,7 +163,6 @@ public class Resolver {
 
             resolveExpr(memberAccessExpr.ownerExpr, scope);
 
-            // TODO: Handle functions later
             FieldRef fieldRef = table.getField(memberAccessExpr.ownerExpr.getType(),
                                                memberAccessExpr.targetMember.literal);
 
@@ -179,6 +174,28 @@ public class Resolver {
                                       memberAccessExpr.targetMember.literal,
                                       memberAccessExpr.ownerExpr.getType().getInternalName()));
             }
+        } else if (expr instanceof ConstructorCallExpr) {
+            ConstructorCallExpr constructorCallExpr = (ConstructorCallExpr) expr;
+            ClassType ownerClassType = resolveTypeableExpr(constructorCallExpr.ownerTypeExpr);
+
+            for (int i = 0; i < constructorCallExpr.argumentCount; i++)
+                resolveExpr(constructorCallExpr.arguments[i], scope);
+
+            MethodRef[] constructorRefs = table.getConstructors(ownerClassType);
+            boolean hasApplicableConstructor = false;
+
+            for (MethodRef constructorRef : constructorRefs) {
+                if (Utils.isInvocationApplicable(constructorCallExpr.argumentCount,
+                                                 constructorCallExpr.arguments, constructorRef)) {
+                    hasApplicableConstructor = true;
+                    break;
+                }
+            }
+
+            if (!hasApplicableConstructor)
+                throw new IllegalStateException("Unknown constructor call");
+
+            constructorCallExpr.resolvedType = ownerClassType;
         } else if (expr instanceof ArrayInitExpr) {
             ArrayInitExpr arrayInitExpr = (ArrayInitExpr) expr;
 
@@ -189,15 +206,16 @@ public class Resolver {
                 resolveExpr(arrayInitExpr.initExprs[i], scope);
 
             if (arrayInitExpr.sizeExpr != null && arrayInitExpr.initExprCount != 0) {
-                throw new IllegalStateException("Array initialization with explicit length and initialization is illegal");
+                throw new IllegalStateException(
+                        "Array initialization with explicit length and initialization is illegal");
             }
-        } else if (expr instanceof VarExpr) {
-            VarExpr varExpr = (VarExpr) expr;
-            LocalVarRef localVarRef = scope.findLocalVar(varExpr.varIdentifier.literal);
+        } else if (expr instanceof NameExpr) {
+            NameExpr nameExpr = (NameExpr) expr;
+            LocalVarRef localVarRef = scope.findLocalVar(nameExpr.varIdentifier.literal);
 
             if (localVarRef != null) {
-                varExpr.resolvedType = localVarRef.type;
-                varExpr.localVarRef = localVarRef;
+                nameExpr.resolvedType = localVarRef.type;
+                nameExpr.localVarRef = localVarRef;
             } else {
                 throw new IllegalStateException("Unknown reference to local variable");
             }
@@ -206,22 +224,30 @@ public class Resolver {
         }
     }
 
+    private ClassType resolveTypeableExpr(TypeableExpr typeableExpr) {
+        ClassTypeRef typeRef = typeableExpr.asTypeRef();
+
+        resolveTypeRef(typeRef);
+
+        return typeRef.resolvedType;
+    }
+
     private void resolveTypeRef(AbstractTypeRef typeRef) {
         // Primitive type is already resolved in parser phase
 
-        if (typeRef instanceof ObjectTypeRef) {
-            ObjectTypeRef objectTypeRef = (ObjectTypeRef) typeRef;
+        if (typeRef instanceof ClassTypeRef) {
+            ClassTypeRef classTypeRef = (ClassTypeRef) typeRef;
             StringBuilder builder = new StringBuilder();
 
-            for (int i = 0; i < objectTypeRef.selectorCount; i++) {
-                builder.append(objectTypeRef.selectors[i].literal);
+            for (int i = 0; i < classTypeRef.selectorCount; i++) {
+                builder.append(classTypeRef.selectors[i].literal);
 
-                if (i != objectTypeRef.selectorCount - 1) {
+                if (i != classTypeRef.selectorCount - 1) {
                     builder.append("/");
                 }
             }
 
-            objectTypeRef.resolvedType = new ObjectType(builder.toString());
+            classTypeRef.resolvedType = new ClassType(builder.toString());
         } else if (typeRef instanceof ArrayTypeRef) {
             ArrayTypeRef arrayTypeRef = (ArrayTypeRef) typeRef;
             resolveTypeRef(arrayTypeRef.componentTypeRef);

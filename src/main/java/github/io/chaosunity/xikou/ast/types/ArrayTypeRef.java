@@ -1,7 +1,7 @@
 package github.io.chaosunity.xikou.ast.types;
 
-import github.io.chaosunity.xikou.resolver.types.ArrayType;
 import github.io.chaosunity.xikou.resolver.types.AbstractType;
+import github.io.chaosunity.xikou.resolver.types.ArrayType;
 
 public class ArrayTypeRef extends AbstractTypeRef {
     public final AbstractTypeRef componentTypeRef;

@@ -173,7 +173,16 @@ public class Lexer {
         return false;
     }
 
+    public int getPos() {
+        return pos;
+    }
+
     public Token getCurrentToken() {
         return currentToken;
+    }
+
+    public void rewindPos(int pos, Token backupToken) {
+        this.pos = pos;
+        currentToken = backupToken;
     }
 }

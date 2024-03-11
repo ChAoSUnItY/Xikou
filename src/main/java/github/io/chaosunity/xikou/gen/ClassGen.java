@@ -2,10 +2,9 @@ package github.io.chaosunity.xikou.gen;
 
 import github.io.chaosunity.xikou.ast.ClassDecl;
 import github.io.chaosunity.xikou.ast.FieldDecl;
-import github.io.chaosunity.xikou.ast.Parameters;
 import github.io.chaosunity.xikou.ast.PrimaryConstructorDecl;
-import github.io.chaosunity.xikou.resolver.types.PrimitiveType;
 import github.io.chaosunity.xikou.resolver.types.AbstractType;
+import github.io.chaosunity.xikou.resolver.types.PrimitiveType;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
@@ -49,19 +48,18 @@ public class ClassGen extends ClassFileGen {
         MethodVisitor mw;
 
         if (constructorDecl != null) {
-            Parameters parameters = constructorDecl.parameters;
-            int parameterCount = parameters.parameterCount;
+            int parameterCount = constructorDecl.parameterCount;
             AbstractType[] parameterTypes = new AbstractType[parameterCount];
 
             for (int i = 0; i < parameterCount; i++)
-                parameterTypes[i] = parameters.parameters[i].typeRef.getType();
+                parameterTypes[i] = constructorDecl.parameters[i].typeRef.getType();
 
             mw = cw.visitMethod(Opcodes.ACC_PUBLIC, "<init>",
                                 Utils.getMethodDescriptor(PrimitiveType.VOID, parameterTypes), null,
                                 null);
 
             for (int i = 0; i < parameterCount; i++) {
-                mw.visitParameter(parameters.parameters[i].name.literal, 0);
+                mw.visitParameter(constructorDecl.parameters[i].name.literal, 0);
             }
 
             mw.visitCode();

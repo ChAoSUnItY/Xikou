@@ -1,9 +1,9 @@
 package github.io.chaosunity.xikou.resolver;
 
 import github.io.chaosunity.xikou.ast.*;
-import github.io.chaosunity.xikou.resolver.types.ObjectType;
-import github.io.chaosunity.xikou.resolver.types.PrimitiveType;
 import github.io.chaosunity.xikou.resolver.types.AbstractType;
+import github.io.chaosunity.xikou.resolver.types.ClassType;
+import github.io.chaosunity.xikou.resolver.types.PrimitiveType;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -26,7 +26,7 @@ public class SymbolTable {
         try {
             Class ignored = Class.forName(path);
 
-            return new ObjectType(path);
+            return new ClassType(path);
         } catch (ClassNotFoundException ignored) {
         }
 
@@ -90,25 +90,28 @@ public class SymbolTable {
             Field field = clazz.getField(name);
             AbstractType fieldType = getFieldType(name, clazz);
 
-            return new FieldRef(ownerType, Modifier.isStatic(field.getModifiers()), name, fieldType);
+            return new FieldRef(ownerType, Modifier.isStatic(field.getModifiers()), name,
+                                fieldType);
         } catch (ClassNotFoundException | NoSuchFieldException ignored) {
         }
 
         return null;
     }
 
-    private MethodRef[] getConstructors(AbstractType ownerType) {
+    public MethodRef[] getConstructors(AbstractType ownerType) {
         for (int i = 0; i < declCount; i++) {
             BoundableDecl decl = decls[i];
 
             if (!decl.getType().equals(ownerType)) continue;
 
-            PrimaryConstructorDecl constructorDecl = decl.getImplDecl().primaryConstructorDecl;
-            Parameters parameters = constructorDecl.parameters;
-            AbstractType[] parameterTypes = new AbstractType[parameters.parameterCount];
+            PrimaryConstructorDecl constructorDecl = decl.getPrimaryConstructorDecl();
 
-            for (int j = 0; j < parameters.parameterCount; j++) {
-                parameterTypes[j] = parameters.parameters[j].typeRef.getType();
+            if (constructorDecl == null) continue;
+
+            AbstractType[] parameterTypes = new AbstractType[constructorDecl.parameterCount];
+
+            for (int j = 0; j < constructorDecl.parameterCount; j++) {
+                parameterTypes[j] = constructorDecl.parameters[j].typeRef.getType();
             }
 
             return new MethodRef[]{new MethodRef(ownerType, "<init>", constructorDecl.exprCount,
@@ -133,7 +136,8 @@ public class SymbolTable {
         return null;
     }
 
-    private static MethodRef getMethodRefFromConstrutor(AbstractType ownerType, Constructor constructor) {
+    private static MethodRef getMethodRefFromConstrutor(AbstractType ownerType,
+                                                        Constructor constructor) {
         int parameterCount = constructor.getParameterCount();
         Class[] parameterReflectionTypes = constructor.getParameterTypes();
         AbstractType[] parameterTypes = new AbstractType[parameterCount];
@@ -161,7 +165,7 @@ public class SymbolTable {
 
             throw new IllegalStateException("Unreachable");
         } else {
-            return new ObjectType(clazz.getCanonicalName().replace(".", "/"));
+            return new ClassType(clazz.getCanonicalName().replace(".", "/"));
         }
     }
 }

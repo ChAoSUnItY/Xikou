@@ -15,7 +15,8 @@ public final class Utils {
         return builder.toString();
     }
 
-    public static int[] genLocalRefIndicesFromMethodDesc(AbstractType ownerType, AbstractType... parameters) {
+    public static int[] genLocalRefIndicesFromMethodDesc(AbstractType ownerType,
+                                                         AbstractType... parameters) {
         int length = (ownerType != null ? 1 : 0) + parameters.length;
         AbstractType[] localRefs = parameters;
         int[] indices = new int[length];

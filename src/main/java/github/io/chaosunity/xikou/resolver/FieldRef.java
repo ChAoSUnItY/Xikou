@@ -8,7 +8,8 @@ public class FieldRef {
     public final String name;
     public final AbstractType fieldType;
 
-    public FieldRef(AbstractType ownerClassType, boolean isStatic, String name, AbstractType fieldType) {
+    public FieldRef(AbstractType ownerClassType, boolean isStatic, String name,
+                    AbstractType fieldType) {
         this.ownerClassType = ownerClassType;
         this.isStatic = isStatic;
         this.name = name;
