@@ -221,6 +221,8 @@ public class Resolver {
             }
         } else if (expr instanceof CharLiteralExpr) {
             CharLiteralExpr charLiteralExpr = (CharLiteralExpr) expr;
+        } else if (expr instanceof StringLiteralExpr) {
+            StringLiteralExpr stringLiteralExpr = (StringLiteralExpr) expr;
         } else if (expr instanceof IntegerLiteralExpr) {
             IntegerLiteralExpr integerLiteralExpr = (IntegerLiteralExpr) expr;
         }

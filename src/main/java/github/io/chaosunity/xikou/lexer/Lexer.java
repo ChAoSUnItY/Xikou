@@ -107,36 +107,32 @@ public class Lexer {
         }
 
         if (currentChar == '\'') {
-            char ch = peekChar(1);
+            currentChar = peekChar(1);
 
-            if (ch == '\\') {
+            if (currentChar == '\\') {
                 // Escaped character
-                switch (peekChar(2)) {
+                switch (currentChar = peekChar(2)) {
                     case 't':
-                        ch = '\t';
+                        currentChar = '\t';
                         break;
                     case 'b':
-                        ch = '\b';
+                        currentChar = '\b';
                         break;
                     case 'n':
-                        ch = '\n';
+                        currentChar = '\n';
                         break;
                     case 'r':
-                        ch = '\r';
+                        currentChar = '\r';
                         break;
                     case 'f':
-                        ch = '\f';
+                        currentChar = '\f';
                         break;
                     case '\'':
-                        ch = '\'';
-                        break;
                     case '"':
-                        ch = '"';
-                        break;
                     case '\\':
                         break;
                     default:
-                        throw new IllegalStateException(String.format("Character %c is not escapable", ch));
+                        throw new IllegalStateException(String.format("Character %c is not escapable", currentChar));
                 }
 
                 readChar(3);
@@ -149,7 +145,56 @@ public class Lexer {
 
             readChar(1);
 
-            return new Token(TokenType.CharLiteral, String.valueOf(ch));
+            return new Token(TokenType.CharLiteral, String.valueOf(currentChar));
+        }
+
+        if (currentChar == '"') {
+            StringBuilder builder = new StringBuilder();
+            int length = 0;
+
+            readChar(1);
+
+            while ((currentChar = peekChar(length)) != '"' && currentChar != '\0') {
+                if (currentChar == '\\') {
+                    // Escaped character
+                    switch (currentChar = peekChar(length + 1)) {
+                        case 't':
+                            currentChar = '\t';
+                            break;
+                        case 'b':
+                            currentChar = '\b';
+                            break;
+                        case 'n':
+                            currentChar = '\n';
+                            break;
+                        case 'r':
+                            currentChar = '\r';
+                            break;
+                        case 'f':
+                            currentChar = '\f';
+                            break;
+                        case '\'':
+                        case '"':
+                        case '\\':
+                            break;
+                        default:
+                            throw new IllegalStateException(String.format("Character %c is not escapable", currentChar));
+                    }
+
+                    builder.append(currentChar);
+                    length += 2;
+                } else {
+                    builder.append(currentChar);
+                    length++;
+                }
+            }
+
+            if (currentChar != '"')
+                throw new IllegalStateException("Unenclosed string");
+
+            readChar(length + 1);
+
+            return new Token(TokenType.StringLiteral, builder.toString());
         }
 
         if (isIdentStart(currentChar)) {

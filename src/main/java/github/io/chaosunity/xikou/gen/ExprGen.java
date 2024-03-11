@@ -25,6 +25,8 @@ public class ExprGen {
             genNameExpr(mw, (NameExpr) expr);
         } else if (expr instanceof CharLiteralExpr) {
             genCharLiteralExpr(mw, (CharLiteralExpr) expr);
+        } else if (expr instanceof StringLiteralExpr) {
+            genStringLiteralExpr(mw, (StringLiteralExpr) expr);
         } else if (expr instanceof IntegerLiteralExpr) {
             genIntegerLiteral(mw, (IntegerLiteralExpr) expr);
         }
@@ -122,6 +124,10 @@ public class ExprGen {
 
     private void genCharLiteralExpr(MethodVisitor mw, CharLiteralExpr charLiteralExpr) {
         mw.visitLdcInsn(charLiteralExpr.characterToken.literal.charAt(0));
+    }
+
+    private void genStringLiteralExpr(MethodVisitor mw, StringLiteralExpr stringLiteralExpr) {
+        mw.visitLdcInsn(stringLiteralExpr.stringLiteralToken.literal);
     }
 
     private static int getArrayTypeOperand(PrimitiveType type) {

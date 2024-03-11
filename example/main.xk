@@ -7,6 +7,7 @@ pub class Lexer {
 impl Lexer {
     pub self(source: java::lang::String) {
         self.source = self.currentToken.literal;
+        self.currentToken = Token.self(TokenType.Dot, ".");
     }
 }
 

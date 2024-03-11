@@ -408,9 +408,8 @@ public class Parser {
             if (typeRef instanceof ClassTypeRef) {
                 ClassTypeRef classTypeRef = (ClassTypeRef) typeRef;
 
-                if (classTypeRef.selectorCount > 1) {
+                if (classTypeRef.selectorCount > 1)
                     return new TypeExpr(classTypeRef);
-                }
             }
 
             lexer.rewindPos(identifierStartPos, identifierStartToken);
@@ -418,17 +417,17 @@ public class Parser {
             return parseNameExpr();
         }
 
-        if (lexer.peekToken(TokenType.Self)) {
+        if (lexer.peekToken(TokenType.Self))
             return parseSelfNameExpr();
-        }
 
-        if (lexer.peekToken(TokenType.CharLiteral)) {
+        if (lexer.peekToken(TokenType.CharLiteral))
             return new CharLiteralExpr(lexer.expectToken(TokenType.CharLiteral));
-        }
 
-        if (lexer.peekToken(TokenType.NumberLiteral)) {
+        if (lexer.peekToken(TokenType.StringLiteral))
+            return new StringLiteralExpr(lexer.expectToken(TokenType.StringLiteral));
+
+        if (lexer.peekToken(TokenType.NumberLiteral))
             return new IntegerLiteralExpr(lexer.expectToken(TokenType.NumberLiteral));
-        }
 
         throw new IllegalStateException(
                 String.format("Unexpected expression token %s", lexer.getCurrentToken().type));
