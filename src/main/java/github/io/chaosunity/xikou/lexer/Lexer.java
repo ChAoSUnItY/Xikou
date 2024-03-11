@@ -106,6 +106,52 @@ public class Lexer {
             return new Token(TokenType.Equal, "=");
         }
 
+        if (currentChar == '\'') {
+            char ch = peekChar(1);
+
+            if (ch == '\\') {
+                // Escaped character
+                switch (peekChar(2)) {
+                    case 't':
+                        ch = '\t';
+                        break;
+                    case 'b':
+                        ch = '\b';
+                        break;
+                    case 'n':
+                        ch = '\n';
+                        break;
+                    case 'r':
+                        ch = '\r';
+                        break;
+                    case 'f':
+                        ch = '\f';
+                        break;
+                    case '\'':
+                        ch = '\'';
+                        break;
+                    case '"':
+                        ch = '"';
+                        break;
+                    case '\\':
+                        break;
+                    default:
+                        throw new IllegalStateException(String.format("Character %c is not escapable", ch));
+                }
+
+                readChar(3);
+            } else {
+                readChar(2);
+            }
+
+            if (peekChar(0) != '\'')
+                throw new IllegalStateException("Unenclosed character");
+
+            readChar(1);
+
+            return new Token(TokenType.CharLiteral, String.valueOf(ch));
+        }
+
         if (isIdentStart(currentChar)) {
             int length = 1;
 

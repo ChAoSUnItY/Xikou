@@ -219,8 +219,10 @@ public class Resolver {
             } else {
                 throw new IllegalStateException("Unknown reference to local variable");
             }
-        } else if (expr instanceof IntegerLiteral) {
-            IntegerLiteral integerLiteral = (IntegerLiteral) expr;
+        } else if (expr instanceof CharLiteralExpr) {
+            CharLiteralExpr charLiteralExpr = (CharLiteralExpr) expr;
+        } else if (expr instanceof IntegerLiteralExpr) {
+            IntegerLiteralExpr integerLiteralExpr = (IntegerLiteralExpr) expr;
         }
     }
 

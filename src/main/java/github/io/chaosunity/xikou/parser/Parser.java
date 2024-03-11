@@ -422,8 +422,12 @@ public class Parser {
             return parseSelfNameExpr();
         }
 
+        if (lexer.peekToken(TokenType.CharLiteral)) {
+            return new CharLiteralExpr(lexer.expectToken(TokenType.CharLiteral));
+        }
+
         if (lexer.peekToken(TokenType.NumberLiteral)) {
-            return new IntegerLiteral(lexer.expectToken(TokenType.NumberLiteral));
+            return new IntegerLiteralExpr(lexer.expectToken(TokenType.NumberLiteral));
         }
 
         throw new IllegalStateException(

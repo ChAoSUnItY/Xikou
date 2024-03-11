@@ -13,9 +13,7 @@ import org.objectweb.asm.Opcodes;
 
 public class ExprGen {
     public void genExpr(MethodVisitor mw, Expr expr) {
-        if (expr instanceof IntegerLiteral) {
-            genIntegerLiteral(mw, (IntegerLiteral) expr);
-        } else if (expr instanceof InfixExpr) {
+        if (expr instanceof InfixExpr) {
             genInfixExpr(mw, (InfixExpr) expr);
         } else if (expr instanceof MemberAccessExpr) {
             genMemberAccessExpr(mw, (MemberAccessExpr) expr);
@@ -24,12 +22,12 @@ public class ExprGen {
         } else if (expr instanceof ArrayInitExpr) {
             genArrayInitExpr(mw, (ArrayInitExpr) expr);
         } else if (expr instanceof NameExpr) {
-            genVarExpr(mw, (NameExpr) expr);
+            genNameExpr(mw, (NameExpr) expr);
+        } else if (expr instanceof CharLiteralExpr) {
+            genCharLiteralExpr(mw, (CharLiteralExpr) expr);
+        } else if (expr instanceof IntegerLiteralExpr) {
+            genIntegerLiteral(mw, (IntegerLiteralExpr) expr);
         }
-    }
-
-    private void genIntegerLiteral(MethodVisitor mw, IntegerLiteral integerLiteral) {
-        mw.visitLdcInsn(integerLiteral.asConstant());
     }
 
     private void genInfixExpr(MethodVisitor mw, InfixExpr infixExpr) {
@@ -111,11 +109,19 @@ public class ExprGen {
         }
     }
 
-    private void genVarExpr(MethodVisitor mw, NameExpr nameExpr) {
+    private void genNameExpr(MethodVisitor mw, NameExpr nameExpr) {
         LocalVarRef localVarRef = nameExpr.localVarRef;
         AbstractType varType = nameExpr.getType();
 
         mw.visitVarInsn(getLoadOpcode(varType), localVarRef.index);
+    }
+
+    private void genIntegerLiteral(MethodVisitor mw, IntegerLiteralExpr integerLiteralExpr) {
+        mw.visitLdcInsn(integerLiteralExpr.asConstant());
+    }
+
+    private void genCharLiteralExpr(MethodVisitor mw, CharLiteralExpr charLiteralExpr) {
+        mw.visitLdcInsn(charLiteralExpr.characterToken.literal.charAt(0));
     }
 
     private static int getArrayTypeOperand(PrimitiveType type) {

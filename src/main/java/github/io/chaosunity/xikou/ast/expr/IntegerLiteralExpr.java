@@ -4,10 +4,10 @@ import github.io.chaosunity.xikou.lexer.Token;
 import github.io.chaosunity.xikou.resolver.types.AbstractType;
 import github.io.chaosunity.xikou.resolver.types.PrimitiveType;
 
-public class IntegerLiteral extends Expr {
+public class IntegerLiteralExpr extends Expr {
     public final Token integerToken;
 
-    public IntegerLiteral(Token integerToken) {
+    public IntegerLiteralExpr(Token integerToken) {
         this.integerToken = integerToken;
     }
 
