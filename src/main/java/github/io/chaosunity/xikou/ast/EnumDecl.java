@@ -1,7 +1,7 @@
 package github.io.chaosunity.xikou.ast;
 
 import github.io.chaosunity.xikou.lexer.Token;
-import github.io.chaosunity.xikou.resolver.types.Type;
+import github.io.chaosunity.xikou.resolver.types.AbstractType;
 
 public class EnumDecl extends BoundableDecl {
     public final PackageRef packageRef;
@@ -12,7 +12,7 @@ public class EnumDecl extends BoundableDecl {
     public final int variantCount;
     public final EnumVariantDecl[] enumVariantDecls;
     public ImplDecl boundImplDecl;
-    public Type enumType;
+    public AbstractType enumType;
 
     public EnumDecl(PackageRef packageRef, int modifiers, Token enumNameToken, int fieldCount,
                     FieldDecl[] fieldDecls, int variantCount, EnumVariantDecl[] enumVariantDecls) {
@@ -47,7 +47,7 @@ public class EnumDecl extends BoundableDecl {
     }
 
     @Override
-    public Type getType() {
+    public AbstractType getType() {
         return enumType == null ? (enumType = super.getType()) : enumType;
     }
 }

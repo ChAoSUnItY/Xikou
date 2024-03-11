@@ -2,7 +2,7 @@ package github.io.chaosunity.xikou.resolver.types;
 
 import java.util.Objects;
 
-public final class ObjectType implements Type {
+public final class ObjectType implements AbstractType {
     public final String internalName;
 
     public ObjectType(String internalName) {

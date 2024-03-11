@@ -1,7 +1,7 @@
 package github.io.chaosunity.xikou.ast.expr;
 
 import github.io.chaosunity.xikou.lexer.Token;
-import github.io.chaosunity.xikou.resolver.types.Type;
+import github.io.chaosunity.xikou.resolver.types.AbstractType;
 
 public class InfixExpr extends Expr {
     public final Expr lhs;
@@ -20,7 +20,7 @@ public class InfixExpr extends Expr {
     }
 
     @Override
-    public Type getType() {
+    public AbstractType getType() {
         return null; // TODO
     }
 }

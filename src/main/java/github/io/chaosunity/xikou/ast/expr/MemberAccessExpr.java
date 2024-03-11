@@ -2,7 +2,7 @@ package github.io.chaosunity.xikou.ast.expr;
 
 import github.io.chaosunity.xikou.lexer.Token;
 import github.io.chaosunity.xikou.resolver.FieldRef;
-import github.io.chaosunity.xikou.resolver.types.Type;
+import github.io.chaosunity.xikou.resolver.types.AbstractType;
 
 public class MemberAccessExpr extends Expr {
     public final Expr ownerExpr;
@@ -15,7 +15,7 @@ public class MemberAccessExpr extends Expr {
     }
 
     @Override
-    public Type getType() {
+    public AbstractType getType() {
         return fieldRef.fieldType;
     }
 

@@ -1,7 +1,7 @@
 package github.io.chaosunity.xikou.ast;
 
 import github.io.chaosunity.xikou.lexer.Token;
-import github.io.chaosunity.xikou.resolver.types.Type;
+import github.io.chaosunity.xikou.resolver.types.AbstractType;
 
 public class ClassDecl extends BoundableDecl {
     public final PackageRef packageRef;
@@ -10,7 +10,7 @@ public class ClassDecl extends BoundableDecl {
     public final int fieldCount;
     public final FieldDecl[] fieldDecls;
     public ImplDecl boundImplDecl;
-    private Type classType;
+    private AbstractType classType;
 
     public ClassDecl(PackageRef packageRef, int modifiers, Token classNameToken, int fieldCount,
                      FieldDecl[] fieldDecls) {
@@ -37,7 +37,7 @@ public class ClassDecl extends BoundableDecl {
     }
 
     @Override
-    public Type getType() {
+    public AbstractType getType() {
         return classType == null ? (classType = super.getType()) : classType;
     }
 

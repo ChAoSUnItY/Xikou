@@ -1,16 +1,16 @@
 package github.io.chaosunity.xikou.resolver;
 
-import github.io.chaosunity.xikou.resolver.types.Type;
+import github.io.chaosunity.xikou.resolver.types.AbstractType;
 
 public class MethodRef {
-    public final Type ownerClassType;
+    public final AbstractType ownerClassType;
     public final String name;
     public final int parameterCount;
-    public final Type[] parameterType;
-    public final Type returnType;
+    public final AbstractType[] parameterType;
+    public final AbstractType returnType;
 
-    public MethodRef(Type ownerClassType, String name, int parameterCount, Type[] parameterType,
-                     Type returnType) {
+    public MethodRef(AbstractType ownerClassType, String name, int parameterCount, AbstractType[] parameterType,
+                     AbstractType returnType) {
         this.ownerClassType = ownerClassType;
         this.name = name;
         this.parameterCount = parameterCount;

@@ -6,9 +6,9 @@ import github.io.chaosunity.xikou.ast.types.AbstractTypeRef;
 import github.io.chaosunity.xikou.ast.types.ArrayTypeRef;
 import github.io.chaosunity.xikou.ast.types.ObjectTypeRef;
 import github.io.chaosunity.xikou.lexer.TokenType;
+import github.io.chaosunity.xikou.resolver.types.AbstractType;
 import github.io.chaosunity.xikou.resolver.types.ArrayType;
 import github.io.chaosunity.xikou.resolver.types.ObjectType;
-import github.io.chaosunity.xikou.resolver.types.Type;
 
 public class Resolver {
     private final SymbolTable table = new SymbolTable();
@@ -65,7 +65,7 @@ public class Resolver {
         for (int i = 0; i < parameters.parameterCount; i++) {
             Parameter parameter = parameters.parameters[i];
 
-            resolveTypeRef(parameter.typeRef, new Scope());
+            resolveTypeRef(parameter.typeRef);
         }
     }
 
@@ -91,17 +91,19 @@ public class Resolver {
         PrimaryConstructorDecl constructorDecl = enumDecl.getPrimaryConstructorDecl();
 
         for (int i = 0; i < enumDecl.variantCount; i++) {
-            resolveEnumVariantInitialization(enumDecl, constructorDecl, enumDecl.enumVariantDecls[i]);
+            resolveEnumVariantInitialization(enumDecl, constructorDecl,
+                                             enumDecl.enumVariantDecls[i]);
         }
 
         if (constructorDecl != null) resolvePrimaryConstructorDecl(constructorDecl);
     }
 
     private void resolveFieldDecl(FieldDecl fieldDecl) {
-        resolveTypeRef(fieldDecl.typeRef, new Scope());
+        resolveTypeRef(fieldDecl.typeRef);
     }
 
-    private void resolveEnumVariantInitialization(EnumDecl enumDecl, PrimaryConstructorDecl constructorDecl,
+    private void resolveEnumVariantInitialization(EnumDecl enumDecl,
+                                                  PrimaryConstructorDecl constructorDecl,
                                                   EnumVariantDecl variantDecl) {
         MethodRef constructorRef = constructorDecl != null ? constructorDecl.asMethodRef() : Utils.genImplcicitPrimaryConstructorRef(
                 enumDecl.getType());
@@ -144,15 +146,21 @@ public class Resolver {
             if (memberAccessExpr.ownerExpr instanceof VarExpr) {
                 VarExpr ownerVarExpr = (VarExpr) memberAccessExpr.ownerExpr;
                 // Special check for type ref
-                Type ownerType = table.getType(ownerVarExpr.varIdentifier.literal);
+                AbstractType ownerType = table.getType(ownerVarExpr.varIdentifier.literal);
 
                 if (ownerType != null) {
-                    FieldRef fieldRef = table.getField(ownerType, memberAccessExpr.targetMember.literal);
+                    FieldRef fieldRef = table.getField(ownerType,
+                                                       memberAccessExpr.targetMember.literal);
 
                     if (fieldRef != null) {
                         ownerVarExpr.resolvedType = ownerType;
                         memberAccessExpr.fieldRef = fieldRef;
                         return;
+                    } else {
+                        throw new IllegalStateException(
+                                String.format("Type %s does not have field %s",
+                                              ownerType.getInternalName(),
+                                              memberAccessExpr.targetMember.literal));
                     }
                 }
             }
@@ -166,11 +174,25 @@ public class Resolver {
             if (fieldRef != null) {
                 memberAccessExpr.fieldRef = fieldRef;
             } else {
-                throw new IllegalStateException("Unknown reference to field");
+                throw new IllegalStateException(
+                        String.format("Unknown reference to field %s in type %s",
+                                      memberAccessExpr.targetMember.literal,
+                                      memberAccessExpr.ownerExpr.getType().getInternalName()));
+            }
+        } else if (expr instanceof ArrayInitExpr) {
+            ArrayInitExpr arrayInitExpr = (ArrayInitExpr) expr;
+
+            resolveTypeRef(arrayInitExpr.componentTypeRef);
+            resolveExpr(arrayInitExpr.sizeExpr, scope);
+
+            for (int i = 0; i < arrayInitExpr.initExprCount; i++)
+                resolveExpr(arrayInitExpr.initExprs[i], scope);
+
+            if (arrayInitExpr.sizeExpr != null && arrayInitExpr.initExprCount != 0) {
+                throw new IllegalStateException("Array initialization with explicit length and initialization is illegal");
             }
         } else if (expr instanceof VarExpr) {
             VarExpr varExpr = (VarExpr) expr;
-
             LocalVarRef localVarRef = scope.findLocalVar(varExpr.varIdentifier.literal);
 
             if (localVarRef != null) {
@@ -184,7 +206,7 @@ public class Resolver {
         }
     }
 
-    private void resolveTypeRef(AbstractTypeRef typeRef, Scope scope) {
+    private void resolveTypeRef(AbstractTypeRef typeRef) {
         // Primitive type is already resolved in parser phase
 
         if (typeRef instanceof ObjectTypeRef) {
@@ -202,12 +224,9 @@ public class Resolver {
             objectTypeRef.resolvedType = new ObjectType(builder.toString());
         } else if (typeRef instanceof ArrayTypeRef) {
             ArrayTypeRef arrayTypeRef = (ArrayTypeRef) typeRef;
-            resolveTypeRef(arrayTypeRef.componentTypeRef, scope);
+            resolveTypeRef(arrayTypeRef.componentTypeRef);
 
-            if (arrayTypeRef.sizeExpr != null)
-                resolveExpr(arrayTypeRef.sizeExpr, scope);
-
-            arrayTypeRef.resolvedType = new ArrayType(arrayTypeRef.componentTypeRef.getType(), arrayTypeRef.sizeExpr);
+            arrayTypeRef.resolvedType = new ArrayType(arrayTypeRef.componentTypeRef.getType());
         }
     }
 }

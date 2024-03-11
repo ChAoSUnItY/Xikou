@@ -3,7 +3,7 @@ package github.io.chaosunity.xikou.ast;
 import github.io.chaosunity.xikou.ast.expr.Expr;
 import github.io.chaosunity.xikou.resolver.MethodRef;
 import github.io.chaosunity.xikou.resolver.Scope;
-import github.io.chaosunity.xikou.resolver.types.Type;
+import github.io.chaosunity.xikou.resolver.types.AbstractType;
 
 public class PrimaryConstructorDecl {
     public final int constructorModifiers;
@@ -25,7 +25,7 @@ public class PrimaryConstructorDecl {
 
     public MethodRef asMethodRef() {
         int parameterCount = parameters.parameterCount;
-        Type[] parameterTypes = new Type[parameterCount];
+        AbstractType[] parameterTypes = new AbstractType[parameterCount];
 
         for (int i = 0; i < parameterCount; i++) {
             parameterTypes[i] = parameters.parameters[i].typeRef.getType();

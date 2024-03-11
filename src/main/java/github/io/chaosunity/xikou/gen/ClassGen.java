@@ -5,7 +5,7 @@ import github.io.chaosunity.xikou.ast.FieldDecl;
 import github.io.chaosunity.xikou.ast.Parameters;
 import github.io.chaosunity.xikou.ast.PrimaryConstructorDecl;
 import github.io.chaosunity.xikou.resolver.types.PrimitiveType;
-import github.io.chaosunity.xikou.resolver.types.Type;
+import github.io.chaosunity.xikou.resolver.types.AbstractType;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
@@ -51,7 +51,7 @@ public class ClassGen extends ClassFileGen {
         if (constructorDecl != null) {
             Parameters parameters = constructorDecl.parameters;
             int parameterCount = parameters.parameterCount;
-            Type[] parameterTypes = new Type[parameterCount];
+            AbstractType[] parameterTypes = new AbstractType[parameterCount];
 
             for (int i = 0; i < parameterCount; i++)
                 parameterTypes[i] = parameters.parameters[i].typeRef.getType();

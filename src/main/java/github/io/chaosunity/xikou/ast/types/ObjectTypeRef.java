@@ -2,7 +2,7 @@ package github.io.chaosunity.xikou.ast.types;
 
 import github.io.chaosunity.xikou.lexer.Token;
 import github.io.chaosunity.xikou.resolver.types.ObjectType;
-import github.io.chaosunity.xikou.resolver.types.Type;
+import github.io.chaosunity.xikou.resolver.types.AbstractType;
 
 public class ObjectTypeRef extends AbstractTypeRef {
     public final int selectorCount;
@@ -15,7 +15,7 @@ public class ObjectTypeRef extends AbstractTypeRef {
     }
 
     @Override
-    public Type getType() {
+    public AbstractType getType() {
         return resolvedType;
     }
 }

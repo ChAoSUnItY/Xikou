@@ -1,6 +1,6 @@
 package github.io.chaosunity.xikou.resolver.types;
 
-public interface Type {
+public interface AbstractType {
     String getInternalName();
 
     String getDescriptor();
@@ -8,6 +8,6 @@ public interface Type {
     int getSize();
 
     default ArrayType asArrayType() {
-        return new ArrayType(this, null);
+        return new ArrayType(this);
     }
 }

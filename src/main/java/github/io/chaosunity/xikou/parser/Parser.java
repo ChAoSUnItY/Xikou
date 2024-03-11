@@ -371,6 +371,37 @@ public class Parser {
     }
 
     private Expr parseLiteralExpr() {
+        if (lexer.acceptToken(TokenType.OpenBracket)) {
+            AbstractTypeRef componentTypeRef = parseTypeRef();
+            Expr sizeExpr = null;
+            int initExprCount = 0;
+            Expr[] initExprs = new Expr[1];
+
+            lexer.expectToken(TokenType.SemiColon);
+
+            if (!lexer.peekToken(TokenType.CloseBracket))
+                sizeExpr = parseExpr();
+
+            lexer.expectToken(TokenType.CloseBracket);
+
+            if (lexer.acceptToken(TokenType.OpenBrace)) {
+                while (!lexer.acceptToken(TokenType.CloseBrace)) {
+                    if (initExprCount >= initExprs.length) {
+                        Expr[] newArr = new Expr[initExprs.length * 2];
+                        System.arraycopy(initExprs, 0, newArr, 0, initExprs.length);
+                        initExprs = newArr;
+                    }
+
+                    initExprs[initExprCount++] = parseExpr();
+
+                    if (!lexer.peekToken(TokenType.CloseBrace))
+                        lexer.expectToken(TokenType.Comma);
+                }
+            }
+
+            return new ArrayInitExpr(componentTypeRef, sizeExpr, initExprCount, initExprs);
+        }
+
         if (lexer.peekToken(TokenType.Identifier)) {
             return parseVarExpr();
         }
@@ -401,15 +432,9 @@ public class Parser {
 
         if (lexer.acceptToken(TokenType.OpenBracket)) {
             AbstractTypeRef componentType = parseTypeRef();
-            lexer.expectToken(TokenType.SemiColon);
+            lexer.expectToken(TokenType.CloseBracket);
 
-            if (lexer.acceptToken(TokenType.CloseBracket)) {
-                return new ArrayTypeRef(componentType, null);
-            } else {
-                Expr sizeExpr = parseExpr();
-                lexer.expectToken(TokenType.CloseBracket);
-                return new ArrayTypeRef(componentType, sizeExpr);
-            }
+            return new ArrayTypeRef(componentType);
         }
 
         while (true) {

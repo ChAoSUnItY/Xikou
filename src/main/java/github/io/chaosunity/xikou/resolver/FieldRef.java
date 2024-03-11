@@ -1,14 +1,14 @@
 package github.io.chaosunity.xikou.resolver;
 
-import github.io.chaosunity.xikou.resolver.types.Type;
+import github.io.chaosunity.xikou.resolver.types.AbstractType;
 
 public class FieldRef {
-    public final Type ownerClassType;
+    public final AbstractType ownerClassType;
     public final boolean isStatic;
     public final String name;
-    public final Type fieldType;
+    public final AbstractType fieldType;
 
-    public FieldRef(Type ownerClassType, boolean isStatic, String name, Type fieldType) {
+    public FieldRef(AbstractType ownerClassType, boolean isStatic, String name, AbstractType fieldType) {
         this.ownerClassType = ownerClassType;
         this.isStatic = isStatic;
         this.name = name;

@@ -3,7 +3,7 @@ package github.io.chaosunity.xikou.gen;
 import github.io.chaosunity.xikou.ast.*;
 import github.io.chaosunity.xikou.resolver.types.ObjectType;
 import github.io.chaosunity.xikou.resolver.types.PrimitiveType;
-import github.io.chaosunity.xikou.resolver.types.Type;
+import github.io.chaosunity.xikou.resolver.types.AbstractType;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
@@ -52,7 +52,7 @@ public class EnumGen extends ClassFileGen {
             Parameters parameters = constructorDecl.parameters;
             int parameterCount = parameters.parameterCount;
             String[] parameterNames = new String[parameterCount + 2];
-            Type[] parameterTypes = new Type[parameterCount + 2];
+            AbstractType[] parameterTypes = new AbstractType[parameterCount + 2];
 
             for (int i = 0; i < parameterCount; i++) {
                 Parameter parameter = parameters.parameters[i];
@@ -62,7 +62,7 @@ public class EnumGen extends ClassFileGen {
             }
 
             System.arraycopy(new String[]{"name", "ordinal"}, 0, parameterNames, parameterCount, 2);
-            System.arraycopy(new Type[]{new ObjectType("java/lang/String"), PrimitiveType.INT}, 0,
+            System.arraycopy(new AbstractType[]{new ObjectType("java/lang/String"), PrimitiveType.INT}, 0,
                              parameterTypes, parameterCount, 2);
 
             int[] localRefsIndicies = Utils.genLocalRefIndicesFromMethodDesc(enumDecl.getType(),
@@ -115,7 +115,7 @@ public class EnumGen extends ClassFileGen {
     }
 
     private void genFields(ClassWriter cw) {
-        Type enumType = enumDecl.getType();
+        AbstractType enumType = enumDecl.getType();
 
         for (int i = 0; i < enumDecl.variantCount; i++) {
             EnumVariantDecl variantDecl = enumDecl.enumVariantDecls[i];
@@ -138,15 +138,15 @@ public class EnumGen extends ClassFileGen {
     }
 
     private void genStaticInit(ClassWriter cw) {
-        Type enumType = enumDecl.getType();
+        AbstractType enumType = enumDecl.getType();
         PrimaryConstructorDecl constructorDecl = enumDecl.getPrimaryConstructorDecl();
-        Type[] constructorParamameterTypes = new Type[2 + (constructorDecl != null ? constructorDecl.parameters.parameterCount : 0)];
+        AbstractType[] constructorParamameterTypes = new AbstractType[2 + (constructorDecl != null ? constructorDecl.parameters.parameterCount : 0)];
 
         for (int i = 0; i < constructorParamameterTypes.length - 2; i++) {
             constructorParamameterTypes[i] = constructorDecl.parameters.parameters[i].typeRef.getType();
         }
 
-        System.arraycopy(new Type[]{new ObjectType("java/lang/String"), PrimitiveType.INT}, 0,
+        System.arraycopy(new AbstractType[]{new ObjectType("java/lang/String"), PrimitiveType.INT}, 0,
                          constructorParamameterTypes, constructorParamameterTypes.length - 2, 2);
 
         String constructorDescriptor = Utils.getMethodDescriptor(PrimitiveType.VOID,

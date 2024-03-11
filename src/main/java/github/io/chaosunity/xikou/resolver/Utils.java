@@ -1,12 +1,12 @@
 package github.io.chaosunity.xikou.resolver;
 
 import github.io.chaosunity.xikou.ast.expr.Expr;
-import github.io.chaosunity.xikou.resolver.types.Type;
+import github.io.chaosunity.xikou.resolver.types.AbstractType;
 import github.io.chaosunity.xikou.resolver.types.TypeResolver;
 
 public class Utils {
-    public static MethodRef genImplcicitPrimaryConstructorRef(Type ownerClassType) {
-        return new MethodRef(ownerClassType, "<init>", 0, new Type[0], ownerClassType);
+    public static MethodRef genImplcicitPrimaryConstructorRef(AbstractType ownerClassType) {
+        return new MethodRef(ownerClassType, "<init>", 0, new AbstractType[0], ownerClassType);
     }
 
     public static boolean isInvocationApplicable(int argumentCount, Expr[] arguments,
@@ -16,7 +16,7 @@ public class Utils {
 
         for (int i = 0; i < argumentCount; i++) {
             Expr argument = arguments[i];
-            Type parameterType = methodRef.parameterType[i];
+            AbstractType parameterType = methodRef.parameterType[i];
 
             if (!TypeResolver.isInstanceOf(argument.getType(), parameterType)) return false;
         }

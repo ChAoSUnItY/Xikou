@@ -1,12 +1,12 @@
 package github.io.chaosunity.xikou.gen;
 
-import github.io.chaosunity.xikou.resolver.types.Type;
+import github.io.chaosunity.xikou.resolver.types.AbstractType;
 
 public final class Utils {
-    public static String getMethodDescriptor(Type returnType, Type... parameters) {
+    public static String getMethodDescriptor(AbstractType returnType, AbstractType... parameters) {
         StringBuilder builder = new StringBuilder("(");
 
-        for (Type parameter : parameters) {
+        for (AbstractType parameter : parameters) {
             builder.append(parameter.getDescriptor());
         }
 
@@ -15,13 +15,13 @@ public final class Utils {
         return builder.toString();
     }
 
-    public static int[] genLocalRefIndicesFromMethodDesc(Type ownerType, Type... parameters) {
+    public static int[] genLocalRefIndicesFromMethodDesc(AbstractType ownerType, AbstractType... parameters) {
         int length = (ownerType != null ? 1 : 0) + parameters.length;
-        Type[] localRefs = parameters;
+        AbstractType[] localRefs = parameters;
         int[] indices = new int[length];
 
         if (ownerType != null) {
-            localRefs = new Type[length];
+            localRefs = new AbstractType[length];
             localRefs[0] = ownerType;
             System.arraycopy(parameters, 0, localRefs, 1, parameters.length);
         }

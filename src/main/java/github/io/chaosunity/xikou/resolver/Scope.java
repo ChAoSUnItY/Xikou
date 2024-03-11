@@ -1,6 +1,6 @@
 package github.io.chaosunity.xikou.resolver;
 
-import github.io.chaosunity.xikou.resolver.types.Type;
+import github.io.chaosunity.xikou.resolver.types.AbstractType;
 
 public class Scope {
     private int localVarCount = 0;
@@ -10,7 +10,7 @@ public class Scope {
 
     }
 
-    public void addLocalVar(String name, Type type) {
+    public void addLocalVar(String name, AbstractType type) {
         for (int i = 0; i < localVarCount; i++) {
             if (localVarRefs[i].name.equals(name)) {
                 throw new IllegalStateException(

@@ -3,7 +3,7 @@ package github.io.chaosunity.xikou.resolver;
 import github.io.chaosunity.xikou.ast.*;
 import github.io.chaosunity.xikou.resolver.types.ObjectType;
 import github.io.chaosunity.xikou.resolver.types.PrimitiveType;
-import github.io.chaosunity.xikou.resolver.types.Type;
+import github.io.chaosunity.xikou.resolver.types.AbstractType;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -13,10 +13,10 @@ public class SymbolTable {
     public int declCount = 0;
     public BoundableDecl[] decls = new BoundableDecl[1];
 
-    public Type getType(String path) {
+    public AbstractType getType(String path) {
         for (int i = 0; i < declCount; i++) {
             BoundableDecl decl = decls[i];
-            Type type = decl.getType();
+            AbstractType type = decl.getType();
 
             if (type.getInternalName().equals(path)) {
                 return type;
@@ -43,7 +43,7 @@ public class SymbolTable {
         decls[declCount++] = decl;
     }
 
-    public FieldRef getField(Type ownerType, String name) {
+    public FieldRef getField(AbstractType ownerType, String name) {
         for (int i = 0; i < declCount; i++) {
             BoundableDecl decl = decls[i];
 
@@ -88,7 +88,7 @@ public class SymbolTable {
             String ownerClassInternalName = ownerType.getInternalName();
             Class clazz = Class.forName(ownerClassInternalName.replace('/', '.'));
             Field field = clazz.getField(name);
-            Type fieldType = getFieldType(name, clazz);
+            AbstractType fieldType = getFieldType(name, clazz);
 
             return new FieldRef(ownerType, Modifier.isStatic(field.getModifiers()), name, fieldType);
         } catch (ClassNotFoundException | NoSuchFieldException ignored) {
@@ -97,7 +97,7 @@ public class SymbolTable {
         return null;
     }
 
-    private MethodRef[] getConstructors(Type ownerType) {
+    private MethodRef[] getConstructors(AbstractType ownerType) {
         for (int i = 0; i < declCount; i++) {
             BoundableDecl decl = decls[i];
 
@@ -105,7 +105,7 @@ public class SymbolTable {
 
             PrimaryConstructorDecl constructorDecl = decl.getImplDecl().primaryConstructorDecl;
             Parameters parameters = constructorDecl.parameters;
-            Type[] parameterTypes = new Type[parameters.parameterCount];
+            AbstractType[] parameterTypes = new AbstractType[parameters.parameterCount];
 
             for (int j = 0; j < parameters.parameterCount; j++) {
                 parameterTypes[j] = parameters.parameters[j].typeRef.getType();
@@ -133,10 +133,10 @@ public class SymbolTable {
         return null;
     }
 
-    private static MethodRef getMethodRefFromConstrutor(Type ownerType, Constructor constructor) {
+    private static MethodRef getMethodRefFromConstrutor(AbstractType ownerType, Constructor constructor) {
         int parameterCount = constructor.getParameterCount();
         Class[] parameterReflectionTypes = constructor.getParameterTypes();
-        Type[] parameterTypes = new Type[parameterCount];
+        AbstractType[] parameterTypes = new AbstractType[parameterCount];
 
         for (int i = 0; i < parameterCount; i++) {
             parameterTypes[i] = getTypeFromClass(parameterReflectionTypes[i]);
@@ -145,13 +145,13 @@ public class SymbolTable {
         return new MethodRef(ownerType, "<init>", parameterCount, parameterTypes, ownerType);
     }
 
-    private static Type getFieldType(String name, Class clazz) throws NoSuchFieldException {
+    private static AbstractType getFieldType(String name, Class clazz) throws NoSuchFieldException {
         Field field = clazz.getField(name);
 
         return getTypeFromClass(field.getType());
     }
 
-    private static Type getTypeFromClass(Class clazz) {
+    private static AbstractType getTypeFromClass(Class clazz) {
         if (clazz.isPrimitive()) {
             for (PrimitiveType primitiveType : PrimitiveType.values()) {
                 if (clazz.getCanonicalName().equals(primitiveType.internalName)) {

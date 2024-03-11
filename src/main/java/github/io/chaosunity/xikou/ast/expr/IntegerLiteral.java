@@ -2,7 +2,7 @@ package github.io.chaosunity.xikou.ast.expr;
 
 import github.io.chaosunity.xikou.lexer.Token;
 import github.io.chaosunity.xikou.resolver.types.PrimitiveType;
-import github.io.chaosunity.xikou.resolver.types.Type;
+import github.io.chaosunity.xikou.resolver.types.AbstractType;
 
 public class IntegerLiteral extends Expr {
     public final Token integerToken;
@@ -16,7 +16,7 @@ public class IntegerLiteral extends Expr {
     }
 
     @Override
-    public Type getType() {
+    public AbstractType getType() {
         return PrimitiveType.INT;
     }
 
