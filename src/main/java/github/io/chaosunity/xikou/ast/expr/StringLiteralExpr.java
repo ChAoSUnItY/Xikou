@@ -13,7 +13,7 @@ public class StringLiteralExpr extends Expr {
 
     @Override
     public AbstractType getType() {
-        return new ClassType("java/lang/String");
+        return ClassType.STRING_CLASS_TYPE;
     }
 
     @Override

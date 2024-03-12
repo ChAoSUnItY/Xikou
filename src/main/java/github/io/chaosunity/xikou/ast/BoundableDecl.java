@@ -22,17 +22,5 @@ public abstract class BoundableDecl {
 
     public abstract void bindImplbidirectionally(ImplDecl implDecl);
 
-    public AbstractType getType() {
-        PackageRef packageRef = getPackageRef();
-        Token declNameToken = getNameToken();
-        String internalPath;
-
-        if (packageRef.qualifiedPath.isEmpty()) {
-            internalPath = declNameToken.literal;
-        } else {
-            internalPath = packageRef.qualifiedPath.replace('.', '/') + "/" + declNameToken.literal;
-        }
-
-        return new ClassType(internalPath);
-    }
+    public abstract ClassType getType();
 }

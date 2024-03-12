@@ -256,7 +256,13 @@ public class Resolver {
                 }
             }
 
-            classTypeRef.resolvedType = new ClassType(builder.toString());
+            AbstractType type = table.getType(builder.toString().replace('/', '.'));
+
+            if (!(type instanceof ClassType))
+                throw new IllegalStateException(String.format("Type %s is not an ClassType",
+                                                              builder));
+
+            classTypeRef.resolvedType = (ClassType) type;
         } else if (typeRef instanceof ArrayTypeRef) {
             ArrayTypeRef arrayTypeRef = (ArrayTypeRef) typeRef;
             resolveTypeRef(arrayTypeRef.componentTypeRef);

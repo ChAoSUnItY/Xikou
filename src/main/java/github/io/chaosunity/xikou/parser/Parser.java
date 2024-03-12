@@ -146,8 +146,32 @@ public class Parser {
 
     private ClassDecl parseClassDecl(PackageRef packageRef, int modifiers) {
         Token classNameToken = lexer.expectToken(TokenType.Identifier);
+        int inheritedCount = 0;
+        ClassTypeRef[] inheritedClasses = new ClassTypeRef[1];
         int fieldCount = 0;
         FieldDecl[] fieldDecls = new FieldDecl[1];
+
+        if (lexer.acceptToken(TokenType.Colon)) {
+            while (true) {
+                if (inheritedCount >= inheritedClasses.length) {
+                    ClassTypeRef[] newArr = new ClassTypeRef[inheritedClasses.length * 2];
+                    System.arraycopy(inheritedClasses, 0, newArr, 0, inheritedClasses.length);
+                    inheritedClasses = newArr;
+                }
+
+                AbstractTypeRef typeRef = parseTypeRef();
+
+                if (typeRef instanceof ArrayTypeRef)
+                    throw new IllegalStateException("Cannot extends an array type");
+                if (typeRef instanceof PrimitiveTypeRef)
+                    throw new IllegalStateException("Cannot extends a primitive type");
+
+                inheritedClasses[inheritedCount++] = (ClassTypeRef) typeRef;
+
+                if (lexer.peekToken(TokenType.OpenBrace)) break;
+                else lexer.expectToken(TokenType.Comma);
+            }
+        }
 
         lexer.expectToken(TokenType.OpenBrace);
 
@@ -161,7 +185,7 @@ public class Parser {
             fieldDecls[fieldCount++] = parseFieldDecl();
         }
 
-        return new ClassDecl(packageRef, modifiers, classNameToken, fieldCount, fieldDecls);
+        return new ClassDecl(packageRef, modifiers, classNameToken, inheritedCount, inheritedClasses, fieldCount, fieldDecls);
     }
 
     private EnumDecl parseEnumDecl(PackageRef packageRef, int modifiers) {

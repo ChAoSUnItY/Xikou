@@ -16,7 +16,7 @@ public class SymbolTable {
     public AbstractType getType(String path) {
         for (int i = 0; i < declCount; i++) {
             BoundableDecl decl = decls[i];
-            AbstractType type = decl.getType();
+            ClassType type = decl.getType();
 
             if (type.getInternalName().equals(path)) {
                 return type;
@@ -24,9 +24,9 @@ public class SymbolTable {
         }
 
         try {
-            Class ignored = Class.forName(path);
+            Class clazz = Class.forName(path);
 
-            return new ClassType(path);
+            return getTypeFromClass(clazz);
         } catch (ClassNotFoundException ignored) {
         }
 
@@ -166,7 +166,23 @@ public class SymbolTable {
 
             throw new IllegalStateException("Unreachable");
         } else {
-            return new ClassType(clazz.getCanonicalName().replace(".", "/"));
+            String internalName = clazz.getCanonicalName().replace(".", "/");
+            Class superClazz = clazz.getSuperclass();
+
+            if (superClazz == null) {
+                if (clazz.isInterface()) {
+                    return new ClassType(null, internalName);
+                } else {
+                    return ClassType.OBJECT_CLASS_TYPE;
+                }
+            }
+
+            AbstractType superclass = getTypeFromClass(superClazz);
+
+            if (!(superclass instanceof ClassType))
+                throw new IllegalStateException("ICE: Superclass is not an ClassType");
+
+            return new ClassType((ClassType) superclass, internalName);
         }
     }
 }

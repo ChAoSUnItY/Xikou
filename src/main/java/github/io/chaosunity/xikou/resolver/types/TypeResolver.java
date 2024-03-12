@@ -14,6 +14,24 @@ public class TypeResolver {
         if (fromType instanceof NullType && targetType instanceof ClassType)
             return true;
 
-        return true;
+        if (fromType instanceof ClassType && targetType instanceof ClassType) {
+            if (fromType.equals(targetType))
+                return true;
+
+            ClassType fromClassType = (ClassType) fromType;
+            ClassType superclassType = fromClassType.superclass;
+
+            // TODO: Resolve interface branches
+            while (superclassType != null) {
+                if (superclassType.equals(targetType))
+                    return true;
+
+                superclassType = superclassType.superclass;
+            }
+
+            return false;
+        }
+
+        return false;
     }
 }

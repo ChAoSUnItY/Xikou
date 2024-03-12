@@ -1,11 +1,9 @@
-pub enum Num {
-    pub mut value: [i32];
-    Zero(0),
-    One(1)
+pub class Box {
+    priv num: java::lang::Number;
 }
 
-impl Num {
-    self(length: i32) {
-        self.value = [i32; length];
+impl Box {
+    pub self() {
+        self.num = java::lang::Integer.self(1);
     }
 }
