@@ -1,5 +1,6 @@
 package github.io.chaosunity.xikou.ast.expr;
 
+import github.io.chaosunity.xikou.resolver.MethodRef;
 import github.io.chaosunity.xikou.resolver.types.AbstractType;
 
 public class ConstructorCallExpr extends Expr {
@@ -7,6 +8,7 @@ public class ConstructorCallExpr extends Expr {
     public final int argumentCount;
     public final Expr[] arguments;
     public AbstractType resolvedType;
+    public MethodRef resolvedMethodRef;
 
     public ConstructorCallExpr(TypeableExpr ownerTypeExpr, int argumentCount, Expr[] arguments) {
         this.ownerTypeExpr = ownerTypeExpr;

@@ -29,6 +29,8 @@ public class ExprGen {
             genStringLiteralExpr(mw, (StringLiteralExpr) expr);
         } else if (expr instanceof IntegerLiteralExpr) {
             genIntegerLiteral(mw, (IntegerLiteralExpr) expr);
+        } else if (expr instanceof NullLiteral) {
+            genNullLiteral(mw, (NullLiteral) expr);
         }
     }
 
@@ -83,7 +85,7 @@ public class ExprGen {
         }
 
         mw.visitMethodInsn(Opcodes.INVOKESPECIAL, constructorCallExpr.getType().getInternalName(),
-                           "<init>", Utils.getMethodDescriptor(PrimitiveType.VOID, types), false);
+                           "<init>", Utils.getMethodDescriptor(constructorCallExpr.resolvedMethodRef), false);
     }
 
     private void genArrayInitExpr(MethodVisitor mw, ArrayInitExpr arrayInitExpr) {
@@ -98,6 +100,7 @@ public class ExprGen {
             mw.visitTypeInsn(Opcodes.ANEWARRAY, componentType.getInternalName());
         } else {
             // Must be array type
+            // TODO: Implement multi array initialization
             ArrayType componentArrayType = (ArrayType) componentType;
         }
 
@@ -118,16 +121,20 @@ public class ExprGen {
         mw.visitVarInsn(getLoadOpcode(varType), localVarRef.index);
     }
 
-    private void genIntegerLiteral(MethodVisitor mw, IntegerLiteralExpr integerLiteralExpr) {
-        mw.visitLdcInsn(integerLiteralExpr.asConstant());
-    }
-
     private void genCharLiteralExpr(MethodVisitor mw, CharLiteralExpr charLiteralExpr) {
         mw.visitLdcInsn(charLiteralExpr.characterToken.literal.charAt(0));
     }
 
     private void genStringLiteralExpr(MethodVisitor mw, StringLiteralExpr stringLiteralExpr) {
         mw.visitLdcInsn(stringLiteralExpr.stringLiteralToken.literal);
+    }
+
+    private void genIntegerLiteral(MethodVisitor mw, IntegerLiteralExpr integerLiteralExpr) {
+        mw.visitLdcInsn(integerLiteralExpr.asConstant());
+    }
+
+    private void genNullLiteral(MethodVisitor mw, NullLiteral nullLiteral) {
+        mw.visitInsn(Opcodes.ACONST_NULL);
     }
 
     private static int getArrayTypeOperand(PrimitiveType type) {

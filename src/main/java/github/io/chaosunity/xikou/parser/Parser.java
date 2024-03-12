@@ -429,6 +429,9 @@ public class Parser {
         if (lexer.peekToken(TokenType.NumberLiteral))
             return new IntegerLiteralExpr(lexer.expectToken(TokenType.NumberLiteral));
 
+        if (lexer.peekToken(TokenType.Null))
+            return new NullLiteral(lexer.expectToken(TokenType.Null));
+
         throw new IllegalStateException(
                 String.format("Unexpected expression token %s", lexer.getCurrentToken().type));
     }

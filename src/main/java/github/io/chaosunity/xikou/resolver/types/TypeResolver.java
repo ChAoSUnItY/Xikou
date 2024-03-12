@@ -9,6 +9,11 @@ public class TypeResolver {
             return false;
         }
 
+        // Allows implicit down cast for null (assume it as any type).
+        // Reversed type conversion from object to null is impossible.
+        if (fromType instanceof NullType && targetType instanceof ClassType)
+            return true;
+
         return true;
     }
 }

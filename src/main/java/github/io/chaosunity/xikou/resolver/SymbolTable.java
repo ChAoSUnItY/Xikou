@@ -116,7 +116,8 @@ public class SymbolTable {
 
             return new MethodRef[]{new MethodRef(ownerType, "<init>", constructorDecl.exprCount,
                                                  parameterTypes,
-                                                 constructorDecl.implDecl.boundDecl.getType())};
+                                                 constructorDecl.implDecl.boundDecl.getType(),
+                                                 true)};
         }
 
         try {
@@ -146,7 +147,7 @@ public class SymbolTable {
             parameterTypes[i] = getTypeFromClass(parameterReflectionTypes[i]);
         }
 
-        return new MethodRef(ownerType, "<init>", parameterCount, parameterTypes, ownerType);
+        return new MethodRef(ownerType, "<init>", parameterCount, parameterTypes, ownerType, true);
     }
 
     private static AbstractType getFieldType(String name, Class clazz) throws NoSuchFieldException {

@@ -1,23 +1,12 @@
 pub class Lexer {
     priv source: java::lang::String;
     priv mut pos: i32 = 0;
-    priv mut currentToken: Token;
+    priv mut currentToken: Token = null;
 }
 
 impl Lexer {
     pub self(source: java::lang::String) {
-        self.source = self.currentToken.literal;
-        self.currentToken = Token.self(TokenType.Dot, ".");
-    }
-}
-
-pub class Boxed {
-    pub i: i32;
-}
-
-impl Boxed {
-    pub self(i: i32) {
-        self.i = i;
+        self.source = source;
     }
 }
 

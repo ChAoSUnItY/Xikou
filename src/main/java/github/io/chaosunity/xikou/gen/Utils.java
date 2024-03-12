@@ -1,5 +1,6 @@
 package github.io.chaosunity.xikou.gen;
 
+import github.io.chaosunity.xikou.resolver.MethodRef;
 import github.io.chaosunity.xikou.resolver.types.AbstractType;
 
 public final class Utils {
@@ -12,6 +13,18 @@ public final class Utils {
 
         builder.append(")");
         builder.append(returnType.getDescriptor());
+        return builder.toString();
+    }
+
+    public static String getMethodDescriptor(MethodRef methodRef) {
+        StringBuilder builder = new StringBuilder("(");
+
+        for (int i = 0; i < methodRef.parameterCount; i++) {
+            builder.append(methodRef.parameterType[i].getDescriptor());
+        }
+
+        builder.append(")");
+        builder.append(methodRef.isConstructor ? "V" : methodRef.returnType.getDescriptor());
         return builder.toString();
     }
 

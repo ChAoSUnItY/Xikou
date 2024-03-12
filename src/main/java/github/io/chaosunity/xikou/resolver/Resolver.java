@@ -182,12 +182,14 @@ public class Resolver {
                 resolveExpr(constructorCallExpr.arguments[i], scope);
 
             MethodRef[] constructorRefs = table.getConstructors(ownerClassType);
+            MethodRef resolvedConstructorRef = null;
             boolean hasApplicableConstructor = false;
 
             for (MethodRef constructorRef : constructorRefs) {
                 if (Utils.isInvocationApplicable(constructorCallExpr.argumentCount,
                                                  constructorCallExpr.arguments, constructorRef)) {
                     hasApplicableConstructor = true;
+                    resolvedConstructorRef = constructorRef;
                     break;
                 }
             }
@@ -196,6 +198,7 @@ public class Resolver {
                 throw new IllegalStateException("Unknown constructor call");
 
             constructorCallExpr.resolvedType = ownerClassType;
+            constructorCallExpr.resolvedMethodRef = resolvedConstructorRef;
         } else if (expr instanceof ArrayInitExpr) {
             ArrayInitExpr arrayInitExpr = (ArrayInitExpr) expr;
 
@@ -225,6 +228,8 @@ public class Resolver {
             StringLiteralExpr stringLiteralExpr = (StringLiteralExpr) expr;
         } else if (expr instanceof IntegerLiteralExpr) {
             IntegerLiteralExpr integerLiteralExpr = (IntegerLiteralExpr) expr;
+        } else if (expr instanceof NullLiteral) {
+            NullLiteral nullLiteral = (NullLiteral) expr;
         }
     }
 
