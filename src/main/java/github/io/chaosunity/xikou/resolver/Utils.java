@@ -2,7 +2,7 @@ package github.io.chaosunity.xikou.resolver;
 
 import github.io.chaosunity.xikou.ast.expr.Expr;
 import github.io.chaosunity.xikou.resolver.types.AbstractType;
-import github.io.chaosunity.xikou.resolver.types.TypeResolver;
+import github.io.chaosunity.xikou.resolver.types.TypeUtils;
 
 public class Utils {
 
@@ -21,7 +21,7 @@ public class Utils {
       Expr argument = arguments[i];
       AbstractType parameterType = methodRef.parameterType[i];
 
-      if (!TypeResolver.isInstanceOf(argument.getType(), parameterType)) {
+      if (!TypeUtils.isInstanceOf(argument.getType(), parameterType)) {
         return false;
       }
     }

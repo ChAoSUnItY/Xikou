@@ -1,6 +1,6 @@
 package github.io.chaosunity.xikou.resolver.types;
 
-public class TypeResolver {
+public class TypeUtils {
 
   // TODO: Complete it
   public static boolean isInstanceOf(AbstractType fromType, AbstractType targetType) {
@@ -15,7 +15,7 @@ public class TypeResolver {
     }
 
     if (fromType instanceof ClassType && targetType instanceof ClassType) {
-      return TypeResolver.isObjectInstanceOf((ClassType) fromType, (ClassType) targetType);
+      return TypeUtils.isObjectInstanceOf((ClassType) fromType, (ClassType) targetType);
     }
 
     return false;
@@ -30,7 +30,7 @@ public class TypeResolver {
     ClassType[] interfaces = fromType.getInterfaces();
 
     for (ClassType interfaceType : interfaces) {
-      if (TypeResolver.isObjectInstanceOf(interfaceType, targetType)) {
+      if (TypeUtils.isObjectInstanceOf(interfaceType, targetType)) {
         return true;
       }
     }
@@ -39,7 +39,7 @@ public class TypeResolver {
     ClassType superclassType = fromType.getSuperclass();
 
     while (superclassType != null) {
-      if (TypeResolver.isObjectInstanceOf(superclassType, targetType)) {
+      if (TypeUtils.isObjectInstanceOf(superclassType, targetType)) {
         return true;
       }
 
