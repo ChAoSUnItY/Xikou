@@ -5,6 +5,8 @@ import github.io.chaosunity.xikou.gen.JvmGen;
 import github.io.chaosunity.xikou.parser.Parser;
 import github.io.chaosunity.xikou.resolver.Resolver;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 public final class XikouApi {
@@ -15,7 +17,9 @@ public final class XikouApi {
 
     for (int i = 0; i < fileCount; i++) {
       try {
-        Parser parser = new Parser(filePaths[i]);
+        byte[] fileBytes = Files.readAllBytes(filePaths[i]);
+        String source = new String(fileBytes, StandardCharsets.UTF_8);
+        Parser parser = new Parser(filePaths[i], source);
         files[i] = parser.parseFile();
       } catch (IOException ignored) {
       }

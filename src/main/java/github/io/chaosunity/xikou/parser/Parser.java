@@ -32,10 +32,7 @@ import github.io.chaosunity.xikou.lexer.Lexer;
 import github.io.chaosunity.xikou.lexer.Token;
 import github.io.chaosunity.xikou.lexer.TokenType;
 import github.io.chaosunity.xikou.resolver.types.PrimitiveType;
-import java.io.IOException;
 import java.lang.reflect.Modifier;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class Parser {
@@ -43,9 +40,7 @@ public class Parser {
   private final Path absoluteFilePath;
   private final Lexer lexer;
 
-  public Parser(Path absoluteFilePath) throws IOException {
-    byte[] fileBytes = Files.readAllBytes(absoluteFilePath);
-    String source = new String(fileBytes, StandardCharsets.UTF_8);
+  public Parser(Path absoluteFilePath, String source) {
     this.absoluteFilePath = absoluteFilePath;
     this.lexer = new Lexer(source);
   }
