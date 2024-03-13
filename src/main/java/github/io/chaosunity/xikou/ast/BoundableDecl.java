@@ -3,24 +3,42 @@ package github.io.chaosunity.xikou.ast;
 import github.io.chaosunity.xikou.lexer.Token;
 import github.io.chaosunity.xikou.resolver.types.ClassType;
 
-public abstract class BoundableDecl {
+public interface BoundableDecl {
 
-  public abstract Token getNameToken();
+  Token getNameToken();
 
-  public String getName() {
+  default String getName() {
     return getNameToken().literal;
   }
 
-  public abstract PackageRef getPackageRef();
+  PackageRef getPackageRef();
 
-  public abstract ImplDecl getImplDecl();
+  ImplDecl getImplDecl();
 
-  public PrimaryConstructorDecl getPrimaryConstructorDecl() {
+  default PrimaryConstructorDecl getPrimaryConstructorDecl() {
     ImplDecl implDecl = getImplDecl();
     return implDecl != null ? implDecl.primaryConstructorDecl : null;
   }
 
-  public abstract void bindImplbidirectionally(ImplDecl implDecl);
+  void bindImplbidirectionally(ImplDecl implDecl);
 
-  public abstract ClassType getType();
+  boolean isInterface();
+
+  ClassType getSuperclassType();
+
+  ClassType[] getInterfaceTypes();
+
+  default ClassType getType() {
+    PackageRef packageRef = getPackageRef();
+    Token declNameToken = getNameToken();
+    String internalPath;
+
+    if (packageRef.qualifiedPath.isEmpty()) {
+      internalPath = declNameToken.literal;
+    } else {
+      internalPath = packageRef.qualifiedPath.replace('.', '/') + "/" + declNameToken.literal;
+    }
+
+    return new ClassType(getSuperclassType(), isInterface(), internalPath);
+  }
 }

@@ -182,7 +182,7 @@ public class SymbolTable {
 
       if (superClazz == null) {
         if (clazz.isInterface()) {
-          return new ClassType(null, internalName);
+          return new ClassType(null, true, internalName);
         } else {
           return ClassType.OBJECT_CLASS_TYPE;
         }
@@ -194,7 +194,7 @@ public class SymbolTable {
         throw new IllegalStateException("ICE: Superclass is not an ClassType");
       }
 
-      return new ClassType((ClassType) superclass, internalName);
+      return new ClassType((ClassType) superclass, false, internalName);
     }
   }
 }

@@ -61,6 +61,16 @@ public class Resolver {
         for (int j = 0; j < classDecl.inheritedCount; j++) {
           resolveTypeRef(classDecl.inheritedClasses[j]);
         }
+
+        classDecl.resolveSuperclassAndInterfaces();
+      } else if (decl instanceof EnumDecl) {
+        EnumDecl enumDecl = (EnumDecl) decl;
+        enumDecl.interfaceTypes = new ClassType[enumDecl.interfacCount];
+
+        for (int j = 0; j < enumDecl.interfacCount; j++) {
+          resolveTypeRef(enumDecl.interfaces[j]);
+          enumDecl.interfaceTypes[j] = enumDecl.interfaces[j].resolvedType;
+        }
       }
     }
   }
@@ -70,9 +80,9 @@ public class Resolver {
       BoundableDecl decl = file.decls[i];
       PrimaryConstructorDecl constructorDecl = decl.getPrimaryConstructorDecl();
 
-        if (constructorDecl != null) {
-            resolvePrimaryConstructorDeclEarly(constructorDecl);
-        }
+      if (constructorDecl != null) {
+        resolvePrimaryConstructorDeclEarly(constructorDecl);
+      }
 
       if (decl instanceof ClassDecl) {
         ClassDecl classDecl = (ClassDecl) decl;
@@ -117,9 +127,9 @@ public class Resolver {
   private void resolveClassDecl(ClassDecl classDecl) {
     PrimaryConstructorDecl constructorDecl = classDecl.getPrimaryConstructorDecl();
 
-      if (constructorDecl != null) {
-          resolvePrimaryConstructorDecl(constructorDecl);
-      }
+    if (constructorDecl != null) {
+      resolvePrimaryConstructorDecl(constructorDecl);
+    }
   }
 
   private void resolveEnumDecl(EnumDecl enumDecl) {
@@ -130,9 +140,9 @@ public class Resolver {
           enumDecl.enumVariantDecls[i]);
     }
 
-      if (constructorDecl != null) {
-          resolvePrimaryConstructorDecl(constructorDecl);
-      }
+    if (constructorDecl != null) {
+      resolvePrimaryConstructorDecl(constructorDecl);
+    }
   }
 
   private void resolveFieldDecl(FieldDecl fieldDecl) {
@@ -148,10 +158,10 @@ public class Resolver {
     boolean isApplicable = Utils.isInvocationApplicable(variantDecl.argumentCount,
         variantDecl.arguments, constructorRef);
 
-      if (!isApplicable) {
-          throw new IllegalStateException(
-              "Incompatible primary constructor invocation on enum variant initialization");
-      }
+    if (!isApplicable) {
+      throw new IllegalStateException(
+          "Incompatible primary constructor invocation on enum variant initialization");
+    }
   }
 
   private void resolvePrimaryConstructorDecl(PrimaryConstructorDecl constructorDecl) {
@@ -220,9 +230,9 @@ public class Resolver {
       ConstructorCallExpr constructorCallExpr = (ConstructorCallExpr) expr;
       ClassType ownerClassType = resolveTypeableExpr(constructorCallExpr.ownerTypeExpr);
 
-        for (int i = 0; i < constructorCallExpr.argumentCount; i++) {
-            resolveExpr(constructorCallExpr.arguments[i], scope);
-        }
+      for (int i = 0; i < constructorCallExpr.argumentCount; i++) {
+        resolveExpr(constructorCallExpr.arguments[i], scope);
+      }
 
       MethodRef[] constructorRefs = table.getConstructors(ownerClassType);
       MethodRef resolvedConstructorRef = null;
@@ -237,9 +247,9 @@ public class Resolver {
         }
       }
 
-        if (!hasApplicableConstructor) {
-            throw new IllegalStateException("Unknown constructor call");
-        }
+      if (!hasApplicableConstructor) {
+        throw new IllegalStateException("Unknown constructor call");
+      }
 
       constructorCallExpr.resolvedType = ownerClassType;
       constructorCallExpr.resolvedMethodRef = resolvedConstructorRef;
@@ -249,9 +259,9 @@ public class Resolver {
       resolveTypeRef(arrayInitExpr.componentTypeRef);
       resolveExpr(arrayInitExpr.sizeExpr, scope);
 
-        for (int i = 0; i < arrayInitExpr.initExprCount; i++) {
-            resolveExpr(arrayInitExpr.initExprs[i], scope);
-        }
+      for (int i = 0; i < arrayInitExpr.initExprCount; i++) {
+        resolveExpr(arrayInitExpr.initExprs[i], scope);
+      }
 
       if (arrayInitExpr.sizeExpr != null && arrayInitExpr.initExprCount != 0) {
         throw new IllegalStateException(
@@ -303,10 +313,10 @@ public class Resolver {
 
       AbstractType type = table.getType(builder.toString().replace('/', '.'));
 
-        if (!(type instanceof ClassType)) {
-            throw new IllegalStateException(String.format("Type %s is not an ClassType",
-                builder));
-        }
+      if (!(type instanceof ClassType)) {
+        throw new IllegalStateException(String.format("Type %s is not an ClassType",
+            builder));
+      }
 
       classTypeRef.resolvedType = (ClassType) type;
     } else if (typeRef instanceof ArrayTypeRef) {

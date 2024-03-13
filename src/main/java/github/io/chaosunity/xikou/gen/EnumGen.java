@@ -26,11 +26,18 @@ public class EnumGen extends ClassFileGen {
 
   @Override
   protected byte[] genClassFileBytes() {
+    ClassType[] interfaceTypes = enumDecl.getInterfaceTypes();
+    String[] interfaceInternalNames = new String[interfaceTypes.length];
+
+    for (int i = 0; i < interfaceTypes.length; i++) {
+      interfaceInternalNames[i] = interfaceTypes[i].getInternalName();
+    }
+
     ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS);
     cw.visit(Opcodes.V1_8, enumDecl.modifiers | Opcodes.ACC_ENUM,
         enumDecl.getType().getInternalName(),
         String.format("Ljava/lang/Enum<%s>;", enumDecl.getType().getDescriptor()),
-        "java/lang/Enum", null);
+        "java/lang/Enum", interfaceInternalNames);
 
     genStaticInit(cw);
     genValueOf(cw);

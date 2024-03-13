@@ -220,10 +220,39 @@ public class Parser {
 
   private EnumDecl parseEnumDecl(PackageRef packageRef, int modifiers) {
     Token enumNameToken = lexer.expectToken(TokenType.Identifier), cachedIdentifierToken = null;
+    int interfaceCount = 0;
+    ClassTypeRef[] interfaces = new ClassTypeRef[1];
     int fieldCount = 0;
     FieldDecl[] fieldDecls = new FieldDecl[1];
     int enumVariantCount = 0;
     EnumVariantDecl[] enumVariantDecls = new EnumVariantDecl[1];
+
+    if (lexer.acceptToken(TokenType.Colon)) {
+      while (true) {
+        if (interfaceCount >= interfaces.length) {
+          ClassTypeRef[] newArr = new ClassTypeRef[interfaces.length * 2];
+          System.arraycopy(interfaces, 0, newArr, 0, interfaces.length);
+          interfaces = newArr;
+        }
+
+        AbstractTypeRef typeRef = parseTypeRef();
+
+        if (typeRef instanceof ArrayTypeRef) {
+          throw new IllegalStateException("Cannot extends an array type");
+        }
+        if (typeRef instanceof PrimitiveTypeRef) {
+          throw new IllegalStateException("Cannot extends a primitive type");
+        }
+
+        interfaces[interfaceCount++] = (ClassTypeRef) typeRef;
+
+        if (lexer.peekToken(TokenType.OpenBrace)) {
+          break;
+        } else {
+          lexer.expectToken(TokenType.Comma);
+        }
+      }
+    }
 
     lexer.expectToken(TokenType.OpenBrace);
 
@@ -267,7 +296,8 @@ public class Parser {
 
     lexer.expectToken(TokenType.CloseBrace);
 
-    return new EnumDecl(packageRef, modifiers, enumNameToken, fieldCount, fieldDecls,
+    return new EnumDecl(packageRef, modifiers, enumNameToken, interfaceCount, interfaces,
+        fieldCount, fieldDecls,
         enumVariantCount, enumVariantDecls);
   }
 

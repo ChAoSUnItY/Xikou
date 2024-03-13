@@ -4,7 +4,7 @@ import github.io.chaosunity.xikou.ast.types.ClassTypeRef;
 import github.io.chaosunity.xikou.lexer.Token;
 import github.io.chaosunity.xikou.resolver.types.ClassType;
 
-public class ClassDecl extends BoundableDecl {
+public class ClassDecl implements BoundableDecl {
 
   public final PackageRef packageRef;
   public final int modifiers;
@@ -14,7 +14,9 @@ public class ClassDecl extends BoundableDecl {
   public final int fieldCount;
   public final FieldDecl[] fieldDecls;
   public ImplDecl boundImplDecl;
-  private ClassType classType;
+  public ClassType classType;
+  private ClassType superclassType;
+  private ClassType[] interfaceTypes;
 
   public ClassDecl(PackageRef packageRef, int modifiers, Token classNameToken, int inheritedCount,
       ClassTypeRef[] inheritedClasses, int fieldCount, FieldDecl[] fieldDecls) {
@@ -42,33 +44,63 @@ public class ClassDecl extends BoundableDecl {
     return boundImplDecl;
   }
 
+  @Override
+  public void bindImplbidirectionally(ImplDecl implDecl) {
+    boundImplDecl = implDecl;
+    implDecl.boundDecl = this;
+  }
+
+  @Override
+  public boolean isInterface() {
+    return false;
+  }
+
+  @Override
   public ClassType getSuperclassType() {
     return inheritedClasses[0] != null ? inheritedClasses[0].resolvedType
         : ClassType.OBJECT_CLASS_TYPE;
   }
 
   @Override
-  public ClassType getType() {
-      if (classType != null) {
-          return classType;
-      }
-
-    PackageRef packageRef = getPackageRef();
-    Token declNameToken = getNameToken();
-    String internalPath;
-
-    if (packageRef.qualifiedPath.isEmpty()) {
-      internalPath = declNameToken.literal;
-    } else {
-      internalPath = packageRef.qualifiedPath.replace('.', '/') + "/" + declNameToken.literal;
-    }
-
-    return new ClassType(getSuperclassType(), internalPath);
+  public ClassType[] getInterfaceTypes() {
+    return interfaceTypes;
   }
 
   @Override
-  public void bindImplbidirectionally(ImplDecl implDecl) {
-    boundImplDecl = implDecl;
-    implDecl.boundDecl = this;
+  public ClassType getType() {
+    return classType != null ? classType : (classType = BoundableDecl.super.getType());
+  }
+
+  public void resolveSuperclassAndInterfaces() {
+    if (superclassType != null && interfaceTypes != null) {
+      return;
+    }
+
+    // Precalculate array size of interfaceTypes
+    int interfaceTypesCount = 0;
+
+    for (int i = 0; i < inheritedCount; i++) {
+      if (inheritedClasses[i].resolvedType.isInterface) {
+        interfaceTypesCount++;
+      }
+    }
+
+    interfaceTypes = new ClassType[interfaceTypesCount];
+    interfaceTypesCount = 0;
+
+    for (int i = 0; i < inheritedCount; i++) {
+      ClassType classType = inheritedClasses[i].resolvedType;
+
+      if (classType.isInterface) {
+        interfaceTypes[interfaceTypesCount++] = classType;
+        continue;
+      }
+
+      if (superclassType != null) {
+        throw new IllegalStateException("Cannot extend multiple classes");
+      }
+
+      superclassType = classType;
+    }
   }
 }

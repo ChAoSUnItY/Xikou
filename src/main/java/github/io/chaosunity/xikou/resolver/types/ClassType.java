@@ -4,17 +4,21 @@ import java.util.Objects;
 
 public final class ClassType implements AbstractType {
 
-  public static final ClassType OBJECT_CLASS_TYPE = new ClassType(null, "java/lang/Object");
+  public static final ClassType OBJECT_CLASS_TYPE = new ClassType(null, false, "java/lang/Object");
   public static final ClassType ENUM_CLASS_TYPE = new ClassType(OBJECT_CLASS_TYPE,
+      false,
       "java/lang/Enum");
   public static final ClassType STRING_CLASS_TYPE = new ClassType(OBJECT_CLASS_TYPE,
+      false,
       "java/lang/String");
 
   public final ClassType superclass;
+  public final boolean isInterface;
   public final String internalName;
 
-  public ClassType(ClassType superclass, String internalName) {
+  public ClassType(ClassType superclass, boolean isInterface, String internalName) {
     this.superclass = superclass;
+    this.isInterface = isInterface;
     this.internalName = internalName;
   }
 

@@ -4,6 +4,7 @@ import github.io.chaosunity.xikou.ast.ClassDecl;
 import github.io.chaosunity.xikou.ast.FieldDecl;
 import github.io.chaosunity.xikou.ast.PrimaryConstructorDecl;
 import github.io.chaosunity.xikou.resolver.types.AbstractType;
+import github.io.chaosunity.xikou.resolver.types.ClassType;
 import github.io.chaosunity.xikou.resolver.types.PrimitiveType;
 import java.nio.file.Path;
 import org.objectweb.asm.ClassWriter;
@@ -21,9 +22,16 @@ public class ClassGen extends ClassFileGen {
 
   @Override
   protected byte[] genClassFileBytes() {
+    ClassType[] interfaceTypes = classDecl.getInterfaceTypes();
+    String[] interfaceInternalNames = new String[interfaceTypes.length];
+
+    for (int i = 0; i < interfaceTypes.length; i++) {
+      interfaceInternalNames[i] = interfaceTypes[i].getInternalName();
+    }
+
     ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS);
     cw.visit(Opcodes.V1_8, classDecl.modifiers, classDecl.getType().getInternalName(), null,
-        classDecl.getSuperclassType().getInternalName(), null);
+        classDecl.getSuperclassType().getInternalName(), interfaceInternalNames);
 
     genPrimaryConstructor(cw);
 
@@ -65,7 +73,8 @@ public class ClassGen extends ClassFileGen {
 
       mw.visitCode();
       mw.visitVarInsn(Opcodes.ALOAD, 0);
-      mw.visitMethodInsn(Opcodes.INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false);
+      mw.visitMethodInsn(Opcodes.INVOKESPECIAL, "java/lang/Object", "<init>", "()V",
+          classDecl.isInterface());
     } else {
       mw = genDefaultPrimaryConstructor(cw);
     }
