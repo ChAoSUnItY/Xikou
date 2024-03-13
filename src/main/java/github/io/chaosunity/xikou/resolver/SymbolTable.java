@@ -59,15 +59,7 @@ public class SymbolTable {
       if (decl instanceof ClassDecl) {
         ClassDecl classDecl = (ClassDecl) decl;
 
-        for (int j = 0; j < classDecl.fieldCount; j++) {
-          FieldDecl fieldDecl = classDecl.fieldDecls[j];
-
-          if (fieldDecl.name.literal.equals(name)) {
-            return new FieldRef(ownerType, false, name, fieldDecl.typeRef.getType());
-          }
-        }
-
-        return null;
+        return getFieldRef(classDecl.fieldCount, classDecl.fieldDecls, ownerType, name);
       } else if (decl instanceof EnumDecl) {
         EnumDecl enumDecl = (EnumDecl) decl;
 
@@ -79,15 +71,7 @@ public class SymbolTable {
           }
         }
 
-        for (int j = 0; j < enumDecl.fieldCount; j++) {
-          FieldDecl fieldDecl = enumDecl.fieldDecls[j];
-
-          if (fieldDecl.name.literal.equals(name)) {
-            return new FieldRef(ownerType, false, name, fieldDecl.typeRef.getType());
-          }
-        }
-
-        return null;
+        return getFieldRef(enumDecl.fieldCount, enumDecl.fieldDecls, ownerType, name);
       }
     }
 
@@ -100,6 +84,19 @@ public class SymbolTable {
       return new FieldRef(ownerType, Modifier.isStatic(field.getModifiers()), name,
           fieldType);
     } catch (ClassNotFoundException | NoSuchFieldException ignored) {
+    }
+
+    return null;
+  }
+
+  private FieldRef getFieldRef(int fieldCount, FieldDecl[] fieldDecls, AbstractType ownerType,
+      String name) {
+    for (int j = 0; j < fieldCount; j++) {
+      FieldDecl fieldDecl = fieldDecls[j];
+
+      if (fieldDecl.name.literal.equals(name)) {
+        return new FieldRef(ownerType, false, name, fieldDecl.typeRef.getType());
+      }
     }
 
     return null;
@@ -179,10 +176,22 @@ public class SymbolTable {
     } else {
       String internalName = clazz.getCanonicalName().replace(".", "/");
       Class superClazz = clazz.getSuperclass();
+      Class[] interfaceClazzes = clazz.getInterfaces();
+      ClassType[] interfaceClasses = new ClassType[interfaceClazzes.length];
+
+      for (int i = 0; i < interfaceClasses.length; i++) {
+        AbstractType superclass = getTypeFromClass(interfaceClazzes[i]);
+
+        if (!(superclass instanceof ClassType)) {
+          throw new IllegalStateException("ICE: Interface is not an ClassType");
+        }
+
+        interfaceClasses[i] = (ClassType) superclass;
+      }
 
       if (superClazz == null) {
         if (clazz.isInterface()) {
-          return new ClassType(null, true, internalName);
+          return new ClassType(null, interfaceClasses, true, internalName);
         } else {
           return ClassType.OBJECT_CLASS_TYPE;
         }
@@ -194,7 +203,7 @@ public class SymbolTable {
         throw new IllegalStateException("ICE: Superclass is not an ClassType");
       }
 
-      return new ClassType((ClassType) superclass, false, internalName);
+      return new ClassType((ClassType) superclass, interfaceClasses, false, internalName);
     }
   }
 }

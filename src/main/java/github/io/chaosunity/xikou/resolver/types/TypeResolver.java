@@ -4,12 +4,8 @@ public class TypeResolver {
 
   // TODO: Complete it
   public static boolean isInstanceOf(AbstractType fromType, AbstractType targetType) {
-    if (fromType instanceof PrimitiveType) {
-      if (targetType instanceof PrimitiveType) {
-        return fromType.equals(targetType);
-      }
-
-      return false;
+    if (fromType instanceof PrimitiveType && targetType instanceof PrimitiveType) {
+      return fromType.equals(targetType);
     }
 
     // Allows implicit down cast for null (assume it as any type).
@@ -19,23 +15,35 @@ public class TypeResolver {
     }
 
     if (fromType instanceof ClassType && targetType instanceof ClassType) {
-      if (fromType.equals(targetType)) {
+      return TypeResolver.isObjectInstanceOf((ClassType) fromType, (ClassType) targetType);
+    }
+
+    return false;
+  }
+
+  private static boolean isObjectInstanceOf(ClassType fromType, ClassType targetType) {
+    if (fromType.equals(targetType)) {
+      return true;
+    }
+
+    // Checks interfaces first
+    ClassType[] interfaces = fromType.getInterfaces();
+
+    for (ClassType interfaceType : interfaces) {
+      if (TypeResolver.isObjectInstanceOf(interfaceType, targetType)) {
+        return true;
+      }
+    }
+
+    // Checks superclass later
+    ClassType superclassType = fromType.getSuperclass();
+
+    while (superclassType != null) {
+      if (TypeResolver.isObjectInstanceOf(superclassType, targetType)) {
         return true;
       }
 
-      ClassType fromClassType = (ClassType) fromType;
-      ClassType superclassType = fromClassType.superclass;
-
-      // TODO: Resolve interface branches
-      while (superclassType != null) {
-        if (superclassType.equals(targetType)) {
-          return true;
-        }
-
-        superclassType = superclassType.superclass;
-      }
-
-      return false;
+      superclassType = superclassType.getSuperclass();
     }
 
     return false;

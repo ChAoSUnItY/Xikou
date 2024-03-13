@@ -39,6 +39,6 @@ public interface BoundableDecl {
       internalPath = packageRef.qualifiedPath.replace('.', '/') + "/" + declNameToken.literal;
     }
 
-    return new ClassType(getSuperclassType(), isInterface(), internalPath);
+    return new ClassType(getSuperclassType(), getInterfaceTypes(), isInterface(), internalPath);
   }
 }

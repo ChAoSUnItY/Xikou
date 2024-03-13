@@ -26,6 +26,7 @@ import github.io.chaosunity.xikou.lexer.TokenType;
 import github.io.chaosunity.xikou.resolver.types.AbstractType;
 import github.io.chaosunity.xikou.resolver.types.ArrayType;
 import github.io.chaosunity.xikou.resolver.types.ClassType;
+import github.io.chaosunity.xikou.resolver.types.TypeResolver;
 
 public class Resolver {
 
@@ -185,8 +186,17 @@ public class Resolver {
       resolveExpr(infixExpr.lhs, scope);
       resolveExpr(infixExpr.rhs, scope);
 
-      if (infixExpr.operator.type == TokenType.Equal && !infixExpr.lhs.isAssignable()) {
-        throw new IllegalStateException("Illegal assignment");
+      if (infixExpr.operator.type == TokenType.Equal) {
+        if (!infixExpr.lhs.isAssignable()) {
+          throw new IllegalStateException("Illegal assignment");
+        }
+
+        if (!TypeResolver.isInstanceOf(infixExpr.rhs.getType(), infixExpr.lhs.getType())) {
+          throw new IllegalStateException(
+              String.format("Illegal assignment: %s is not compatible with %s",
+                  infixExpr.rhs.getType().getInternalName(),
+                  infixExpr.lhs.getType().getInternalName()));
+        }
       }
     } else if (expr instanceof MemberAccessExpr) {
       MemberAccessExpr memberAccessExpr = (MemberAccessExpr) expr;

@@ -10,7 +10,7 @@ import java.nio.file.Paths;
 public class Main {
 
   public static void main(String[] args) throws IOException {
-    Parser parser = new Parser(Paths.get("example/main.xk"));
+    Parser parser = new Parser(Paths.get("example/test.xk"));
     XkFile parsedFile = parser.parseFile();
     XkFile resolvedFile = new Resolver(parsedFile).resolve();
     JvmGen gen = new JvmGen(Paths.get("output"), resolvedFile);
