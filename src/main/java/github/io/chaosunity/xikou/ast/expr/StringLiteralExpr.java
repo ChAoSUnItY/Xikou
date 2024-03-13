@@ -5,19 +5,20 @@ import github.io.chaosunity.xikou.resolver.types.AbstractType;
 import github.io.chaosunity.xikou.resolver.types.ClassType;
 
 public class StringLiteralExpr extends Expr {
-    public final Token stringLiteralToken;
 
-    public StringLiteralExpr(Token stringLiteralToken) {
-        this.stringLiteralToken = stringLiteralToken;
-    }
+  public final Token stringLiteralToken;
 
-    @Override
-    public AbstractType getType() {
-        return ClassType.STRING_CLASS_TYPE;
-    }
+  public StringLiteralExpr(Token stringLiteralToken) {
+    this.stringLiteralToken = stringLiteralToken;
+  }
 
-    @Override
-    public boolean isAssignable() {
-        return false;
-    }
+  @Override
+  public AbstractType getType() {
+    return ClassType.STRING_CLASS_TYPE;
+  }
+
+  @Override
+  public boolean isAssignable() {
+    return false;
+  }
 }

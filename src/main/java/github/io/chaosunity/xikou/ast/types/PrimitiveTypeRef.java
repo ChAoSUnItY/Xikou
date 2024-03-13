@@ -4,16 +4,17 @@ import github.io.chaosunity.xikou.lexer.Token;
 import github.io.chaosunity.xikou.resolver.types.PrimitiveType;
 
 public class PrimitiveTypeRef extends AbstractTypeRef {
-    public final PrimitiveType type;
-    public final Token typeRefToken;
 
-    public PrimitiveTypeRef(Token typeRefToken, PrimitiveType type) {
-        this.type = type;
-        this.typeRefToken = typeRefToken;
-    }
+  public final PrimitiveType type;
+  public final Token typeRefToken;
 
-    @Override
-    public PrimitiveType getType() {
-        return type;
-    }
+  public PrimitiveTypeRef(Token typeRefToken, PrimitiveType type) {
+    this.type = type;
+    this.typeRefToken = typeRefToken;
+  }
+
+  @Override
+  public PrimitiveType getType() {
+    return type;
+  }
 }

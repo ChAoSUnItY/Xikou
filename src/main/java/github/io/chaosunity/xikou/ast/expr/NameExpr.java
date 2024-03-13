@@ -6,26 +6,27 @@ import github.io.chaosunity.xikou.resolver.LocalVarRef;
 import github.io.chaosunity.xikou.resolver.types.AbstractType;
 
 public class NameExpr extends Expr implements TypeableExpr {
-    public final Token varIdentifier;
-    public AbstractType resolvedType;
-    public LocalVarRef localVarRef;
 
-    public NameExpr(Token varIdentifier) {
-        this.varIdentifier = varIdentifier;
-    }
+  public final Token varIdentifier;
+  public AbstractType resolvedType;
+  public LocalVarRef localVarRef;
 
-    @Override
-    public AbstractType getType() {
-        return resolvedType;
-    }
+  public NameExpr(Token varIdentifier) {
+    this.varIdentifier = varIdentifier;
+  }
 
-    @Override
-    public boolean isAssignable() {
-        return true;
-    }
+  @Override
+  public AbstractType getType() {
+    return resolvedType;
+  }
 
-    @Override
-    public ClassTypeRef asTypeRef() {
-        return new ClassTypeRef(1, new Token[]{varIdentifier});
-    }
+  @Override
+  public boolean isAssignable() {
+    return true;
+  }
+
+  @Override
+  public ClassTypeRef asTypeRef() {
+    return new ClassTypeRef(1, new Token[]{varIdentifier});
+  }
 }

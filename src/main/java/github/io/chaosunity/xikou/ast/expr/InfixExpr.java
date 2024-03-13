@@ -4,23 +4,24 @@ import github.io.chaosunity.xikou.lexer.Token;
 import github.io.chaosunity.xikou.resolver.types.AbstractType;
 
 public class InfixExpr extends Expr {
-    public final Expr lhs;
-    public final Token operator;
-    public final Expr rhs;
 
-    public InfixExpr(Expr lhs, Token operator, Expr rhs) {
-        this.lhs = lhs;
-        this.operator = operator;
-        this.rhs = rhs;
-    }
+  public final Expr lhs;
+  public final Token operator;
+  public final Expr rhs;
 
-    @Override
-    public boolean isAssignable() {
-        return lhs.isAssignable();
-    }
+  public InfixExpr(Expr lhs, Token operator, Expr rhs) {
+    this.lhs = lhs;
+    this.operator = operator;
+    this.rhs = rhs;
+  }
 
-    @Override
-    public AbstractType getType() {
-        return null; // TODO
-    }
+  @Override
+  public boolean isAssignable() {
+    return lhs.isAssignable();
+  }
+
+  @Override
+  public AbstractType getType() {
+    return null; // TODO
+  }
 }

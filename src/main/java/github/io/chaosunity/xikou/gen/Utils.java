@@ -4,46 +4,47 @@ import github.io.chaosunity.xikou.resolver.MethodRef;
 import github.io.chaosunity.xikou.resolver.types.AbstractType;
 
 public final class Utils {
-    public static String getMethodDescriptor(AbstractType returnType, AbstractType... parameters) {
-        StringBuilder builder = new StringBuilder("(");
 
-        for (AbstractType parameter : parameters) {
-            builder.append(parameter.getDescriptor());
-        }
+  public static String getMethodDescriptor(AbstractType returnType, AbstractType... parameters) {
+    StringBuilder builder = new StringBuilder("(");
 
-        builder.append(")");
-        builder.append(returnType.getDescriptor());
-        return builder.toString();
+    for (AbstractType parameter : parameters) {
+      builder.append(parameter.getDescriptor());
     }
 
-    public static String getMethodDescriptor(MethodRef methodRef) {
-        StringBuilder builder = new StringBuilder("(");
+    builder.append(")");
+    builder.append(returnType.getDescriptor());
+    return builder.toString();
+  }
 
-        for (int i = 0; i < methodRef.parameterCount; i++) {
-            builder.append(methodRef.parameterType[i].getDescriptor());
-        }
+  public static String getMethodDescriptor(MethodRef methodRef) {
+    StringBuilder builder = new StringBuilder("(");
 
-        builder.append(")");
-        builder.append(methodRef.isConstructor ? "V" : methodRef.returnType.getDescriptor());
-        return builder.toString();
+    for (int i = 0; i < methodRef.parameterCount; i++) {
+      builder.append(methodRef.parameterType[i].getDescriptor());
     }
 
-    public static int[] genLocalRefIndicesFromMethodDesc(AbstractType ownerType,
-                                                         AbstractType... parameters) {
-        int length = (ownerType != null ? 1 : 0) + parameters.length;
-        AbstractType[] localRefs = parameters;
-        int[] indices = new int[length];
+    builder.append(")");
+    builder.append(methodRef.isConstructor ? "V" : methodRef.returnType.getDescriptor());
+    return builder.toString();
+  }
 
-        if (ownerType != null) {
-            localRefs = new AbstractType[length];
-            localRefs[0] = ownerType;
-            System.arraycopy(parameters, 0, localRefs, 1, parameters.length);
-        }
+  public static int[] genLocalRefIndicesFromMethodDesc(AbstractType ownerType,
+      AbstractType... parameters) {
+    int length = (ownerType != null ? 1 : 0) + parameters.length;
+    AbstractType[] localRefs = parameters;
+    int[] indices = new int[length];
 
-        for (int i = 1; i < length; i++) {
-            indices[i] = indices[i - 1] + localRefs[i - 1].getSize();
-        }
-
-        return indices;
+    if (ownerType != null) {
+      localRefs = new AbstractType[length];
+      localRefs[0] = ownerType;
+      System.arraycopy(parameters, 0, localRefs, 1, parameters.length);
     }
+
+    for (int i = 1; i < length; i++) {
+      indices[i] = indices[i - 1] + localRefs[i - 1].getSize();
+    }
+
+    return indices;
+  }
 }

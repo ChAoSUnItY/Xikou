@@ -4,24 +4,25 @@ import github.io.chaosunity.xikou.ast.types.ClassTypeRef;
 import github.io.chaosunity.xikou.resolver.types.AbstractType;
 
 public class TypeExpr extends Expr implements TypeableExpr {
-    public final ClassTypeRef typeRef;
 
-    public TypeExpr(ClassTypeRef typeRef) {
-        this.typeRef = typeRef;
-    }
+  public final ClassTypeRef typeRef;
 
-    @Override
-    public AbstractType getType() {
-        return typeRef.getType();
-    }
+  public TypeExpr(ClassTypeRef typeRef) {
+    this.typeRef = typeRef;
+  }
 
-    @Override
-    public boolean isAssignable() {
-        return false;
-    }
+  @Override
+  public AbstractType getType() {
+    return typeRef.getType();
+  }
 
-    @Override
-    public ClassTypeRef asTypeRef() {
-        return typeRef;
-    }
+  @Override
+  public boolean isAssignable() {
+    return false;
+  }
+
+  @Override
+  public ClassTypeRef asTypeRef() {
+    return typeRef;
+  }
 }

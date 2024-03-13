@@ -4,25 +4,26 @@ import github.io.chaosunity.xikou.resolver.MethodRef;
 import github.io.chaosunity.xikou.resolver.types.AbstractType;
 
 public class ConstructorCallExpr extends Expr {
-    public final TypeableExpr ownerTypeExpr;
-    public final int argumentCount;
-    public final Expr[] arguments;
-    public AbstractType resolvedType;
-    public MethodRef resolvedMethodRef;
 
-    public ConstructorCallExpr(TypeableExpr ownerTypeExpr, int argumentCount, Expr[] arguments) {
-        this.ownerTypeExpr = ownerTypeExpr;
-        this.argumentCount = argumentCount;
-        this.arguments = arguments;
-    }
+  public final TypeableExpr ownerTypeExpr;
+  public final int argumentCount;
+  public final Expr[] arguments;
+  public AbstractType resolvedType;
+  public MethodRef resolvedMethodRef;
 
-    @Override
-    public AbstractType getType() {
-        return resolvedType;
-    }
+  public ConstructorCallExpr(TypeableExpr ownerTypeExpr, int argumentCount, Expr[] arguments) {
+    this.ownerTypeExpr = ownerTypeExpr;
+    this.argumentCount = argumentCount;
+    this.arguments = arguments;
+  }
 
-    @Override
-    public boolean isAssignable() {
-        return false;
-    }
+  @Override
+  public AbstractType getType() {
+    return resolvedType;
+  }
+
+  @Override
+  public boolean isAssignable() {
+    return false;
+  }
 }

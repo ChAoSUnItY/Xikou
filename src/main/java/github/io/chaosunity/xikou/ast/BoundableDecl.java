@@ -1,26 +1,26 @@
 package github.io.chaosunity.xikou.ast;
 
 import github.io.chaosunity.xikou.lexer.Token;
-import github.io.chaosunity.xikou.resolver.types.AbstractType;
 import github.io.chaosunity.xikou.resolver.types.ClassType;
 
 public abstract class BoundableDecl {
-    public abstract Token getNameToken();
 
-    public String getName() {
-        return getNameToken().literal;
-    }
+  public abstract Token getNameToken();
 
-    public abstract PackageRef getPackageRef();
+  public String getName() {
+    return getNameToken().literal;
+  }
 
-    public abstract ImplDecl getImplDecl();
+  public abstract PackageRef getPackageRef();
 
-    public PrimaryConstructorDecl getPrimaryConstructorDecl() {
-        ImplDecl implDecl = getImplDecl();
-        return implDecl != null ? implDecl.primaryConstructorDecl : null;
-    }
+  public abstract ImplDecl getImplDecl();
 
-    public abstract void bindImplbidirectionally(ImplDecl implDecl);
+  public PrimaryConstructorDecl getPrimaryConstructorDecl() {
+    ImplDecl implDecl = getImplDecl();
+    return implDecl != null ? implDecl.primaryConstructorDecl : null;
+  }
 
-    public abstract ClassType getType();
+  public abstract void bindImplbidirectionally(ImplDecl implDecl);
+
+  public abstract ClassType getType();
 }
