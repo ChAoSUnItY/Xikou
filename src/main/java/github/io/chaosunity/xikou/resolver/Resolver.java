@@ -15,28 +15,39 @@ public final class Resolver {
   private final SymbolTable table = new SymbolTable();
   private final TypeResolver typeResolver = new TypeResolver(table);
   private final ExprResolver exprResolver = new ExprResolver(table, typeResolver);
-  private final XkFile file;
+  private final XkFile[] files;
 
-  public Resolver(XkFile file) {
-    this.file = file;
+  public Resolver(XkFile[] files) {
+    this.files = files;
   }
 
-  public XkFile resolve() {
-    resolveTypeDecls();
-    resolveDeclSupertypes();
-    resolveDeclMembers();
-    resolveDeclBody();
+  public XkFile[] resolve() {
+    for (XkFile file : files) {
+      resolveTypeDecls(file);
+    }
 
-    return file;
+    for (XkFile file : files) {
+      resolveDeclSupertypes(file);
+    }
+
+    for (XkFile file : files) {
+      resolveDeclMembers(file);
+    }
+
+    for (XkFile file : files) {
+      resolveDeclBody(file);
+    }
+
+    return files;
   }
 
-  private void resolveTypeDecls() {
+  private void resolveTypeDecls(XkFile file) {
     for (int i = 0; i < file.declCount; i++) {
       table.registerDecl(file.decls[i]);
     }
   }
 
-  private void resolveDeclSupertypes() {
+  private void resolveDeclSupertypes(XkFile file) {
     for (int i = 0; i < file.declCount; i++) {
       BoundableDecl decl = file.decls[i];
 
@@ -60,7 +71,7 @@ public final class Resolver {
     }
   }
 
-  private void resolveDeclMembers() {
+  private void resolveDeclMembers(XkFile file) {
     for (int i = 0; i < file.declCount; i++) {
       BoundableDecl decl = file.decls[i];
       PrimaryConstructorDecl constructorDecl = decl.getPrimaryConstructorDecl();
@@ -78,10 +89,6 @@ public final class Resolver {
       } else if (decl instanceof EnumDecl) {
         EnumDecl enumDecl = (EnumDecl) decl;
 
-        for (int j = 0; j < enumDecl.variantCount; j++) {
-
-        }
-
         for (int j = 0; j < enumDecl.fieldCount; j++) {
           resolveFieldDecl(enumDecl.fieldDecls[j]);
         }
@@ -97,7 +104,7 @@ public final class Resolver {
     }
   }
 
-  private void resolveDeclBody() {
+  private void resolveDeclBody(XkFile file) {
     for (int i = 0; i < file.declCount; i++) {
       BoundableDecl decl = file.decls[i];
 

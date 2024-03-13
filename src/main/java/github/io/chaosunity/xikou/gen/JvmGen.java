@@ -13,11 +13,11 @@ import java.util.Objects;
 public class JvmGen {
 
   private final Path outputFolder;
-  private final XkFile file;
+  private final XkFile[] files;
 
-  public JvmGen(Path outputFolder, XkFile file) {
+  public JvmGen(Path outputFolder, XkFile[] files) {
     this.outputFolder = outputFolder;
-    this.file = file;
+    this.files = files;
   }
 
   private void init() {
@@ -37,6 +37,12 @@ public class JvmGen {
   public void gen() {
     init();
 
+    for (XkFile file : files) {
+      genFile(file);
+    }
+  }
+
+  private void genFile(XkFile file) {
     for (int i = 0; i < file.declCount; i++) {
       BoundableDecl decl = file.decls[i];
 
