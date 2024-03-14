@@ -7,6 +7,7 @@ import github.io.chaosunity.xikou.ast.expr.Expr;
 import github.io.chaosunity.xikou.ast.expr.InfixExpr;
 import github.io.chaosunity.xikou.ast.expr.IntegerLiteralExpr;
 import github.io.chaosunity.xikou.ast.expr.MemberAccessExpr;
+import github.io.chaosunity.xikou.ast.expr.MethodCallExpr;
 import github.io.chaosunity.xikou.ast.expr.NameExpr;
 import github.io.chaosunity.xikou.ast.expr.NullLiteral;
 import github.io.chaosunity.xikou.ast.expr.StringLiteralExpr;
@@ -30,6 +31,8 @@ public final class ExprResolver {
   public void resolveExpr(Expr expr, Scope scope) {
     if (expr instanceof InfixExpr) {
       resolveInfixExpr((InfixExpr) expr, scope);
+    } else if (expr instanceof MethodCallExpr) {
+      resolveMethodCallExpr((MethodCallExpr) expr, scope);
     } else if (expr instanceof MemberAccessExpr) {
       resolveMemberAccessExpr((MemberAccessExpr) expr, scope);
     } else if (expr instanceof ConstructorCallExpr) {
@@ -61,7 +64,7 @@ public final class ExprResolver {
   }
 
   private void resolveArrayInitExpr(ArrayInitExpr expr, Scope scope) {
-    typeResolver.resolveTypeRef(expr.componentTypeRef);
+    typeResolver.resolveTypeRef(expr.componentTypeRef, false);
     resolveExpr(expr.sizeExpr, scope);
 
     for (int i = 0; i < expr.initExprCount; i++) {
@@ -75,7 +78,7 @@ public final class ExprResolver {
   }
 
   private void resolveConstructorCallExpr(ConstructorCallExpr expr, Scope scope) {
-    ClassType ownerClassType = resolveTypeableExpr(expr.ownerTypeExpr);
+    ClassType ownerClassType = resolveTypeableExpr(expr.ownerTypeExpr, false);
 
     for (int i = 0; i < expr.argumentCount; i++) {
       resolveExpr(expr.arguments[i], scope);
@@ -102,25 +105,65 @@ public final class ExprResolver {
     expr.resolvedMethodRef = resolvedConstructorRef;
   }
 
-  private void resolveMemberAccessExpr(MemberAccessExpr expr, Scope scope) {
-    if (expr.ownerExpr instanceof NameExpr) {
-      NameExpr ownerNameExpr = (NameExpr) expr.ownerExpr;
+  private void resolveMethodCallExpr(MethodCallExpr expr, Scope scope) {
+    AbstractType[] arguementTypes = new AbstractType[expr.argumentCount];
+
+    for (int i = 0; i < expr.argumentCount; i++) {
+      resolveExpr(expr.arguments[i], scope);
+      arguementTypes[i] = expr.arguments[i].getType();
+    }
+
+    if (expr.ownerExpr instanceof TypeableExpr) {
       // Special check for type ref
-      AbstractType ownerType = table.getType(ownerNameExpr.varIdentifier.literal);
+      ClassType ownerType = resolveTypeableExpr((TypeableExpr) expr.ownerExpr, true);
+
+      if (ownerType != null) {
+        MethodRef methodRef = table.getMethod(ownerType, expr.nameToken.literal, arguementTypes);
+
+        if (methodRef != null) {
+          expr.resolvedMethodRef = methodRef;
+          return;
+        } else {
+          throw new IllegalStateException(
+              String.format("Type %s does not have method %s",
+                  ownerType.getInternalName(),
+                  expr.nameToken.literal));
+        }
+      }
+    }
+
+    resolveExpr(expr.ownerExpr, scope);
+
+    MethodRef methodRef = table.getMethod(expr.ownerExpr.getType(), expr.nameToken.literal,
+        arguementTypes);
+
+    if (methodRef != null) {
+      expr.resolvedMethodRef = methodRef;
+    } else {
+      throw new IllegalStateException(
+          String.format("Type %s does not have method %s",
+              expr.ownerExpr.getType(),
+              expr.nameToken.literal));
+    }
+  }
+
+  private void resolveMemberAccessExpr(MemberAccessExpr expr, Scope scope) {
+    if (expr.ownerExpr instanceof TypeableExpr) {
+      // Special check for type ref
+      ClassType ownerType = resolveTypeableExpr((TypeableExpr) expr.ownerExpr, true);
 
       if (ownerType != null) {
         FieldRef fieldRef = table.getField(ownerType,
-            expr.targetMember.literal);
+            expr.nameToken.literal);
 
         if (fieldRef != null) {
-          ownerNameExpr.resolvedType = ownerType;
-          expr.fieldRef = fieldRef;
+          expr.resolvedFieldRef = fieldRef;
           return;
         } else {
           throw new IllegalStateException(
               String.format("Type %s does not have field %s",
                   ownerType.getInternalName(),
-                  expr.targetMember.literal));
+                  expr.nameToken.literal));
         }
       }
     }
@@ -128,15 +171,15 @@ public final class ExprResolver {
     resolveExpr(expr.ownerExpr, scope);
 
     FieldRef fieldRef = table.getField(expr.ownerExpr.getType(),
-        expr.targetMember.literal);
+        expr.nameToken.literal);
 
     if (fieldRef != null) {
-      expr.fieldRef = fieldRef;
+      expr.resolvedFieldRef = fieldRef;
     } else {
       throw new IllegalStateException(
-          String.format("Unknown reference to field %s in type %s",
-              expr.targetMember.literal,
-              expr.ownerExpr.getType().getInternalName()));
+          String.format("Type %s does not have field %s",
+              expr.ownerExpr.getType().getInternalName(),
+              expr.nameToken.literal));
     }
   }
 
@@ -158,10 +201,10 @@ public final class ExprResolver {
     }
   }
 
-  private ClassType resolveTypeableExpr(TypeableExpr typeableExpr) {
+  private ClassType resolveTypeableExpr(TypeableExpr typeableExpr, boolean recoverable) {
     ClassTypeRef typeRef = typeableExpr.asTypeRef();
 
-    typeResolver.resolveTypeRef(typeRef);
+    typeResolver.resolveTypeRef(typeRef, recoverable);
 
     return typeRef.resolvedType;
   }

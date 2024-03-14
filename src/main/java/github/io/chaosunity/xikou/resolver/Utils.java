@@ -7,7 +7,8 @@ import github.io.chaosunity.xikou.resolver.types.TypeUtils;
 public class Utils {
 
   public static MethodRef genImplcicitPrimaryConstructorRef(AbstractType ownerClassType) {
-    return new MethodRef(ownerClassType, "<init>", 0, new AbstractType[0], ownerClassType, true);
+    return new MethodRef(ownerClassType, "<init>", 0, new AbstractType[0], ownerClassType, false,
+        true);
   }
 
   public static boolean isInvocationApplicable(int argumentCount, Expr[] arguments,

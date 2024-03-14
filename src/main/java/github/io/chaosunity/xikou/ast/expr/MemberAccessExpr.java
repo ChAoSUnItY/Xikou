@@ -7,17 +7,17 @@ import github.io.chaosunity.xikou.resolver.types.AbstractType;
 public class MemberAccessExpr extends Expr {
 
   public final Expr ownerExpr;
-  public final Token targetMember;
-  public FieldRef fieldRef;
+  public final Token nameToken;
+  public FieldRef resolvedFieldRef;
 
-  public MemberAccessExpr(Expr ownerExpr, Token targetMember) {
+  public MemberAccessExpr(Expr ownerExpr, Token nameToken) {
     this.ownerExpr = ownerExpr;
-    this.targetMember = targetMember;
+    this.nameToken = nameToken;
   }
 
   @Override
   public AbstractType getType() {
-    return fieldRef.fieldType;
+    return resolvedFieldRef.fieldType;
   }
 
   @Override

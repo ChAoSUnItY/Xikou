@@ -19,6 +19,7 @@ import github.io.chaosunity.xikou.ast.expr.Expr;
 import github.io.chaosunity.xikou.ast.expr.InfixExpr;
 import github.io.chaosunity.xikou.ast.expr.IntegerLiteralExpr;
 import github.io.chaosunity.xikou.ast.expr.MemberAccessExpr;
+import github.io.chaosunity.xikou.ast.expr.MethodCallExpr;
 import github.io.chaosunity.xikou.ast.expr.NameExpr;
 import github.io.chaosunity.xikou.ast.expr.NullLiteral;
 import github.io.chaosunity.xikou.ast.expr.StringLiteralExpr;
@@ -461,6 +462,16 @@ public class Parser {
 
         if (lexer.acceptToken(TokenType.OpenParenthesis)) {
           // (Instance / Static) Method call
+          Arguments arguments;
+
+          if (!lexer.acceptToken(TokenType.CloseParenthesis)) {
+            arguments = parseArguments();
+          } else {
+            arguments = new Arguments(0, new Expr[0]);
+          }
+
+          lhs = new MethodCallExpr(lhs, memberNameToken, arguments.argumentCount,
+              arguments.arguments);
         } else {
           // (Instance / Static) Member access
           lhs = new MemberAccessExpr(lhs, memberNameToken);

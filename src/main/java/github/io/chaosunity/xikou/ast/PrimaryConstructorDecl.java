@@ -34,6 +34,6 @@ public class PrimaryConstructorDecl {
     }
 
     return new MethodRef(implDecl.boundDecl.getType(), "<init>", exprCount, parameterTypes,
-        implDecl.boundDecl.getType(), true);
+        implDecl.boundDecl.getType(), false, true);
   }
 }

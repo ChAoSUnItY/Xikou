@@ -55,7 +55,7 @@ public final class Resolver {
         ClassDecl classDecl = (ClassDecl) decl;
 
         for (int j = 0; j < classDecl.inheritedCount; j++) {
-          typeResolver.resolveTypeRef(classDecl.inheritedClasses[j]);
+          typeResolver.resolveTypeRef(classDecl.inheritedClasses[j], false);
         }
 
         classDecl.resolveSuperclassAndInterfaces();
@@ -64,7 +64,7 @@ public final class Resolver {
         enumDecl.interfaceTypes = new ClassType[enumDecl.interfacCount];
 
         for (int j = 0; j < enumDecl.interfacCount; j++) {
-          typeResolver.resolveTypeRef(enumDecl.interfaces[j]);
+          typeResolver.resolveTypeRef(enumDecl.interfaces[j], false);
           enumDecl.interfaceTypes[j] = enumDecl.interfaces[j].resolvedType;
         }
       }
@@ -100,7 +100,7 @@ public final class Resolver {
     for (int i = 0; i < constructorDecl.parameterCount; i++) {
       Parameter parameter = constructorDecl.parameters[i];
 
-      typeResolver.resolveTypeRef(parameter.typeRef);
+      typeResolver.resolveTypeRef(parameter.typeRef, false);
     }
   }
 
@@ -138,7 +138,7 @@ public final class Resolver {
   }
 
   private void resolveFieldDecl(FieldDecl fieldDecl) {
-    typeResolver.resolveTypeRef(fieldDecl.typeRef);
+    typeResolver.resolveTypeRef(fieldDecl.typeRef, false);
   }
 
   private void resolveEnumVariantInitialization(EnumDecl enumDecl,

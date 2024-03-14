@@ -7,12 +7,14 @@ import github.io.chaosunity.xikou.ast.expr.Expr;
 import github.io.chaosunity.xikou.ast.expr.InfixExpr;
 import github.io.chaosunity.xikou.ast.expr.IntegerLiteralExpr;
 import github.io.chaosunity.xikou.ast.expr.MemberAccessExpr;
+import github.io.chaosunity.xikou.ast.expr.MethodCallExpr;
 import github.io.chaosunity.xikou.ast.expr.NameExpr;
 import github.io.chaosunity.xikou.ast.expr.NullLiteral;
 import github.io.chaosunity.xikou.ast.expr.StringLiteralExpr;
 import github.io.chaosunity.xikou.lexer.TokenType;
 import github.io.chaosunity.xikou.resolver.FieldRef;
 import github.io.chaosunity.xikou.resolver.LocalVarRef;
+import github.io.chaosunity.xikou.resolver.MethodRef;
 import github.io.chaosunity.xikou.resolver.types.AbstractType;
 import github.io.chaosunity.xikou.resolver.types.ArrayType;
 import github.io.chaosunity.xikou.resolver.types.ClassType;
@@ -25,6 +27,8 @@ public class ExprGen {
   public void genExpr(MethodVisitor mw, Expr expr) {
     if (expr instanceof InfixExpr) {
       genInfixExpr(mw, (InfixExpr) expr);
+    } else if (expr instanceof MethodCallExpr) {
+      genMethodCallExpr(mw, (MethodCallExpr) expr);
     } else if (expr instanceof MemberAccessExpr) {
       genMemberAccessExpr(mw, (MemberAccessExpr) expr);
     } else if (expr instanceof ConstructorCallExpr) {
@@ -52,14 +56,14 @@ public class ExprGen {
       case Equal:
         if (lhs instanceof MemberAccessExpr) {
           MemberAccessExpr memberAccessLhs = (MemberAccessExpr) lhs;
-          FieldRef fieldRef = memberAccessLhs.fieldRef;
+          FieldRef fieldRef = memberAccessLhs.resolvedFieldRef;
 
           genExpr(mw, memberAccessLhs.ownerExpr);
           genExpr(mw, rhs);
 
           mw.visitFieldInsn(fieldRef.isStatic ? Opcodes.PUTSTATIC : Opcodes.PUTFIELD,
               memberAccessLhs.ownerExpr.getType().getInternalName(),
-              memberAccessLhs.targetMember.literal,
+              memberAccessLhs.nameToken.literal,
               memberAccessLhs.getType().getDescriptor());
         }
         break;
@@ -69,8 +73,27 @@ public class ExprGen {
     }
   }
 
+  private void genMethodCallExpr(MethodVisitor mw, MethodCallExpr methodCallExpr) {
+    MethodRef methodRef = methodCallExpr.resolvedMethodRef;
+    int opcode;
+
+    if (methodRef.isStatic) {
+      opcode = Opcodes.INVOKESTATIC;
+    } else {
+      opcode = Opcodes.INVOKEVIRTUAL;
+      genExpr(mw, methodCallExpr.ownerExpr);
+    }
+
+    for (int i = 0; i < methodCallExpr.argumentCount; i++) {
+      genExpr(mw, methodCallExpr.arguments[i]);
+    }
+
+    mw.visitMethodInsn(opcode, methodRef.ownerClassType.getInternalName(), methodRef.name,
+        Utils.getMethodDescriptor(methodRef), false);
+  }
+
   private void genMemberAccessExpr(MethodVisitor mw, MemberAccessExpr memberAccessExpr) {
-    FieldRef fieldRef = memberAccessExpr.fieldRef;
+    FieldRef fieldRef = memberAccessExpr.resolvedFieldRef;
 
     if (fieldRef.isStatic) {
       mw.visitFieldInsn(Opcodes.GETSTATIC, fieldRef.ownerClassType.getInternalName(),

@@ -1,9 +1,8 @@
 pub class Box {
-    priv num: java::io::Serializable;
 }
 
 impl Box {
     pub self() {
-        self.num = java::lang::Integer.self(1);
+        java::lang::System.out.println("1");
     }
 }
