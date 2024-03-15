@@ -65,6 +65,11 @@ public class ExprGen {
               memberAccessLhs.ownerExpr.getType().getInternalName(),
               memberAccessLhs.nameToken.literal,
               memberAccessLhs.getType().getDescriptor());
+        } else if (lhs instanceof NameExpr) {
+          NameExpr nameExpr = (NameExpr) lhs;
+
+          genExpr(mw, rhs);
+          mw.visitVarInsn(Utils.getStoreOpcode(nameExpr.getType()), nameExpr.localVarRef.index);
         }
         break;
       default:

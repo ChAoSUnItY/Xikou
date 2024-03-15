@@ -4,6 +4,7 @@ pub class Box {
 impl Box {
     pub self() {
         let a = 1;
+        a = 2;
         java::lang::System.out.println(a);
     }
 }
