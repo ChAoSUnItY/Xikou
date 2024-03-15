@@ -4,7 +4,7 @@ import github.io.chaosunity.xikou.lexer.Token;
 import github.io.chaosunity.xikou.resolver.types.AbstractType;
 import github.io.chaosunity.xikou.resolver.types.PrimitiveType;
 
-public class CharLiteralExpr extends Expr {
+public class CharLiteralExpr implements Expr {
 
   public final Token characterToken;
 

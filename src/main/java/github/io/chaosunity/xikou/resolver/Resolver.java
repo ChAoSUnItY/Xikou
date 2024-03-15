@@ -2,11 +2,11 @@ package github.io.chaosunity.xikou.resolver;
 
 import github.io.chaosunity.xikou.ast.BoundableDecl;
 import github.io.chaosunity.xikou.ast.ClassDecl;
+import github.io.chaosunity.xikou.ast.ConstructorDecl;
 import github.io.chaosunity.xikou.ast.EnumDecl;
 import github.io.chaosunity.xikou.ast.EnumVariantDecl;
 import github.io.chaosunity.xikou.ast.FieldDecl;
 import github.io.chaosunity.xikou.ast.Parameter;
-import github.io.chaosunity.xikou.ast.PrimaryConstructorDecl;
 import github.io.chaosunity.xikou.ast.XkFile;
 import github.io.chaosunity.xikou.resolver.types.ClassType;
 
@@ -15,6 +15,7 @@ public final class Resolver {
   private final SymbolTable table = new SymbolTable();
   private final TypeResolver typeResolver = new TypeResolver(table);
   private final ExprResolver exprResolver = new ExprResolver(table, typeResolver);
+  private final StmtResolver stmtResolver = new StmtResolver(table, exprResolver, typeResolver);
   private final XkFile[] files;
 
   public Resolver(XkFile[] files) {
@@ -74,7 +75,7 @@ public final class Resolver {
   private void resolveDeclMembers(XkFile file) {
     for (int i = 0; i < file.declCount; i++) {
       BoundableDecl decl = file.decls[i];
-      PrimaryConstructorDecl constructorDecl = decl.getPrimaryConstructorDecl();
+      ConstructorDecl constructorDecl = decl.getPrimaryConstructorDecl();
 
       if (constructorDecl != null) {
         resolvePrimaryConstructorDeclEarly(constructorDecl);
@@ -96,7 +97,7 @@ public final class Resolver {
     }
   }
 
-  private void resolvePrimaryConstructorDeclEarly(PrimaryConstructorDecl constructorDecl) {
+  private void resolvePrimaryConstructorDeclEarly(ConstructorDecl constructorDecl) {
     for (int i = 0; i < constructorDecl.parameterCount; i++) {
       Parameter parameter = constructorDecl.parameters[i];
 
@@ -117,7 +118,7 @@ public final class Resolver {
   }
 
   private void resolveClassDecl(ClassDecl classDecl) {
-    PrimaryConstructorDecl constructorDecl = classDecl.getPrimaryConstructorDecl();
+    ConstructorDecl constructorDecl = classDecl.getPrimaryConstructorDecl();
 
     if (constructorDecl != null) {
       resolvePrimaryConstructorDecl(constructorDecl);
@@ -125,7 +126,7 @@ public final class Resolver {
   }
 
   private void resolveEnumDecl(EnumDecl enumDecl) {
-    PrimaryConstructorDecl constructorDecl = enumDecl.getPrimaryConstructorDecl();
+    ConstructorDecl constructorDecl = enumDecl.getPrimaryConstructorDecl();
 
     for (int i = 0; i < enumDecl.variantCount; i++) {
       resolveEnumVariantInitialization(enumDecl, constructorDecl,
@@ -142,7 +143,7 @@ public final class Resolver {
   }
 
   private void resolveEnumVariantInitialization(EnumDecl enumDecl,
-      PrimaryConstructorDecl constructorDecl,
+      ConstructorDecl constructorDecl,
       EnumVariantDecl variantDecl) {
     MethodRef constructorRef = constructorDecl != null ? constructorDecl.asMethodRef()
         : Utils.genImplcicitPrimaryConstructorRef(
@@ -156,7 +157,7 @@ public final class Resolver {
     }
   }
 
-  private void resolvePrimaryConstructorDecl(PrimaryConstructorDecl constructorDecl) {
+  private void resolvePrimaryConstructorDecl(ConstructorDecl constructorDecl) {
     constructorDecl.scope.addLocalVar("self", constructorDecl.implDecl.boundDecl.getType());
 
     for (int i = 0; i < constructorDecl.parameterCount; i++) {
@@ -165,8 +166,8 @@ public final class Resolver {
       constructorDecl.scope.addLocalVar(parameter.name.literal, parameter.typeRef.getType());
     }
 
-    for (int i = 0; i < constructorDecl.exprCount; i++) {
-      exprResolver.resolveExpr(constructorDecl.exprs[i], constructorDecl.scope);
+    for (int i = 0; i < constructorDecl.statementCount; i++) {
+      stmtResolver.resolveStatment(constructorDecl.statements[i], constructorDecl.scope);
     }
   }
 }

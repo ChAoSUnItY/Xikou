@@ -3,7 +3,7 @@ package github.io.chaosunity.xikou.ast.expr;
 import github.io.chaosunity.xikou.ast.types.AbstractTypeRef;
 import github.io.chaosunity.xikou.resolver.types.AbstractType;
 
-public class ArrayInitExpr extends Expr {
+public class ArrayInitExpr implements Expr {
 
   public final AbstractTypeRef componentTypeRef;
   public final Expr sizeExpr;

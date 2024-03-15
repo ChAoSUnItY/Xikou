@@ -11,7 +11,7 @@ public class Scope {
 
   }
 
-  public void addLocalVar(String name, AbstractType type) {
+  public LocalVarRef addLocalVar(String name, AbstractType type) {
     for (int i = 0; i < localVarCount; i++) {
       if (localVarRefs[i].name.equals(name)) {
         throw new IllegalStateException(
@@ -25,8 +25,11 @@ public class Scope {
       localVarRefs = newArr;
     }
 
-    localVarRefs[localVarCount] = new LocalVarRef(name, localVarCount, type);
+    LocalVarRef localVarRef = localVarRefs[localVarCount] = new LocalVarRef(name, localVarCount,
+        type);
     localVarCount += type.getSize();
+
+    return localVarRef;
   }
 
   public LocalVarRef findLocalVar(String name) {

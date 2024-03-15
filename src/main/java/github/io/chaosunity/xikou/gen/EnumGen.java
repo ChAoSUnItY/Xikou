@@ -1,10 +1,10 @@
 package github.io.chaosunity.xikou.gen;
 
+import github.io.chaosunity.xikou.ast.ConstructorDecl;
 import github.io.chaosunity.xikou.ast.EnumDecl;
 import github.io.chaosunity.xikou.ast.EnumVariantDecl;
 import github.io.chaosunity.xikou.ast.FieldDecl;
 import github.io.chaosunity.xikou.ast.Parameter;
-import github.io.chaosunity.xikou.ast.PrimaryConstructorDecl;
 import github.io.chaosunity.xikou.resolver.types.AbstractType;
 import github.io.chaosunity.xikou.resolver.types.ClassType;
 import github.io.chaosunity.xikou.resolver.types.PrimitiveType;
@@ -56,7 +56,7 @@ public class EnumGen extends ClassFileGen {
 
   @Override
   protected void genPrimaryConstructor(ClassWriter cw) {
-    PrimaryConstructorDecl constructorDecl = enumDecl.getPrimaryConstructorDecl();
+    ConstructorDecl constructorDecl = enumDecl.getPrimaryConstructorDecl();
     MethodVisitor mw;
 
     if (constructorDecl != null) {
@@ -150,7 +150,7 @@ public class EnumGen extends ClassFileGen {
 
   private void genStaticInit(ClassWriter cw) {
     AbstractType enumType = enumDecl.getType();
-    PrimaryConstructorDecl constructorDecl = enumDecl.getPrimaryConstructorDecl();
+    ConstructorDecl constructorDecl = enumDecl.getPrimaryConstructorDecl();
     AbstractType[] constructorParamameterTypes = new AbstractType[2 + (constructorDecl != null
         ? constructorDecl.parameterCount : 0)];
 

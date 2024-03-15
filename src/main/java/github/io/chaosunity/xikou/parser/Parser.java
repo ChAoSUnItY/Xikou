@@ -3,6 +3,7 @@ package github.io.chaosunity.xikou.parser;
 import github.io.chaosunity.xikou.ast.Arguments;
 import github.io.chaosunity.xikou.ast.BoundableDecl;
 import github.io.chaosunity.xikou.ast.ClassDecl;
+import github.io.chaosunity.xikou.ast.ConstructorDecl;
 import github.io.chaosunity.xikou.ast.EnumDecl;
 import github.io.chaosunity.xikou.ast.EnumVariantDecl;
 import github.io.chaosunity.xikou.ast.FieldDecl;
@@ -10,7 +11,6 @@ import github.io.chaosunity.xikou.ast.ImplDecl;
 import github.io.chaosunity.xikou.ast.PackageRef;
 import github.io.chaosunity.xikou.ast.Parameter;
 import github.io.chaosunity.xikou.ast.Parameters;
-import github.io.chaosunity.xikou.ast.PrimaryConstructorDecl;
 import github.io.chaosunity.xikou.ast.XkFile;
 import github.io.chaosunity.xikou.ast.expr.ArrayInitExpr;
 import github.io.chaosunity.xikou.ast.expr.CharLiteralExpr;
@@ -25,6 +25,9 @@ import github.io.chaosunity.xikou.ast.expr.NullLiteral;
 import github.io.chaosunity.xikou.ast.expr.StringLiteralExpr;
 import github.io.chaosunity.xikou.ast.expr.TypeExpr;
 import github.io.chaosunity.xikou.ast.expr.TypeableExpr;
+import github.io.chaosunity.xikou.ast.stmt.ExprStmt;
+import github.io.chaosunity.xikou.ast.stmt.Statement;
+import github.io.chaosunity.xikou.ast.stmt.VarDeclStmt;
 import github.io.chaosunity.xikou.ast.types.AbstractTypeRef;
 import github.io.chaosunity.xikou.ast.types.ArrayTypeRef;
 import github.io.chaosunity.xikou.ast.types.ClassTypeRef;
@@ -335,7 +338,7 @@ public class Parser {
 
   private ImplDecl parseImplDecl() {
     Token targetClass = lexer.expectToken(TokenType.Identifier);
-    PrimaryConstructorDecl primaryConstructorDecl = null;
+    ConstructorDecl constructorDecl = null;
 
     lexer.expectToken(TokenType.OpenBrace);
 
@@ -343,7 +346,7 @@ public class Parser {
       int modifiers = parseAccessModifiers();
 
       if (lexer.acceptToken(TokenType.Self)) {
-        primaryConstructorDecl = parsePrimaryConstructorDecl(modifiers);
+        constructorDecl = parseConstructorDecl(modifiers);
         continue;
       }
 
@@ -354,32 +357,31 @@ public class Parser {
 
     lexer.expectToken(TokenType.CloseBrace);
 
-    return new ImplDecl(targetClass, primaryConstructorDecl);
+    return new ImplDecl(targetClass, constructorDecl);
   }
 
-  private PrimaryConstructorDecl parsePrimaryConstructorDecl(int modifiers) {
+  private ConstructorDecl parseConstructorDecl(int modifiers) {
     lexer.expectToken(TokenType.OpenParenthesis);
 
     Parameters parameters = parseParameters();
 
-    int exprCount = 0;
-    Expr[] exprs = new Expr[1];
+    int statementCount = 0;
+    Statement[] statements = new Statement[1];
 
     lexer.expectToken(TokenType.OpenBrace);
 
     while (!lexer.acceptToken(TokenType.CloseBrace)) {
-      if (exprCount >= exprs.length) {
-        Expr[] newArr = new Expr[exprs.length * 2];
-        System.arraycopy(exprs, 0, newArr, 0, exprs.length);
-        exprs = newArr;
+      if (statementCount >= statements.length) {
+        Statement[] newArr = new Statement[statements.length * 2];
+        System.arraycopy(statements, 0, newArr, 0, statements.length);
+        statements = newArr;
       }
 
-      exprs[exprCount++] = parseExpr();
-      lexer.expectToken(TokenType.SemiColon);
+      statements[statementCount++] = parseStatement();
     }
 
-    return new PrimaryConstructorDecl(modifiers, parameters.parameterCount,
-        parameters.parameters, exprCount, exprs);
+    return new ConstructorDecl(modifiers, parameters.parameterCount,
+        parameters.parameters, statementCount, statements);
   }
 
   private Parameters parseParameters() {
@@ -428,6 +430,33 @@ public class Parser {
     }
 
     return new Arguments(argumentCount, arguments);
+  }
+
+  private Statement parseStatement() {
+    if (lexer.acceptToken(TokenType.Let)) {
+      // Variable Declaration
+      Token mutToken = null;
+      Expr initialExpr = null;
+
+      if (lexer.peekToken(TokenType.Mut)) {
+        mutToken = lexer.advanceToken();
+      }
+
+      Token varNameToken = lexer.expectToken(TokenType.Identifier);
+
+      if (lexer.acceptToken(TokenType.Equal)) {
+        initialExpr = parseExpr();
+      }
+
+      lexer.expectToken(TokenType.SemiColon);
+
+      return new VarDeclStmt(mutToken, varNameToken, initialExpr);
+    } else {
+      Expr expr = parseExpr();
+      lexer.expectToken(TokenType.SemiColon);
+
+      return new ExprStmt(expr);
+    }
   }
 
   private Expr parseExpr() {

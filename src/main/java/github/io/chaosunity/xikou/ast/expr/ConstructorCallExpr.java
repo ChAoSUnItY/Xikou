@@ -3,7 +3,7 @@ package github.io.chaosunity.xikou.ast.expr;
 import github.io.chaosunity.xikou.resolver.MethodRef;
 import github.io.chaosunity.xikou.resolver.types.AbstractType;
 
-public class ConstructorCallExpr extends Expr {
+public class ConstructorCallExpr implements Expr {
 
   public final TypeableExpr ownerTypeExpr;
   public final int argumentCount;

@@ -2,9 +2,9 @@ package github.io.chaosunity.xikou.ast.expr;
 
 import github.io.chaosunity.xikou.resolver.types.AbstractType;
 
-public abstract class Expr {
+public interface Expr {
 
-  public abstract AbstractType getType();
+  AbstractType getType();
 
-  public abstract boolean isAssignable();
+  boolean isAssignable();
 }

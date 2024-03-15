@@ -5,15 +5,15 @@ import github.io.chaosunity.xikou.lexer.Token;
 public class ImplDecl {
 
   public final Token targetClass;
-  public final PrimaryConstructorDecl primaryConstructorDecl;
+  public final ConstructorDecl constructorDecl;
   public BoundableDecl boundDecl;
 
-  public ImplDecl(Token targetClass, PrimaryConstructorDecl primaryConstructorDecl) {
+  public ImplDecl(Token targetClass, ConstructorDecl constructorDecl) {
     this.targetClass = targetClass;
-    this.primaryConstructorDecl = primaryConstructorDecl;
+    this.constructorDecl = constructorDecl;
 
-    if (primaryConstructorDecl != null) {
-      primaryConstructorDecl.implDecl = this;
+    if (constructorDecl != null) {
+      constructorDecl.implDecl = this;
     }
   }
 }

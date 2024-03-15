@@ -4,7 +4,7 @@ import github.io.chaosunity.xikou.lexer.Token;
 import github.io.chaosunity.xikou.resolver.MethodRef;
 import github.io.chaosunity.xikou.resolver.types.AbstractType;
 
-public class MethodCallExpr extends Expr {
+public class MethodCallExpr implements Expr {
 
   public final Expr ownerExpr;
   public final Token nameToken;

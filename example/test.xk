@@ -3,6 +3,7 @@ pub class Box {
 
 impl Box {
     pub self() {
-        java::lang::System.out.println("1");
+        let a = 1;
+        java::lang::System.out.println(a);
     }
 }

@@ -2,10 +2,10 @@ package github.io.chaosunity.xikou.resolver;
 
 import github.io.chaosunity.xikou.ast.BoundableDecl;
 import github.io.chaosunity.xikou.ast.ClassDecl;
+import github.io.chaosunity.xikou.ast.ConstructorDecl;
 import github.io.chaosunity.xikou.ast.EnumDecl;
 import github.io.chaosunity.xikou.ast.EnumVariantDecl;
 import github.io.chaosunity.xikou.ast.FieldDecl;
-import github.io.chaosunity.xikou.ast.PrimaryConstructorDecl;
 import github.io.chaosunity.xikou.resolver.types.AbstractType;
 import github.io.chaosunity.xikou.resolver.types.ClassType;
 import github.io.chaosunity.xikou.resolver.types.PrimitiveType;
@@ -173,7 +173,7 @@ public class SymbolTable {
         continue;
       }
 
-      PrimaryConstructorDecl constructorDecl = decl.getPrimaryConstructorDecl();
+      ConstructorDecl constructorDecl = decl.getPrimaryConstructorDecl();
 
       if (constructorDecl == null) {
         continue;
@@ -185,7 +185,7 @@ public class SymbolTable {
         parameterTypes[j] = constructorDecl.parameters[j].typeRef.getType();
       }
 
-      return new MethodRef[]{new MethodRef(ownerType, "<init>", constructorDecl.exprCount,
+      return new MethodRef[]{new MethodRef(ownerType, "<init>", constructorDecl.statementCount,
           parameterTypes,
           constructorDecl.implDecl.boundDecl.getType(),
           false,

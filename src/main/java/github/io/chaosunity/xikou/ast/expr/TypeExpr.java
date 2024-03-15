@@ -3,7 +3,7 @@ package github.io.chaosunity.xikou.ast.expr;
 import github.io.chaosunity.xikou.ast.types.ClassTypeRef;
 import github.io.chaosunity.xikou.resolver.types.AbstractType;
 
-public class TypeExpr extends Expr implements TypeableExpr {
+public class TypeExpr implements TypeableExpr {
 
   public final ClassTypeRef typeRef;
 

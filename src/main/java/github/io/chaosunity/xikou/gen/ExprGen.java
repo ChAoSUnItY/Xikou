@@ -131,7 +131,7 @@ public class ExprGen {
     }
 
     if (componentType instanceof PrimitiveType) {
-      mw.visitIntInsn(Opcodes.NEWARRAY, getArrayTypeOperand((PrimitiveType) componentType));
+      mw.visitIntInsn(Opcodes.NEWARRAY, Utils.getArrayTypeOperand((PrimitiveType) componentType));
     } else if (componentType instanceof ClassType) {
       mw.visitTypeInsn(Opcodes.ANEWARRAY, componentType.getInternalName());
     } else {
@@ -146,7 +146,7 @@ public class ExprGen {
       mw.visitInsn(Opcodes.DUP);
       mw.visitLdcInsn(i);
       genExpr(mw, initExpr);
-      mw.visitInsn(getArrayStoreOpcode(initExpr.getType()));
+      mw.visitInsn(Utils.getArrayStoreOpcode(initExpr.getType()));
     }
   }
 
@@ -154,7 +154,7 @@ public class ExprGen {
     LocalVarRef localVarRef = nameExpr.localVarRef;
     AbstractType varType = nameExpr.getType();
 
-    mw.visitVarInsn(getLoadOpcode(varType), localVarRef.index);
+    mw.visitVarInsn(Utils.getLoadOpcode(varType), localVarRef.index);
   }
 
   private void genCharLiteralExpr(MethodVisitor mw, CharLiteralExpr charLiteralExpr) {
@@ -171,86 +171,5 @@ public class ExprGen {
 
   private void genNullLiteral(MethodVisitor mw, NullLiteral nullLiteral) {
     mw.visitInsn(Opcodes.ACONST_NULL);
-  }
-
-  private static int getArrayTypeOperand(PrimitiveType type) {
-    switch (type) {
-      case CHAR:
-        return Opcodes.T_CHAR;
-      case BOOL:
-        return Opcodes.T_BOOLEAN;
-      case INT:
-        return Opcodes.T_INT;
-      case LONG:
-        return Opcodes.T_LONG;
-      case FLOAT:
-        return Opcodes.T_FLOAT;
-      case DOUBLE:
-        return Opcodes.T_DOUBLE;
-      default:
-        return 0;
-    }
-  }
-
-  private static int getArrayStoreOpcode(AbstractType type) {
-    if (type instanceof PrimitiveType) {
-      switch ((PrimitiveType) type) {
-        case CHAR:
-          return Opcodes.CASTORE;
-        case BOOL:
-          return Opcodes.BASTORE;
-        case INT:
-          return Opcodes.IASTORE;
-        case LONG:
-          return Opcodes.LASTORE;
-        case FLOAT:
-          return Opcodes.FASTORE;
-        case DOUBLE:
-          return Opcodes.DASTORE;
-        default:
-          return 0;
-      }
-    } else {
-      return Opcodes.AASTORE;
-    }
-  }
-
-  private static int getArrayLoadOpcode(AbstractType type) {
-    if (type instanceof PrimitiveType) {
-      switch ((PrimitiveType) type) {
-        case CHAR:
-          return Opcodes.CALOAD;
-        case BOOL:
-          return Opcodes.BALOAD;
-        case INT:
-          return Opcodes.IALOAD;
-        case LONG:
-          return Opcodes.LALOAD;
-        case FLOAT:
-          return Opcodes.FALOAD;
-        case DOUBLE:
-          return Opcodes.DALOAD;
-        default:
-          return 0;
-      }
-    } else {
-      return Opcodes.AALOAD;
-    }
-  }
-
-  private static int getLoadOpcode(AbstractType type) {
-    if (type instanceof PrimitiveType) {
-      if (type == PrimitiveType.CHAR || type == PrimitiveType.BOOL || type == PrimitiveType.INT) {
-        return Opcodes.ILOAD;
-      } else if (type == PrimitiveType.LONG) {
-        return Opcodes.LLOAD;
-      } else if (type == PrimitiveType.DOUBLE) {
-        return Opcodes.DLOAD;
-      } else {
-        return 0;
-      }
-    } else {
-      return Opcodes.ALOAD;
-    }
   }
 }
