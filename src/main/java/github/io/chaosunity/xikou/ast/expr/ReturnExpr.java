@@ -4,6 +4,7 @@ import github.io.chaosunity.xikou.resolver.types.AbstractType;
 import github.io.chaosunity.xikou.resolver.types.PrimitiveType;
 
 public class ReturnExpr implements Expr {
+
   public final Expr rhs;
 
   public ReturnExpr(Expr rhs) {

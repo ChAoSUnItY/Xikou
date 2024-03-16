@@ -42,7 +42,8 @@ public class FnDecl {
       parameterTypes[i] = parameters[i].typeRef.getType();
     }
 
-    return new MethodRef(implDecl.boundDecl.getType(), nameToken.literal, parameterCount, parameterTypes,
+    return new MethodRef(implDecl.boundDecl.getType(), nameToken.literal, parameterCount,
+        parameterTypes,
         returnType, selfToken == null, false);
   }
 }

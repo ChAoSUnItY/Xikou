@@ -7,7 +7,8 @@ public class Scope {
   private int localVarCount = 0;
   private LocalVarRef[] localVarRefs = new LocalVarRef[1];
 
-  public Scope() {}
+  public Scope() {
+  }
 
   public Scope extend() {
     LocalVarRef[] extendedLocalVarRefs = new LocalVarRef[localVarRefs.length];

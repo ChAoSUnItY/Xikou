@@ -3,7 +3,6 @@ package github.io.chaosunity.xikou.gen;
 import github.io.chaosunity.xikou.ast.ClassDecl;
 import github.io.chaosunity.xikou.ast.ConstructorDecl;
 import github.io.chaosunity.xikou.ast.FieldDecl;
-import github.io.chaosunity.xikou.ast.ImplDecl;
 import github.io.chaosunity.xikou.resolver.types.AbstractType;
 import github.io.chaosunity.xikou.resolver.types.ClassType;
 import github.io.chaosunity.xikou.resolver.types.PrimitiveType;

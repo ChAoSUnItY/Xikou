@@ -436,7 +436,8 @@ public class Parser {
       statements[statementCount++] = parseStatement();
     }
 
-    return new FnDecl(modifiers, nameToken, selfToken, parameters.parameterCount, parameters.parameters,
+    return new FnDecl(modifiers, nameToken, selfToken, parameters.parameterCount,
+        parameters.parameters,
         returnTypeRef, statementCount, statements);
   }
 

@@ -6,6 +6,7 @@ import github.io.chaosunity.xikou.resolver.types.AbstractType;
 import github.io.chaosunity.xikou.resolver.types.PrimitiveType;
 
 public class BlockExpr implements Expr {
+
   public final int statementCount;
   public final Statement[] statements;
 
