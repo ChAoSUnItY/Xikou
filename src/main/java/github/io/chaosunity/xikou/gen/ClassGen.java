@@ -3,6 +3,7 @@ package github.io.chaosunity.xikou.gen;
 import github.io.chaosunity.xikou.ast.ClassDecl;
 import github.io.chaosunity.xikou.ast.ConstructorDecl;
 import github.io.chaosunity.xikou.ast.FieldDecl;
+import github.io.chaosunity.xikou.ast.ImplDecl;
 import github.io.chaosunity.xikou.resolver.types.AbstractType;
 import github.io.chaosunity.xikou.resolver.types.ClassType;
 import github.io.chaosunity.xikou.resolver.types.PrimitiveType;
@@ -33,13 +34,15 @@ public class ClassGen extends ClassFileGen {
     cw.visit(Opcodes.V1_8, classDecl.modifiers, classDecl.getType().getInternalName(), null,
         classDecl.getSuperclassType().getInternalName(), interfaceInternalNames);
 
-    genPrimaryConstructor(cw);
+    genConstructor(cw);
 
     for (int i = 0; i < classDecl.fieldCount; i++) {
       FieldDecl fieldDecl = classDecl.fieldDecls[i];
 
       genFieldDecl(cw, fieldDecl);
     }
+
+    genImplDecl(cw, classDecl.getImplDecl());
 
     cw.visitEnd();
     return cw.toByteArray();
@@ -51,8 +54,8 @@ public class ClassGen extends ClassFileGen {
   }
 
   @Override
-  protected void genPrimaryConstructor(ClassWriter cw) {
-    ConstructorDecl constructorDecl = classDecl.getPrimaryConstructorDecl();
+  protected void genConstructor(ClassWriter cw) {
+    ConstructorDecl constructorDecl = classDecl.getConstructorDecl();
     MethodVisitor mw;
 
     if (constructorDecl != null) {
@@ -91,7 +94,7 @@ public class ClassGen extends ClassFileGen {
       }
     }
 
-    genPrimaryConstrcutorBody(cw, mw, constructorDecl);
+    genConstructorBody(cw, mw, constructorDecl);
 
     mw.visitInsn(Opcodes.RETURN);
     mw.visitMaxs(-1, -1);

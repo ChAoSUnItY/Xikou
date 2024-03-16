@@ -15,7 +15,7 @@ public interface BoundableDecl {
 
   ImplDecl getImplDecl();
 
-  default ConstructorDecl getPrimaryConstructorDecl() {
+  default ConstructorDecl getConstructorDecl() {
     ImplDecl implDecl = getImplDecl();
     return implDecl != null ? implDecl.constructorDecl : null;
   }

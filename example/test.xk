@@ -7,4 +7,10 @@ impl Box {
         a = 2;
         java::lang::System.out.println(a);
     }
+
+    pub fn main(args: [java::lang::String]) {
+        let a = 1;
+        a = 2;
+        java::lang::System.out.println(a);
+    }
 }

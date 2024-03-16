@@ -173,7 +173,7 @@ public class SymbolTable {
         continue;
       }
 
-      ConstructorDecl constructorDecl = decl.getPrimaryConstructorDecl();
+      ConstructorDecl constructorDecl = decl.getConstructorDecl();
 
       if (constructorDecl == null) {
         continue;

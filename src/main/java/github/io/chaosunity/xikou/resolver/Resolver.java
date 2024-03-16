@@ -6,9 +6,12 @@ import github.io.chaosunity.xikou.ast.ConstructorDecl;
 import github.io.chaosunity.xikou.ast.EnumDecl;
 import github.io.chaosunity.xikou.ast.EnumVariantDecl;
 import github.io.chaosunity.xikou.ast.FieldDecl;
+import github.io.chaosunity.xikou.ast.FnDecl;
+import github.io.chaosunity.xikou.ast.ImplDecl;
 import github.io.chaosunity.xikou.ast.Parameter;
 import github.io.chaosunity.xikou.ast.XkFile;
 import github.io.chaosunity.xikou.resolver.types.ClassType;
+import github.io.chaosunity.xikou.resolver.types.PrimitiveType;
 
 public final class Resolver {
 
@@ -75,10 +78,18 @@ public final class Resolver {
   private void resolveDeclMembers(XkFile file) {
     for (int i = 0; i < file.declCount; i++) {
       BoundableDecl decl = file.decls[i];
-      ConstructorDecl constructorDecl = decl.getPrimaryConstructorDecl();
+      ConstructorDecl constructorDecl = decl.getConstructorDecl();
 
       if (constructorDecl != null) {
         resolvePrimaryConstructorDeclEarly(constructorDecl);
+      }
+
+      ImplDecl implDecl = decl.getImplDecl();
+
+      if (implDecl != null) {
+        for (int j = 0; j < implDecl.functionCount; j++) {
+          resolveFunctionDeclEarly(implDecl.functionDecls[j]);
+        }
       }
 
       if (decl instanceof ClassDecl) {
@@ -105,9 +116,38 @@ public final class Resolver {
     }
   }
 
+  private void resolveFunctionDeclEarly(FnDecl fnDecl) {
+    for (int i = 0; i < fnDecl.parameterCount; i++) {
+      Parameter parameter = fnDecl.parameters[i];
+
+      typeResolver.resolveTypeRef(parameter.typeRef, false);
+    }
+
+    if (fnDecl.returnTypeRef != null) {
+      typeResolver.resolveTypeRef(fnDecl.returnTypeRef, false);
+
+      fnDecl.returnType = fnDecl.returnTypeRef.getType();
+    } else {
+      fnDecl.returnType = PrimitiveType.VOID;
+    }
+  }
+
   private void resolveDeclBody(XkFile file) {
     for (int i = 0; i < file.declCount; i++) {
       BoundableDecl decl = file.decls[i];
+      ConstructorDecl constructorDecl = decl.getConstructorDecl();
+
+      if (constructorDecl != null) {
+        resolveConstructorDecl(constructorDecl);
+      }
+
+      ImplDecl implDecl = decl.getImplDecl();
+
+      if (implDecl != null) {
+        for (int j = 0; j < implDecl.functionCount; j++) {
+          resolveFunctionDecl(implDecl.functionDecls[j]);
+        }
+      }
 
       if (decl instanceof ClassDecl) {
         resolveClassDecl((ClassDecl) decl);
@@ -118,23 +158,14 @@ public final class Resolver {
   }
 
   private void resolveClassDecl(ClassDecl classDecl) {
-    ConstructorDecl constructorDecl = classDecl.getPrimaryConstructorDecl();
-
-    if (constructorDecl != null) {
-      resolvePrimaryConstructorDecl(constructorDecl);
-    }
   }
 
   private void resolveEnumDecl(EnumDecl enumDecl) {
-    ConstructorDecl constructorDecl = enumDecl.getPrimaryConstructorDecl();
+    ConstructorDecl constructorDecl = enumDecl.getConstructorDecl();
 
     for (int i = 0; i < enumDecl.variantCount; i++) {
       resolveEnumVariantInitialization(enumDecl, constructorDecl,
           enumDecl.enumVariantDecls[i]);
-    }
-
-    if (constructorDecl != null) {
-      resolvePrimaryConstructorDecl(constructorDecl);
     }
   }
 
@@ -157,7 +188,7 @@ public final class Resolver {
     }
   }
 
-  private void resolvePrimaryConstructorDecl(ConstructorDecl constructorDecl) {
+  private void resolveConstructorDecl(ConstructorDecl constructorDecl) {
     constructorDecl.scope.addLocalVar("self", constructorDecl.implDecl.boundDecl.getType());
 
     for (int i = 0; i < constructorDecl.parameterCount; i++) {
@@ -168,6 +199,22 @@ public final class Resolver {
 
     for (int i = 0; i < constructorDecl.statementCount; i++) {
       stmtResolver.resolveStatment(constructorDecl.statements[i], constructorDecl.scope);
+    }
+  }
+
+  private void resolveFunctionDecl(FnDecl fnDecl) {
+    if (fnDecl.selfToken != null) {
+      fnDecl.scope.addLocalVar("self", fnDecl.implDecl.boundDecl.getType());
+    }
+
+    for (int i = 0; i < fnDecl.parameterCount; i++) {
+      Parameter parameter = fnDecl.parameters[i];
+
+      fnDecl.scope.addLocalVar(parameter.name.literal, parameter.typeRef.getType());
+    }
+
+    for (int i = 0; i < fnDecl.statementCount; i++) {
+      stmtResolver.resolveStatment(fnDecl.statements[i], fnDecl.scope);
     }
   }
 }

@@ -2,7 +2,7 @@ package github.io.chaosunity.xikou.ast.types;
 
 import github.io.chaosunity.xikou.resolver.types.AbstractType;
 
-public abstract class AbstractTypeRef {
+public interface AbstractTypeRef {
 
-  public abstract AbstractType getType();
+  AbstractType getType();
 }

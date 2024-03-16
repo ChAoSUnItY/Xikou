@@ -16,30 +16,26 @@ public final class StmtGen {
     this.exprGen = exprGen;
   }
 
-  public void genStatement(MethodVisitor mw, Statement statement, Label blockEndLabel) {
+  public void genStatement(MethodVisitor mw, Statement statement) {
     if (statement instanceof VarDeclStmt) {
-      genVarDeclStatement(mw, (VarDeclStmt) statement, blockEndLabel);
+      genVarDeclStatement(mw, (VarDeclStmt) statement);
     } else if (statement instanceof ExprStmt) {
-      genExprStatment(mw, (ExprStmt) statement, blockEndLabel);
+      genExprStatment(mw, (ExprStmt) statement);
     }
   }
 
-  private void genVarDeclStatement(MethodVisitor mw, VarDeclStmt varDeclStmt, Label blockEndLabel) {
+  private void genVarDeclStatement(MethodVisitor mw, VarDeclStmt varDeclStmt) {
     Expr initialExpr = varDeclStmt.initialValue;
 
     if (initialExpr != null) {
-      Label varLivenessStartLabel = new Label();
       int localVarIndex = varDeclStmt.localVarRef.index;
       AbstractType initialValueType = initialExpr.getType();
       exprGen.genExpr(mw, varDeclStmt.initialValue);
       mw.visitVarInsn(Utils.getStoreOpcode(initialValueType), localVarIndex);
-      mw.visitLabel(varLivenessStartLabel);
-      mw.visitLocalVariable(varDeclStmt.nameToken.literal, initialValueType.getDescriptor(), null,
-          varLivenessStartLabel, blockEndLabel, localVarIndex);
     }
   }
 
-  private void genExprStatment(MethodVisitor mw, ExprStmt exprStmt, Label blockEndLabel) {
+  private void genExprStatment(MethodVisitor mw, ExprStmt exprStmt) {
     exprGen.genExpr(mw, exprStmt.expr);
   }
 }

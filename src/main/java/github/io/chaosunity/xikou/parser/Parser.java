@@ -7,6 +7,7 @@ import github.io.chaosunity.xikou.ast.ConstructorDecl;
 import github.io.chaosunity.xikou.ast.EnumDecl;
 import github.io.chaosunity.xikou.ast.EnumVariantDecl;
 import github.io.chaosunity.xikou.ast.FieldDecl;
+import github.io.chaosunity.xikou.ast.FnDecl;
 import github.io.chaosunity.xikou.ast.ImplDecl;
 import github.io.chaosunity.xikou.ast.PackageRef;
 import github.io.chaosunity.xikou.ast.Parameter;
@@ -339,6 +340,8 @@ public class Parser {
   private ImplDecl parseImplDecl() {
     Token targetClass = lexer.expectToken(TokenType.Identifier);
     ConstructorDecl constructorDecl = null;
+    int functionCount = 0;
+    FnDecl[] functionDecls = new FnDecl[1];
 
     lexer.expectToken(TokenType.OpenBrace);
 
@@ -350,6 +353,17 @@ public class Parser {
         continue;
       }
 
+      if (lexer.acceptToken(TokenType.Fn)) {
+        if (functionCount >= functionDecls.length) {
+          FnDecl[] newArr = new FnDecl[functionDecls.length * 2];
+          System.arraycopy(functionDecls, 0, newArr, 0, functionDecls.length);
+          functionDecls = newArr;
+        }
+
+        functionDecls[functionCount++] = parseFunctionDecl(modifiers);
+        continue;
+      }
+
       throw new IllegalStateException(
           String.format("Unexpected token %s while parsing implementation",
               lexer.getCurrentToken().type));
@@ -357,7 +371,7 @@ public class Parser {
 
     lexer.expectToken(TokenType.CloseBrace);
 
-    return new ImplDecl(targetClass, constructorDecl);
+    return new ImplDecl(targetClass, constructorDecl, functionCount, functionDecls);
   }
 
   private ConstructorDecl parseConstructorDecl(int modifiers) {
@@ -382,6 +396,46 @@ public class Parser {
 
     return new ConstructorDecl(modifiers, parameters.parameterCount,
         parameters.parameters, statementCount, statements);
+  }
+
+  private FnDecl parseFunctionDecl(int modifiers) {
+    Token nameToken = lexer.expectToken(TokenType.Identifier);
+    Token selfToken = null;
+    lexer.expectToken(TokenType.OpenParenthesis);
+
+    if (lexer.peekToken(TokenType.Self)) {
+      selfToken = lexer.advanceToken();
+
+      if (!lexer.acceptToken(TokenType.CloseParenthesis)) {
+        lexer.expectToken(TokenType.Comma);
+      }
+    }
+
+    Parameters parameters = parseParameters();
+
+    AbstractTypeRef returnTypeRef = null;
+
+    if (lexer.acceptToken(TokenType.SlimArrow)) {
+      returnTypeRef = parseTypeRef();
+    }
+
+    int statementCount = 0;
+    Statement[] statements = new Statement[1];
+
+    lexer.expectToken(TokenType.OpenBrace);
+
+    while (!lexer.acceptToken(TokenType.CloseBrace)) {
+      if (statementCount >= statements.length) {
+        Statement[] newArr = new Statement[statements.length * 2];
+        System.arraycopy(statements, 0, newArr, 0, statements.length);
+        statements = newArr;
+      }
+
+      statements[statementCount++] = parseStatement();
+    }
+
+    return new FnDecl(modifiers, nameToken, selfToken, parameters.parameterCount, parameters.parameters,
+        returnTypeRef, statementCount, statements);
   }
 
   private Parameters parseParameters() {
