@@ -7,8 +7,16 @@ public class Scope {
   private int localVarCount = 0;
   private LocalVarRef[] localVarRefs = new LocalVarRef[1];
 
-  public Scope() {
+  public Scope() {}
 
+  public Scope extend() {
+    LocalVarRef[] extendedLocalVarRefs = new LocalVarRef[localVarRefs.length];
+    System.arraycopy(localVarRefs, 0, extendedLocalVarRefs, 0, localVarCount);
+    Scope newScope = new Scope();
+    newScope.localVarCount = localVarCount;
+    newScope.localVarRefs = extendedLocalVarRefs;
+
+    return newScope;
   }
 
   public LocalVarRef addLocalVar(String name, AbstractType type) {

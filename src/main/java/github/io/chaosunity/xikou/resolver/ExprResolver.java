@@ -1,6 +1,7 @@
 package github.io.chaosunity.xikou.resolver;
 
 import github.io.chaosunity.xikou.ast.expr.ArrayInitExpr;
+import github.io.chaosunity.xikou.ast.expr.BlockExpr;
 import github.io.chaosunity.xikou.ast.expr.CharLiteralExpr;
 import github.io.chaosunity.xikou.ast.expr.ConstructorCallExpr;
 import github.io.chaosunity.xikou.ast.expr.Expr;
@@ -17,6 +18,7 @@ import github.io.chaosunity.xikou.ast.types.ClassTypeRef;
 import github.io.chaosunity.xikou.lexer.TokenType;
 import github.io.chaosunity.xikou.resolver.types.AbstractType;
 import github.io.chaosunity.xikou.resolver.types.ClassType;
+import github.io.chaosunity.xikou.resolver.types.PrimitiveType;
 import github.io.chaosunity.xikou.resolver.types.TypeUtils;
 
 public final class ExprResolver {
@@ -42,6 +44,8 @@ public final class ExprResolver {
       resolveArrayInitExpr((ArrayInitExpr) expr, scope);
     } else if (expr instanceof ReturnExpr) {
       resolveReturnExpr((ReturnExpr) expr, scope);
+    } else if (expr instanceof BlockExpr) {
+      resolveBlockExpr((BlockExpr) expr, scope);
     } else if (expr instanceof NameExpr) {
       resolveNameExpr((NameExpr) expr, scope);
     } else if (expr instanceof CharLiteralExpr) {
@@ -195,6 +199,10 @@ public final class ExprResolver {
         throw new IllegalStateException("Illegal assignment");
       }
 
+      if (expr.rhs.getType() == PrimitiveType.VOID) {
+        throw new IllegalStateException("void type cannot be used as value");
+      }
+
       if (!TypeUtils.isInstanceOf(expr.rhs.getType(), expr.lhs.getType())) {
         throw new IllegalStateException(
             String.format("Illegal assignment: %s is not compatible with %s",
@@ -206,6 +214,15 @@ public final class ExprResolver {
 
   private void resolveReturnExpr(ReturnExpr expr, Scope scope) {
     resolveExpr(expr.rhs, scope);
+  }
+
+  private void resolveBlockExpr(BlockExpr expr, Scope scope) {
+    Scope blockScope = scope.extend();
+    StmtResolver stmtResolver = new StmtResolver(table, this, typeResolver);
+
+    for (int i = 0; i < expr.statementCount; i++) {
+      stmtResolver.resolveStatment(expr.statements[i], blockScope);
+    }
   }
 
   private ClassType resolveTypeableExpr(TypeableExpr typeableExpr, boolean recoverable) {

@@ -156,7 +156,7 @@ public final class Utils {
       } else if (type == PrimitiveType.DOUBLE) {
         return Opcodes.DRETURN;
       } else {
-        return 0;
+        return Opcodes.RETURN;
       }
     } else {
       return Opcodes.ARETURN;

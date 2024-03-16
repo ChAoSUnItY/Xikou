@@ -14,6 +14,7 @@ import github.io.chaosunity.xikou.ast.Parameter;
 import github.io.chaosunity.xikou.ast.Parameters;
 import github.io.chaosunity.xikou.ast.XkFile;
 import github.io.chaosunity.xikou.ast.expr.ArrayInitExpr;
+import github.io.chaosunity.xikou.ast.expr.BlockExpr;
 import github.io.chaosunity.xikou.ast.expr.CharLiteralExpr;
 import github.io.chaosunity.xikou.ast.expr.ConstructorCallExpr;
 import github.io.chaosunity.xikou.ast.expr.Expr;
@@ -617,6 +618,23 @@ public class Parser {
       Expr expr = parseExpr();
 
       return new ReturnExpr(expr);
+    }
+
+    if (lexer.acceptToken(TokenType.OpenBrace)) {
+      int statementCount = 0;
+      Statement[] statements = new Statement[1];
+
+      while (!lexer.acceptToken(TokenType.CloseBrace)) {
+        if (statementCount >= statements.length) {
+          Statement[] newArr = new Statement[statements.length * 2];
+          System.arraycopy(statements, 0, newArr, 0, statements.length);
+          statements = newArr;
+        }
+
+        statements[statementCount++] = parseStatement();
+      }
+
+      return new BlockExpr(statementCount, statements);
     }
 
     if (lexer.peekToken(TokenType.CharLiteral)) {

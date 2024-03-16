@@ -1,6 +1,7 @@
 package github.io.chaosunity.xikou.gen;
 
 import github.io.chaosunity.xikou.ast.expr.ArrayInitExpr;
+import github.io.chaosunity.xikou.ast.expr.BlockExpr;
 import github.io.chaosunity.xikou.ast.expr.CharLiteralExpr;
 import github.io.chaosunity.xikou.ast.expr.ConstructorCallExpr;
 import github.io.chaosunity.xikou.ast.expr.Expr;
@@ -36,6 +37,10 @@ public class ExprGen {
       genConstructorCallExpr(mw, (ConstructorCallExpr) expr);
     } else if (expr instanceof ArrayInitExpr) {
       genArrayInitExpr(mw, (ArrayInitExpr) expr);
+    } else if (expr instanceof ReturnExpr) {
+      genReturnExpr(mw, (ReturnExpr) expr);
+    } else if (expr instanceof BlockExpr) {
+      genBlockExpr(mw, (BlockExpr) expr);
     } else if (expr instanceof NameExpr) {
       genNameExpr(mw, (NameExpr) expr);
     } else if (expr instanceof CharLiteralExpr) {
@@ -162,6 +167,14 @@ public class ExprGen {
       mw.visitInsn(Utils.getReturnOpcode(returnExpr.rhs.getType()));
     } else {
       mw.visitInsn(Opcodes.RETURN);
+    }
+  }
+
+  private void genBlockExpr(MethodVisitor mw, BlockExpr blockExpr) {
+    StmtGen stmtGen = new StmtGen(this);
+
+    for (int i = 0; i < blockExpr.statementCount; i++) {
+      stmtGen.genStatement(mw, blockExpr.statements[i]);
     }
   }
 

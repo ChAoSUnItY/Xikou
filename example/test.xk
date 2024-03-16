@@ -11,6 +11,12 @@ impl Box {
     pub fn main(args: [java::lang::String]) {
         let a = 1;
         a = 2;
+        a = 3;
         java::lang::System.out.println(a);
+        return {};
+    }
+
+    pub(pkg) fn get2() -> i32 {
+      return 2;
     }
 }

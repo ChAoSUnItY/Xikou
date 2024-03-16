@@ -5,7 +5,6 @@ import github.io.chaosunity.xikou.ast.stmt.ExprStmt;
 import github.io.chaosunity.xikou.ast.stmt.Statement;
 import github.io.chaosunity.xikou.ast.stmt.VarDeclStmt;
 import github.io.chaosunity.xikou.resolver.types.AbstractType;
-import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 
 public final class StmtGen {

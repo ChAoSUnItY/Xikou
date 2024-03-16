@@ -4,6 +4,8 @@ import github.io.chaosunity.xikou.ast.ConstructorDecl;
 import github.io.chaosunity.xikou.ast.FnDecl;
 import github.io.chaosunity.xikou.ast.ImplDecl;
 import github.io.chaosunity.xikou.ast.expr.ReturnExpr;
+import github.io.chaosunity.xikou.ast.stmt.ExprStmt;
+import github.io.chaosunity.xikou.ast.stmt.Statement;
 import github.io.chaosunity.xikou.resolver.types.PrimitiveType;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -72,10 +74,17 @@ public abstract class ClassFileGen {
       stmtGen.genStatement(mw, fnDecl.statements[i]);
     }
 
-    // FIXME: implicit void return hack
-    if (!(fnDecl.statements[fnDecl.statementCount - 1] instanceof ReturnExpr)
-        && fnDecl.returnType == PrimitiveType.VOID) {
-      mw.visitInsn(Opcodes.RETURN);
+    // Implicit return generation
+    if (fnDecl.statementCount > 0) {
+      Statement lastStatement = fnDecl.statements[fnDecl.statementCount - 1];
+
+      if (lastStatement instanceof ExprStmt) {
+        ExprStmt exprStmt = (ExprStmt) lastStatement;
+
+        if (!(exprStmt.expr instanceof ReturnExpr) && fnDecl.returnType == PrimitiveType.VOID) {
+          mw.visitInsn(Opcodes.RETURN);
+        }
+      }
     }
 
     mw.visitMaxs(-1, -1);
