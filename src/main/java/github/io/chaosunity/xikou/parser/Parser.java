@@ -18,6 +18,7 @@ import github.io.chaosunity.xikou.ast.expr.BlockExpr;
 import github.io.chaosunity.xikou.ast.expr.CharLiteralExpr;
 import github.io.chaosunity.xikou.ast.expr.ConstructorCallExpr;
 import github.io.chaosunity.xikou.ast.expr.Expr;
+import github.io.chaosunity.xikou.ast.expr.IndexExpr;
 import github.io.chaosunity.xikou.ast.expr.InfixExpr;
 import github.io.chaosunity.xikou.ast.expr.IntegerLiteralExpr;
 import github.io.chaosunity.xikou.ast.expr.MemberAccessExpr;
@@ -525,7 +526,7 @@ public class Parser {
   }
 
   private Expr parseInfixExpr(int parentPrecedence) {
-    Expr lhs = parseDotSuffixExpr();
+    Expr lhs = parseSuffixExpr();
 
     while (true) {
       Token operatorToken = lexer.getCurrentToken();
@@ -542,40 +543,33 @@ public class Parser {
     return lhs;
   }
 
-  private Expr parseDotSuffixExpr() {
+  private Expr parseSuffixExpr() {
     Expr lhs = parsePrimaryStart();
 
-    while (lexer.acceptToken(TokenType.Dot)) {
-      if (lexer.peekToken(TokenType.Identifier)) {
-        // (Instance / Static) Member access / Method call
-        Token memberNameToken = lexer.expectToken(TokenType.Identifier);
+    while (true) {
+      if (lexer.acceptToken(TokenType.Dot)) {
+        lhs = parseDotSuffixExpr(lhs);
+      } else if (lexer.acceptToken(TokenType.OpenBracket)) {
+        Expr indexExpr = parseExpr();
+        lexer.expectToken(TokenType.CloseBracket);
 
-        if (lexer.acceptToken(TokenType.OpenParenthesis)) {
-          // (Instance / Static) Method call
-          Arguments arguments;
-
-          if (!lexer.acceptToken(TokenType.CloseParenthesis)) {
-            arguments = parseArguments();
-          } else {
-            arguments = new Arguments(0, new Expr[0]);
-          }
-
-          lhs = new MethodCallExpr(lhs, memberNameToken, arguments.argumentCount,
-              arguments.arguments);
-        } else {
-          // (Instance / Static) Member access
-          lhs = new MemberAccessExpr(lhs, memberNameToken);
-        }
+        lhs = new IndexExpr(lhs, indexExpr);
       } else {
-        // Constructor call, e.g. Integer.self(...)
-        Arguments arguments;
-        if (!(lhs instanceof TypeableExpr)) {
-          throw new IllegalStateException(
-              "Unable to invoke constructor with non typeable expression");
-        }
+        break;
+      }
+    }
 
-        lexer.expectToken(TokenType.Self);
-        lexer.expectToken(TokenType.OpenParenthesis);
+    return lhs;
+  }
+
+  private Expr parseDotSuffixExpr(Expr lhs) {
+    if (lexer.peekToken(TokenType.Identifier)) {
+      // (Instance / Static) Member access / Method call
+      Token memberNameToken = lexer.expectToken(TokenType.Identifier);
+
+      if (lexer.acceptToken(TokenType.OpenParenthesis)) {
+        // (Instance / Static) Method call
+        Arguments arguments;
 
         if (!lexer.acceptToken(TokenType.CloseParenthesis)) {
           arguments = parseArguments();
@@ -583,13 +577,32 @@ public class Parser {
           arguments = new Arguments(0, new Expr[0]);
         }
 
-        lhs = new ConstructorCallExpr((TypeableExpr) lhs, arguments.argumentCount,
+        return new MethodCallExpr(lhs, memberNameToken, arguments.argumentCount,
             arguments.arguments);
-
+      } else {
+        // (Instance / Static) Member access
+        return new MemberAccessExpr(lhs, memberNameToken);
       }
-    }
+    } else {
+      // Constructor call, e.g. Integer.self(...)
+      Arguments arguments;
+      if (!(lhs instanceof TypeableExpr)) {
+        throw new IllegalStateException(
+            "Unable to invoke constructor with non typeable expression");
+      }
 
-    return lhs;
+      lexer.expectToken(TokenType.Self);
+      lexer.expectToken(TokenType.OpenParenthesis);
+
+      if (!lexer.acceptToken(TokenType.CloseParenthesis)) {
+        arguments = parseArguments();
+      } else {
+        arguments = new Arguments(0, new Expr[0]);
+      }
+
+      return new ConstructorCallExpr((TypeableExpr) lhs, arguments.argumentCount,
+          arguments.arguments);
+    }
   }
 
   private Expr parsePrimaryStart() {

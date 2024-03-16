@@ -5,6 +5,7 @@ import github.io.chaosunity.xikou.ast.expr.BlockExpr;
 import github.io.chaosunity.xikou.ast.expr.CharLiteralExpr;
 import github.io.chaosunity.xikou.ast.expr.ConstructorCallExpr;
 import github.io.chaosunity.xikou.ast.expr.Expr;
+import github.io.chaosunity.xikou.ast.expr.IndexExpr;
 import github.io.chaosunity.xikou.ast.expr.InfixExpr;
 import github.io.chaosunity.xikou.ast.expr.IntegerLiteralExpr;
 import github.io.chaosunity.xikou.ast.expr.MemberAccessExpr;
@@ -35,6 +36,8 @@ public class ExprGen {
       genMemberAccessExpr(mw, (MemberAccessExpr) expr);
     } else if (expr instanceof ConstructorCallExpr) {
       genConstructorCallExpr(mw, (ConstructorCallExpr) expr);
+    } else if (expr instanceof IndexExpr) {
+      genIndexExpr(mw, (IndexExpr) expr);
     } else if (expr instanceof ArrayInitExpr) {
       genArrayInitExpr(mw, (ArrayInitExpr) expr);
     } else if (expr instanceof ReturnExpr) {
@@ -76,6 +79,13 @@ public class ExprGen {
 
           genExpr(mw, rhs);
           mw.visitVarInsn(Utils.getStoreOpcode(nameExpr.getType()), nameExpr.localVarRef.index);
+        } else if (lhs instanceof IndexExpr) {
+          IndexExpr indexExpr = (IndexExpr) lhs;
+
+          genExpr(mw, indexExpr.targetExpr);
+          genExpr(mw, indexExpr.indexExpr);
+          genExpr(mw, rhs);
+          mw.visitInsn(Utils.getArrayStoreOpcode(indexExpr.getType()));
         }
         break;
       default:
@@ -130,6 +140,12 @@ public class ExprGen {
 
     mw.visitMethodInsn(Opcodes.INVOKESPECIAL, constructorCallExpr.getType().getInternalName(),
         "<init>", Utils.getMethodDescriptor(constructorCallExpr.resolvedMethodRef), false);
+  }
+
+  private void genIndexExpr(MethodVisitor mw, IndexExpr expr) {
+    genExpr(mw, expr.targetExpr);
+    genExpr(mw, expr.indexExpr);
+    mw.visitInsn(Utils.getArrayLoadOpcode(expr.getType()));
   }
 
   private void genArrayInitExpr(MethodVisitor mw, ArrayInitExpr arrayInitExpr) {

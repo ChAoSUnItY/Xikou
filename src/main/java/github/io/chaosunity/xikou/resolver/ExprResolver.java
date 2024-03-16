@@ -5,6 +5,7 @@ import github.io.chaosunity.xikou.ast.expr.BlockExpr;
 import github.io.chaosunity.xikou.ast.expr.CharLiteralExpr;
 import github.io.chaosunity.xikou.ast.expr.ConstructorCallExpr;
 import github.io.chaosunity.xikou.ast.expr.Expr;
+import github.io.chaosunity.xikou.ast.expr.IndexExpr;
 import github.io.chaosunity.xikou.ast.expr.InfixExpr;
 import github.io.chaosunity.xikou.ast.expr.IntegerLiteralExpr;
 import github.io.chaosunity.xikou.ast.expr.MemberAccessExpr;
@@ -17,6 +18,7 @@ import github.io.chaosunity.xikou.ast.expr.TypeableExpr;
 import github.io.chaosunity.xikou.ast.types.ClassTypeRef;
 import github.io.chaosunity.xikou.lexer.TokenType;
 import github.io.chaosunity.xikou.resolver.types.AbstractType;
+import github.io.chaosunity.xikou.resolver.types.ArrayType;
 import github.io.chaosunity.xikou.resolver.types.ClassType;
 import github.io.chaosunity.xikou.resolver.types.PrimitiveType;
 import github.io.chaosunity.xikou.resolver.types.TypeUtils;
@@ -40,6 +42,8 @@ public final class ExprResolver {
       resolveMemberAccessExpr((MemberAccessExpr) expr, scope);
     } else if (expr instanceof ConstructorCallExpr) {
       resolveConstructorCallExpr((ConstructorCallExpr) expr, scope);
+    } else if (expr instanceof IndexExpr) {
+      resolveIndexExpr((IndexExpr) expr, scope);
     } else if (expr instanceof ArrayInitExpr) {
       resolveArrayInitExpr((ArrayInitExpr) expr, scope);
     } else if (expr instanceof ReturnExpr) {
@@ -187,6 +191,19 @@ public final class ExprResolver {
           String.format("Type %s does not have field %s",
               expr.ownerExpr.getType().getInternalName(),
               expr.nameToken.literal));
+    }
+  }
+
+  private void resolveIndexExpr(IndexExpr expr, Scope scope) {
+    resolveExpr(expr.targetExpr, scope);
+    resolveExpr(expr.indexExpr, scope);
+
+    if (!(expr.targetExpr.getType() instanceof ArrayType)) {
+      throw new IllegalStateException("Cannot index a non-array type");
+    }
+
+    if (expr.indexExpr.getType() != PrimitiveType.INT) {
+      throw new IllegalStateException("Cannot index an array type with i32");
     }
   }
 

@@ -159,7 +159,8 @@ public class SymbolTable {
       FieldDecl fieldDecl = fieldDecls[j];
 
       if (fieldDecl.name.literal.equals(name)) {
-        return new FieldRef(ownerType, false, !Modifier.isFinal(fieldDecl.fieldModifiers), name, fieldDecl.typeRef.getType());
+        return new FieldRef(ownerType, false, !Modifier.isFinal(fieldDecl.fieldModifiers), name,
+            fieldDecl.typeRef.getType());
       }
     }
 
