@@ -146,4 +146,20 @@ public final class Utils {
       return Opcodes.ASTORE;
     }
   }
+
+  static int getReturnOpcode(AbstractType type) {
+    if (type instanceof PrimitiveType) {
+      if (type == PrimitiveType.CHAR || type == PrimitiveType.BOOL || type == PrimitiveType.INT) {
+        return Opcodes.IRETURN;
+      } else if (type == PrimitiveType.LONG) {
+        return Opcodes.LRETURN;
+      } else if (type == PrimitiveType.DOUBLE) {
+        return Opcodes.DRETURN;
+      } else {
+        return 0;
+      }
+    } else {
+      return Opcodes.ARETURN;
+    }
+  }
 }

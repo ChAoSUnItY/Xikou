@@ -10,6 +10,7 @@ import github.io.chaosunity.xikou.ast.expr.MemberAccessExpr;
 import github.io.chaosunity.xikou.ast.expr.MethodCallExpr;
 import github.io.chaosunity.xikou.ast.expr.NameExpr;
 import github.io.chaosunity.xikou.ast.expr.NullLiteral;
+import github.io.chaosunity.xikou.ast.expr.ReturnExpr;
 import github.io.chaosunity.xikou.ast.expr.StringLiteralExpr;
 import github.io.chaosunity.xikou.lexer.TokenType;
 import github.io.chaosunity.xikou.resolver.FieldRef;
@@ -152,6 +153,15 @@ public class ExprGen {
       mw.visitLdcInsn(i);
       genExpr(mw, initExpr);
       mw.visitInsn(Utils.getArrayStoreOpcode(initExpr.getType()));
+    }
+  }
+
+  private void genReturnExpr(MethodVisitor mw, ReturnExpr returnExpr) {
+    if (returnExpr.rhs != null) {
+      genExpr(mw, returnExpr.rhs);
+      mw.visitInsn(Utils.getReturnOpcode(returnExpr.rhs.getType()));
+    } else {
+      mw.visitInsn(Opcodes.RETURN);
     }
   }
 

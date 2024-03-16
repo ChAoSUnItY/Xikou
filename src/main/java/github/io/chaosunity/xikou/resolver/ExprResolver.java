@@ -10,6 +10,7 @@ import github.io.chaosunity.xikou.ast.expr.MemberAccessExpr;
 import github.io.chaosunity.xikou.ast.expr.MethodCallExpr;
 import github.io.chaosunity.xikou.ast.expr.NameExpr;
 import github.io.chaosunity.xikou.ast.expr.NullLiteral;
+import github.io.chaosunity.xikou.ast.expr.ReturnExpr;
 import github.io.chaosunity.xikou.ast.expr.StringLiteralExpr;
 import github.io.chaosunity.xikou.ast.expr.TypeableExpr;
 import github.io.chaosunity.xikou.ast.types.ClassTypeRef;
@@ -39,6 +40,8 @@ public final class ExprResolver {
       resolveConstructorCallExpr((ConstructorCallExpr) expr, scope);
     } else if (expr instanceof ArrayInitExpr) {
       resolveArrayInitExpr((ArrayInitExpr) expr, scope);
+    } else if (expr instanceof ReturnExpr) {
+      resolveReturnExpr((ReturnExpr) expr, scope);
     } else if (expr instanceof NameExpr) {
       resolveNameExpr((NameExpr) expr, scope);
     } else if (expr instanceof CharLiteralExpr) {
@@ -199,6 +202,10 @@ public final class ExprResolver {
                 expr.lhs.getType().getInternalName()));
       }
     }
+  }
+
+  private void resolveReturnExpr(ReturnExpr expr, Scope scope) {
+    resolveExpr(expr.rhs, scope);
   }
 
   private ClassType resolveTypeableExpr(TypeableExpr typeableExpr, boolean recoverable) {

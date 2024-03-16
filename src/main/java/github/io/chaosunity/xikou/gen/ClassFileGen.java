@@ -3,13 +3,13 @@ package github.io.chaosunity.xikou.gen;
 import github.io.chaosunity.xikou.ast.ConstructorDecl;
 import github.io.chaosunity.xikou.ast.FnDecl;
 import github.io.chaosunity.xikou.ast.ImplDecl;
+import github.io.chaosunity.xikou.ast.expr.ReturnExpr;
 import github.io.chaosunity.xikou.resolver.types.PrimitiveType;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
@@ -63,7 +63,8 @@ public abstract class ClassFileGen {
       modifiers |= Opcodes.ACC_STATIC;
     }
 
-    MethodVisitor mw = cw.visitMethod(modifiers, fnDecl.nameToken.literal, Utils.getMethodDescriptor(fnDecl.asMethodRef()), null, null);
+    MethodVisitor mw = cw.visitMethod(modifiers, fnDecl.nameToken.literal,
+        Utils.getMethodDescriptor(fnDecl.asMethodRef()), null, null);
 
     mw.visitCode();
 
@@ -72,7 +73,8 @@ public abstract class ClassFileGen {
     }
 
     // FIXME: implicit void return hack
-    if (fnDecl.returnType == PrimitiveType.VOID) {
+    if (!(fnDecl.statements[fnDecl.statementCount - 1] instanceof ReturnExpr)
+        && fnDecl.returnType == PrimitiveType.VOID) {
       mw.visitInsn(Opcodes.RETURN);
     }
 

@@ -23,6 +23,7 @@ import github.io.chaosunity.xikou.ast.expr.MemberAccessExpr;
 import github.io.chaosunity.xikou.ast.expr.MethodCallExpr;
 import github.io.chaosunity.xikou.ast.expr.NameExpr;
 import github.io.chaosunity.xikou.ast.expr.NullLiteral;
+import github.io.chaosunity.xikou.ast.expr.ReturnExpr;
 import github.io.chaosunity.xikou.ast.expr.StringLiteralExpr;
 import github.io.chaosunity.xikou.ast.expr.TypeExpr;
 import github.io.chaosunity.xikou.ast.expr.TypeableExpr;
@@ -610,6 +611,12 @@ public class Parser {
 
     if (lexer.peekToken(TokenType.Self)) {
       return parseSelfNameExpr();
+    }
+
+    if (lexer.acceptToken(TokenType.Return)) {
+      Expr expr = parseExpr();
+
+      return new ReturnExpr(expr);
     }
 
     if (lexer.peekToken(TokenType.CharLiteral)) {
