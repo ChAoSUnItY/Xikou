@@ -22,7 +22,7 @@ public class NameExpr implements TypeableExpr {
 
   @Override
   public boolean isAssignable() {
-    return true;
+    return localVarRef.mutable;
   }
 
   @Override

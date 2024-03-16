@@ -20,7 +20,7 @@ public class Scope {
     return newScope;
   }
 
-  public LocalVarRef addLocalVar(String name, AbstractType type) {
+  public LocalVarRef addLocalVar(String name, boolean mutable, AbstractType type) {
     for (int i = 0; i < localVarCount; i++) {
       if (localVarRefs[i].name.equals(name)) {
         throw new IllegalStateException(
@@ -34,8 +34,8 @@ public class Scope {
       localVarRefs = newArr;
     }
 
-    LocalVarRef localVarRef = localVarRefs[localVarCount] = new LocalVarRef(name, localVarCount,
-        type);
+    LocalVarRef localVarRef = localVarRefs[localVarCount] = new LocalVarRef(name, mutable,
+        localVarCount, type);
     localVarCount += type.getSize();
 
     return localVarRef;

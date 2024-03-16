@@ -22,7 +22,6 @@ public class MemberAccessExpr implements Expr {
 
   @Override
   public boolean isAssignable() {
-    // FIXME: Member functions are not assignable
-    return true;
+    return resolvedFieldRef.isMutable;
   }
 }

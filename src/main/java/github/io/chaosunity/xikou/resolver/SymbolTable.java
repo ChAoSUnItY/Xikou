@@ -130,7 +130,7 @@ public class SymbolTable {
           EnumVariantDecl variantDecl = enumDecl.enumVariantDecls[j];
 
           if (variantDecl.name.literal.equals(name)) {
-            return new FieldRef(ownerType, true, name, enumDecl.enumType);
+            return new FieldRef(ownerType, true, false, name, enumDecl.enumType);
           }
         }
 
@@ -142,10 +142,11 @@ public class SymbolTable {
       String ownerClassInternalName = ownerType.getInternalName();
       Class clazz = Class.forName(ownerClassInternalName.replace('/', '.'));
       Field field = clazz.getField(name);
+      int modifiers = field.getModifiers();
       AbstractType fieldType = getFieldType(name, clazz);
 
-      return new FieldRef(ownerType, Modifier.isStatic(field.getModifiers()), name,
-          fieldType);
+      return new FieldRef(ownerType, Modifier.isStatic(modifiers), !Modifier.isFinal(modifiers),
+          name, fieldType);
     } catch (ClassNotFoundException | NoSuchFieldException ignored) {
     }
 
@@ -158,7 +159,7 @@ public class SymbolTable {
       FieldDecl fieldDecl = fieldDecls[j];
 
       if (fieldDecl.name.literal.equals(name)) {
-        return new FieldRef(ownerType, false, name, fieldDecl.typeRef.getType());
+        return new FieldRef(ownerType, false, !Modifier.isFinal(fieldDecl.fieldModifiers), name, fieldDecl.typeRef.getType());
       }
     }
 

@@ -189,12 +189,12 @@ public final class Resolver {
   }
 
   private void resolveConstructorDecl(ConstructorDecl constructorDecl) {
-    constructorDecl.scope.addLocalVar("self", constructorDecl.implDecl.boundDecl.getType());
+    constructorDecl.scope.addLocalVar("self", true, constructorDecl.implDecl.boundDecl.getType());
 
     for (int i = 0; i < constructorDecl.parameterCount; i++) {
       Parameter parameter = constructorDecl.parameters[i];
 
-      constructorDecl.scope.addLocalVar(parameter.name.literal, parameter.typeRef.getType());
+      constructorDecl.scope.addLocalVar(parameter.name.literal, true, parameter.typeRef.getType());
     }
 
     for (int i = 0; i < constructorDecl.statementCount; i++) {
@@ -204,13 +204,13 @@ public final class Resolver {
 
   private void resolveFunctionDecl(FnDecl fnDecl) {
     if (fnDecl.selfToken != null) {
-      fnDecl.scope.addLocalVar("self", fnDecl.implDecl.boundDecl.getType());
+      fnDecl.scope.addLocalVar("self", true, fnDecl.implDecl.boundDecl.getType());
     }
 
     for (int i = 0; i < fnDecl.parameterCount; i++) {
       Parameter parameter = fnDecl.parameters[i];
 
-      fnDecl.scope.addLocalVar(parameter.name.literal, parameter.typeRef.getType());
+      fnDecl.scope.addLocalVar(parameter.name.literal, true, parameter.typeRef.getType());
     }
 
     for (int i = 0; i < fnDecl.statementCount; i++) {

@@ -28,7 +28,7 @@ public final class StmtResolver {
     if (varDeclStmt.initialValue != null) {
       exprResolver.resolveExpr(varDeclStmt.initialValue, scope);
       varDeclStmt.localVarRef = scope.addLocalVar(varDeclStmt.nameToken.literal,
-          varDeclStmt.initialValue.getType());
+          varDeclStmt.mutToken != null, varDeclStmt.initialValue.getType());
     }
   }
 
