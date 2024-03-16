@@ -509,9 +509,13 @@ public class Parser {
       return new VarDeclStmt(mutToken, varNameToken, initialExpr);
     } else {
       Expr expr = parseExpr();
-      lexer.expectToken(TokenType.SemiColon);
+      Token semicolon = null;
 
-      return new ExprStmt(expr);
+      if (lexer.peekToken(TokenType.SemiColon)) {
+        semicolon = lexer.advanceToken();
+      }
+
+      return new ExprStmt(expr, semicolon);
     }
   }
 
