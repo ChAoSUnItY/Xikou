@@ -4,6 +4,7 @@ import github.io.chaosunity.xikou.resolver.types.AbstractType;
 import github.io.chaosunity.xikou.resolver.types.ClassType;
 
 public class Scope {
+
   public final ClassType parentClassType;
   public final boolean isInConstructor;
   private int localVarCount = 0;

@@ -17,11 +17,14 @@ public class InfixExpr implements Expr {
 
   @Override
   public boolean isAssignable() {
-    return lhs.isAssignable();
+    return false;
   }
 
   @Override
   public AbstractType getType() {
-    return null; // TODO
+    switch (operator.type) {
+      default:
+        return null;
+    }
   }
 }

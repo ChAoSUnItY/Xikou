@@ -162,4 +162,16 @@ public final class Utils {
       return Opcodes.ARETURN;
     }
   }
+
+  static int getDupOpcode(AbstractType type) {
+    return type.getSize() == 2 ? Opcodes.DUP2 : Opcodes.DUP;
+  }
+
+  static int getDupX1Opcode(AbstractType type) {
+    return type.getSize() == 2 ? Opcodes.DUP2_X1 : Opcodes.DUP_X1;
+  }
+
+  static int getDupX2Opcode(AbstractType type) {
+    return type.getSize() == 2 ? Opcodes.DUP2_X2 : Opcodes.DUP_X2;
+  }
 }

@@ -1,6 +1,7 @@
 package github.io.chaosunity.xikou.gen;
 
 import github.io.chaosunity.xikou.ast.expr.ArrayInitExpr;
+import github.io.chaosunity.xikou.ast.expr.AssignmentExpr;
 import github.io.chaosunity.xikou.ast.expr.BlockExpr;
 import github.io.chaosunity.xikou.ast.expr.CharLiteralExpr;
 import github.io.chaosunity.xikou.ast.expr.ConstructorCallExpr;
@@ -30,6 +31,8 @@ public class ExprGen {
   public void genExpr(MethodVisitor mw, Expr expr) {
     if (expr instanceof InfixExpr) {
       genInfixExpr(mw, (InfixExpr) expr);
+    } else if (expr instanceof AssignmentExpr) {
+      genAssignmentExpr(mw, (AssignmentExpr) expr);
     } else if (expr instanceof MethodCallExpr) {
       genMethodCallExpr(mw, (MethodCallExpr) expr);
     } else if (expr instanceof MemberAccessExpr) {
@@ -62,35 +65,88 @@ public class ExprGen {
     TokenType operatorType = infixExpr.operator.type;
 
     switch (operatorType) {
-      case Equal:
-        if (lhs instanceof MemberAccessExpr) {
-          MemberAccessExpr memberAccessLhs = (MemberAccessExpr) lhs;
-          FieldRef fieldRef = memberAccessLhs.resolvedFieldRef;
-
-          genExpr(mw, memberAccessLhs.ownerExpr);
-          genExpr(mw, rhs);
-
-          mw.visitFieldInsn(fieldRef.isStatic ? Opcodes.PUTSTATIC : Opcodes.PUTFIELD,
-              memberAccessLhs.ownerExpr.getType().getInternalName(),
-              memberAccessLhs.nameToken.literal,
-              memberAccessLhs.getType().getDescriptor());
-        } else if (lhs instanceof NameExpr) {
-          NameExpr nameExpr = (NameExpr) lhs;
-
-          genExpr(mw, rhs);
-          mw.visitVarInsn(Utils.getStoreOpcode(nameExpr.getType()), nameExpr.localVarRef.index);
-        } else if (lhs instanceof IndexExpr) {
-          IndexExpr indexExpr = (IndexExpr) lhs;
-
-          genExpr(mw, indexExpr.targetExpr);
-          genExpr(mw, indexExpr.indexExpr);
-          genExpr(mw, rhs);
-          mw.visitInsn(Utils.getArrayStoreOpcode(indexExpr.getType()));
-        }
-        break;
       default:
         throw new IllegalStateException(
             String.format("Token %s is not an valid infix operator", operatorType));
+    }
+  }
+
+  private void genAssignmentExpr(MethodVisitor mw, AssignmentExpr assignmentExpr) {
+    int assignmentTargetCount = 0;
+    Expr[] assignmentTargets = new Expr[1];
+    Expr lhsHolder = assignmentExpr.lhs, rhs = assignmentExpr.rhs;
+
+    // Collect all assignment targets
+    while (lhsHolder != null) {
+      if (assignmentTargetCount >= assignmentTargets.length) {
+        Expr[] newArr = new Expr[assignmentTargets.length * 2];
+        System.arraycopy(assignmentTargets, 0, newArr, 0, assignmentTargets.length);
+        assignmentTargets = newArr;
+      }
+
+      if (!(lhsHolder instanceof AssignmentExpr)) {
+        assignmentTargets[assignmentTargetCount++] = lhsHolder;
+        break;
+      }
+
+      AssignmentExpr lhsAssignment = (AssignmentExpr) lhsHolder;
+
+      assignmentTargets[assignmentTargetCount++] = lhsAssignment.rhs;
+      lhsHolder = lhsAssignment.lhs;
+    }
+
+    // Setup targets
+    for (int i = 0; i < assignmentTargetCount; i++) {
+      Expr assignmentTarget = assignmentTargets[i];
+
+      if (assignmentTarget instanceof MemberAccessExpr) {
+        MemberAccessExpr memberAccessExpr = (MemberAccessExpr) assignmentTarget;
+
+        genExpr(mw, memberAccessExpr.ownerExpr);
+      } else if (assignmentTarget instanceof IndexExpr) {
+        IndexExpr indexExpr = (IndexExpr) assignmentTarget;
+
+        genExpr(mw, indexExpr.targetExpr);
+        genExpr(mw, indexExpr.indexExpr);
+      }
+    }
+
+    // Gen assign value then dup if needed
+    genExpr(mw, rhs);
+
+    for (int i = 0; i < assignmentTargetCount; i++) {
+      Expr assignmentTarget = assignmentTargets[i];
+      boolean isLastAssignment = i == assignmentTargetCount - 1;
+
+      if (assignmentTarget instanceof MemberAccessExpr) {
+        MemberAccessExpr memberAccessExpr = (MemberAccessExpr) assignmentTarget;
+        FieldRef fieldRef = memberAccessExpr.resolvedFieldRef;
+
+        if (!isLastAssignment) {
+          mw.visitInsn(Opcodes.DUP_X1);
+        }
+
+        mw.visitFieldInsn(fieldRef.isStatic ? Opcodes.PUTSTATIC : Opcodes.PUTFIELD,
+            memberAccessExpr.ownerExpr.getType().getInternalName(),
+            memberAccessExpr.nameToken.literal,
+            memberAccessExpr.getType().getDescriptor());
+      } else if (assignmentTarget instanceof NameExpr) {
+        NameExpr nameExpr = (NameExpr) assignmentTarget;
+
+        if (!isLastAssignment) {
+          mw.visitInsn(Opcodes.DUP);
+        }
+
+        mw.visitVarInsn(Utils.getStoreOpcode(nameExpr.getType()), nameExpr.localVarRef.index);
+      } else if (assignmentTarget instanceof IndexExpr) {
+        IndexExpr indexExpr = (IndexExpr) assignmentTarget;
+
+        if (!isLastAssignment) {
+          mw.visitInsn(Opcodes.DUP_X2);
+        }
+
+        mw.visitInsn(Utils.getArrayStoreOpcode(indexExpr.getType()));
+      }
     }
   }
 
@@ -128,14 +184,11 @@ public class ExprGen {
   }
 
   private void genConstructorCallExpr(MethodVisitor mw, ConstructorCallExpr constructorCallExpr) {
-    AbstractType[] types = new AbstractType[constructorCallExpr.argumentCount];
-
     mw.visitTypeInsn(Opcodes.NEW, constructorCallExpr.getType().getInternalName());
     mw.visitInsn(Opcodes.DUP);
 
     for (int i = 0; i < constructorCallExpr.argumentCount; i++) {
       genExpr(mw, constructorCallExpr.arguments[i]);
-      types[i] = constructorCallExpr.arguments[i].getType();
     }
 
     mw.visitMethodInsn(Opcodes.INVOKESPECIAL, constructorCallExpr.getType().getInternalName(),

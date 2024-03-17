@@ -9,8 +9,8 @@ impl Box {
     }
 
     pub fn main(args: [java::lang::String]) {
-        let a = [i32;] { 1 };
-        a[0] = 100;
+        let mut a = [i32;] { 1 };
+        a[0] = a[0] = 20;
         java::lang::System.out.println(a[0]);
         return {};
     }

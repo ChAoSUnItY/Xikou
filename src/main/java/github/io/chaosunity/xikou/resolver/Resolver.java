@@ -11,6 +11,7 @@ import github.io.chaosunity.xikou.ast.ImplDecl;
 import github.io.chaosunity.xikou.ast.Parameter;
 import github.io.chaosunity.xikou.ast.XkFile;
 import github.io.chaosunity.xikou.ast.expr.ArrayInitExpr;
+import github.io.chaosunity.xikou.ast.expr.AssignmentExpr;
 import github.io.chaosunity.xikou.ast.expr.BlockExpr;
 import github.io.chaosunity.xikou.ast.expr.CharLiteralExpr;
 import github.io.chaosunity.xikou.ast.expr.ConstructorCallExpr;
@@ -31,7 +32,6 @@ import github.io.chaosunity.xikou.ast.stmt.VarDeclStmt;
 import github.io.chaosunity.xikou.ast.types.AbstractTypeRef;
 import github.io.chaosunity.xikou.ast.types.ArrayTypeRef;
 import github.io.chaosunity.xikou.ast.types.ClassTypeRef;
-import github.io.chaosunity.xikou.lexer.TokenType;
 import github.io.chaosunity.xikou.resolver.types.AbstractType;
 import github.io.chaosunity.xikou.resolver.types.ArrayType;
 import github.io.chaosunity.xikou.resolver.types.ClassType;
@@ -130,7 +130,8 @@ public final class Resolver {
     }
   }
 
-  private void resolvePrimaryConstructorDeclEarly(ClassType ownerType, ConstructorDecl constructorDecl) {
+  private void resolvePrimaryConstructorDeclEarly(ClassType ownerType,
+      ConstructorDecl constructorDecl) {
     for (int i = 0; i < constructorDecl.parameterCount; i++) {
       Parameter parameter = constructorDecl.parameters[i];
 
@@ -275,6 +276,8 @@ public final class Resolver {
   public void resolveExpr(Expr expr, Scope scope) {
     if (expr instanceof InfixExpr) {
       resolveInfixExpr((InfixExpr) expr, scope);
+    } else if (expr instanceof AssignmentExpr) {
+      resolveAssignmentExpr((AssignmentExpr) expr, scope);
     } else if (expr instanceof MethodCallExpr) {
       resolveMethodCallExpr((MethodCallExpr) expr, scope);
     } else if (expr instanceof MemberAccessExpr) {
@@ -299,6 +302,36 @@ public final class Resolver {
       IntegerLiteralExpr integerLiteralExpr = (IntegerLiteralExpr) expr;
     } else if (expr instanceof NullLiteral) {
       NullLiteral nullLiteral = (NullLiteral) expr;
+    }
+  }
+
+  private void resolveInfixExpr(InfixExpr expr, Scope scope) {
+    resolveExpr(expr.lhs, scope);
+    resolveExpr(expr.rhs, scope);
+  }
+
+  private void resolveAssignmentExpr(AssignmentExpr expr, Scope scope) {
+    resolveExpr(expr.lhs, scope);
+    resolveExpr(expr.rhs, scope);
+
+    boolean assignable = scope.isInConstructor && expr.lhs instanceof MemberAccessExpr
+        && ((MemberAccessExpr) expr.lhs).resolvedFieldRef.ownerClassType.equals(
+        scope.parentClassType);
+    assignable |= expr.lhs.isAssignable();
+
+    if (!assignable) {
+      throw new IllegalStateException("Illegal assignment");
+    }
+
+    if (expr.rhs.getType() == PrimitiveType.VOID) {
+      throw new IllegalStateException("void type cannot be used as value");
+    }
+
+    if (!TypeUtils.isInstanceOf(expr.rhs.getType(), expr.lhs.getType())) {
+      throw new IllegalStateException(
+          String.format("Illegal assignment: %s is not compatible with %s",
+              expr.rhs.getType().getInternalName(),
+              expr.lhs.getType().getInternalName()));
     }
   }
 
@@ -443,33 +476,6 @@ public final class Resolver {
 
     if (expr.indexExpr.getType() != PrimitiveType.INT) {
       throw new IllegalStateException("Cannot index an array type with i32");
-    }
-  }
-
-  private void resolveInfixExpr(InfixExpr expr, Scope scope) {
-    resolveExpr(expr.lhs, scope);
-    resolveExpr(expr.rhs, scope);
-
-    if (expr.operator.type == TokenType.Equal) {
-      boolean assignable = scope.isInConstructor && expr.lhs instanceof MemberAccessExpr
-          && ((MemberAccessExpr) expr.lhs).resolvedFieldRef.ownerClassType.equals(
-          scope.parentClassType);
-      assignable |= expr.lhs.isAssignable();
-
-      if (!assignable) {
-        throw new IllegalStateException("Illegal assignment");
-      }
-
-      if (expr.rhs.getType() == PrimitiveType.VOID) {
-        throw new IllegalStateException("void type cannot be used as value");
-      }
-
-      if (!TypeUtils.isInstanceOf(expr.rhs.getType(), expr.lhs.getType())) {
-        throw new IllegalStateException(
-            String.format("Illegal assignment: %s is not compatible with %s",
-                expr.rhs.getType().getInternalName(),
-                expr.lhs.getType().getInternalName()));
-      }
     }
   }
 
