@@ -212,7 +212,12 @@ public final class ExprResolver {
     resolveExpr(expr.rhs, scope);
 
     if (expr.operator.type == TokenType.Equal) {
-      if (!expr.lhs.isAssignable()) {
+      boolean assignable = scope.isInConstructor && expr.lhs instanceof MemberAccessExpr
+          && ((MemberAccessExpr) expr.lhs).resolvedFieldRef.ownerClassType.equals(
+          scope.parentClassType);
+      assignable |= expr.lhs.isAssignable();
+
+      if (!assignable) {
         throw new IllegalStateException("Illegal assignment");
       }
 

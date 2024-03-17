@@ -8,6 +8,10 @@ impl Lexer {
     pub self(source: java::lang::String) {
         self.source = source;
     }
+
+    priv fn isNumeric(ch: char) -> bool {
+        return java::lang::Character.isDigit(ch);
+    }
 }
 
 pub class Token {

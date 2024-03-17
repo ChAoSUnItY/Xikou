@@ -18,7 +18,7 @@ public class FnDecl {
   public final int statementCount;
   public final Statement[] statements;
   public ImplDecl implDecl;
-  public final Scope scope;
+  public Scope scope;
   public AbstractType returnType;
 
   public FnDecl(int fnModifiers, Token nameToken, Token selfToken, int parameterCount,
@@ -32,7 +32,6 @@ public class FnDecl {
     this.returnTypeRef = returnTypeRef;
     this.statementCount = statementCount;
     this.statements = statements;
-    scope = new Scope();
   }
 
   public MethodRef asMethodRef() {

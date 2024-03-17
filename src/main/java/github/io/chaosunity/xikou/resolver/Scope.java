@@ -1,19 +1,23 @@
 package github.io.chaosunity.xikou.resolver;
 
 import github.io.chaosunity.xikou.resolver.types.AbstractType;
+import github.io.chaosunity.xikou.resolver.types.ClassType;
 
 public class Scope {
-
+  public final ClassType parentClassType;
+  public final boolean isInConstructor;
   private int localVarCount = 0;
   private LocalVarRef[] localVarRefs = new LocalVarRef[1];
 
-  public Scope() {
+  public Scope(ClassType parentClassType, boolean isInConstructor) {
+    this.parentClassType = parentClassType;
+    this.isInConstructor = isInConstructor;
   }
 
   public Scope extend() {
     LocalVarRef[] extendedLocalVarRefs = new LocalVarRef[localVarRefs.length];
     System.arraycopy(localVarRefs, 0, extendedLocalVarRefs, 0, localVarCount);
-    Scope newScope = new Scope();
+    Scope newScope = new Scope(parentClassType, isInConstructor);
     newScope.localVarCount = localVarCount;
     newScope.localVarRefs = extendedLocalVarRefs;
 

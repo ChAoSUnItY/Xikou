@@ -81,14 +81,14 @@ public final class Resolver {
       ConstructorDecl constructorDecl = decl.getConstructorDecl();
 
       if (constructorDecl != null) {
-        resolvePrimaryConstructorDeclEarly(constructorDecl);
+        resolvePrimaryConstructorDeclEarly(decl.getType(), constructorDecl);
       }
 
       ImplDecl implDecl = decl.getImplDecl();
 
       if (implDecl != null) {
         for (int j = 0; j < implDecl.functionCount; j++) {
-          resolveFunctionDeclEarly(implDecl.functionDecls[j]);
+          resolveFunctionDeclEarly(decl.getType(), implDecl.functionDecls[j]);
         }
       }
 
@@ -108,15 +108,17 @@ public final class Resolver {
     }
   }
 
-  private void resolvePrimaryConstructorDeclEarly(ConstructorDecl constructorDecl) {
+  private void resolvePrimaryConstructorDeclEarly(ClassType ownerType, ConstructorDecl constructorDecl) {
     for (int i = 0; i < constructorDecl.parameterCount; i++) {
       Parameter parameter = constructorDecl.parameters[i];
 
       typeResolver.resolveTypeRef(parameter.typeRef, false);
     }
+
+    constructorDecl.scope = new Scope(ownerType, true);
   }
 
-  private void resolveFunctionDeclEarly(FnDecl fnDecl) {
+  private void resolveFunctionDeclEarly(ClassType ownerType, FnDecl fnDecl) {
     for (int i = 0; i < fnDecl.parameterCount; i++) {
       Parameter parameter = fnDecl.parameters[i];
 
@@ -130,6 +132,8 @@ public final class Resolver {
     } else {
       fnDecl.returnType = PrimitiveType.VOID;
     }
+
+    fnDecl.scope = new Scope(ownerType, false);
   }
 
   private void resolveDeclBody(XkFile file) {

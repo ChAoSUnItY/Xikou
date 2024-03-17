@@ -14,7 +14,7 @@ public class ConstructorDecl {
   public final Statement[] statements;
 
   public ImplDecl implDecl;
-  public final Scope scope;
+  public Scope scope;
 
   public ConstructorDecl(int constructorModifiers, int parameterCount,
       Parameter[] parameters, int statementCount, Statement[] statements) {
@@ -23,7 +23,6 @@ public class ConstructorDecl {
     this.parameters = parameters;
     this.statementCount = statementCount;
     this.statements = statements;
-    this.scope = new Scope();
   }
 
   public MethodRef asMethodRef() {
