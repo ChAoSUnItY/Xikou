@@ -48,4 +48,17 @@ public class TypeUtils {
 
     return false;
   }
+
+  public static boolean typesCanCast(AbstractType fromType, AbstractType toType) {
+    if (fromType instanceof PrimitiveType && toType instanceof PrimitiveType) {
+      return toType != PrimitiveType.BOOL && fromType != PrimitiveType.VOID
+          && toType != PrimitiveType.VOID;
+    }
+
+    if (fromType instanceof ArrayType && toType instanceof ClassType) {
+      return toType.equals(ClassType.OBJECT_CLASS_TYPE);
+    }
+
+    return true;
+  }
 }

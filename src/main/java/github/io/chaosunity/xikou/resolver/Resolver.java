@@ -13,18 +13,15 @@ import github.io.chaosunity.xikou.ast.XkFile;
 import github.io.chaosunity.xikou.ast.expr.ArrayInitExpr;
 import github.io.chaosunity.xikou.ast.expr.AssignmentExpr;
 import github.io.chaosunity.xikou.ast.expr.BlockExpr;
-import github.io.chaosunity.xikou.ast.expr.CharLiteralExpr;
+import github.io.chaosunity.xikou.ast.expr.CastExpr;
 import github.io.chaosunity.xikou.ast.expr.ConstructorCallExpr;
 import github.io.chaosunity.xikou.ast.expr.Expr;
 import github.io.chaosunity.xikou.ast.expr.IndexExpr;
 import github.io.chaosunity.xikou.ast.expr.InfixExpr;
-import github.io.chaosunity.xikou.ast.expr.IntegerLiteralExpr;
 import github.io.chaosunity.xikou.ast.expr.MemberAccessExpr;
 import github.io.chaosunity.xikou.ast.expr.MethodCallExpr;
 import github.io.chaosunity.xikou.ast.expr.NameExpr;
-import github.io.chaosunity.xikou.ast.expr.NullLiteral;
 import github.io.chaosunity.xikou.ast.expr.ReturnExpr;
-import github.io.chaosunity.xikou.ast.expr.StringLiteralExpr;
 import github.io.chaosunity.xikou.ast.expr.TypeableExpr;
 import github.io.chaosunity.xikou.ast.stmt.ExprStmt;
 import github.io.chaosunity.xikou.ast.stmt.Statement;
@@ -218,15 +215,10 @@ public final class Resolver {
   private void resolveConstructorDecl(ConstructorDecl constructorDecl) {
     constructorDecl.scope.addLocalVar("self", true, constructorDecl.implDecl.boundDecl.getType());
 
-    for (int i = 0; i < constructorDecl.parameterCount; i++) {
-      Parameter parameter = constructorDecl.parameters[i];
-
-      constructorDecl.scope.addLocalVar(parameter.name.literal, true, parameter.typeRef.getType());
-    }
-
-    for (int i = 0; i < constructorDecl.statementCount; i++) {
-      resolveStatment(constructorDecl.statements[i], constructorDecl.scope);
-    }
+    resolveParameters(constructorDecl.parameterCount, constructorDecl.parameters,
+        constructorDecl.scope);
+    resolveStatement(constructorDecl.statementCount, constructorDecl.statements,
+        constructorDecl.scope);
   }
 
   private void resolveFunctionDecl(FnDecl fnDecl) {
@@ -234,14 +226,21 @@ public final class Resolver {
       fnDecl.scope.addLocalVar("self", true, fnDecl.implDecl.boundDecl.getType());
     }
 
-    for (int i = 0; i < fnDecl.parameterCount; i++) {
-      Parameter parameter = fnDecl.parameters[i];
+    resolveParameters(fnDecl.parameterCount, fnDecl.parameters, fnDecl.scope);
+    resolveStatement(fnDecl.statementCount, fnDecl.statements, fnDecl.scope);
+  }
 
-      fnDecl.scope.addLocalVar(parameter.name.literal, true, parameter.typeRef.getType());
+  private void resolveParameters(int parameterCount, Parameter[] parameters, Scope scope) {
+    for (int i = 0; i < parameterCount; i++) {
+      Parameter parameter = parameters[i];
+
+      scope.addLocalVar(parameter.name.literal, true, parameter.typeRef.getType());
     }
+  }
 
-    for (int i = 0; i < fnDecl.statementCount; i++) {
-      resolveStatment(fnDecl.statements[i], fnDecl.scope);
+  private void resolveStatement(int statementCount, Statement[] statements, Scope scope) {
+    for (int i = 0; i < statementCount; i++) {
+      resolveStatement(statements[i], scope);
     }
   }
 
@@ -249,7 +248,7 @@ public final class Resolver {
   // Statement resolve functions
   // =================================================
 
-  public void resolveStatment(Statement statement, Scope scope) {
+  private void resolveStatement(Statement statement, Scope scope) {
     if (statement instanceof VarDeclStmt) {
       resolveVarDeclStatement((VarDeclStmt) statement, scope);
     } else if (statement instanceof ExprStmt) {
@@ -278,6 +277,8 @@ public final class Resolver {
       resolveInfixExpr((InfixExpr) expr, scope);
     } else if (expr instanceof AssignmentExpr) {
       resolveAssignmentExpr((AssignmentExpr) expr, scope);
+    } else if (expr instanceof CastExpr) {
+      resolveCastExpr((CastExpr) expr, scope);
     } else if (expr instanceof MethodCallExpr) {
       resolveMethodCallExpr((MethodCallExpr) expr, scope);
     } else if (expr instanceof MemberAccessExpr) {
@@ -294,20 +295,35 @@ public final class Resolver {
       resolveBlockExpr((BlockExpr) expr, scope);
     } else if (expr instanceof NameExpr) {
       resolveNameExpr((NameExpr) expr, scope);
-    } else if (expr instanceof CharLiteralExpr) {
-      CharLiteralExpr charLiteralExpr = (CharLiteralExpr) expr;
-    } else if (expr instanceof StringLiteralExpr) {
-      StringLiteralExpr stringLiteralExpr = (StringLiteralExpr) expr;
-    } else if (expr instanceof IntegerLiteralExpr) {
-      IntegerLiteralExpr integerLiteralExpr = (IntegerLiteralExpr) expr;
-    } else if (expr instanceof NullLiteral) {
-      NullLiteral nullLiteral = (NullLiteral) expr;
     }
   }
 
   private void resolveInfixExpr(InfixExpr expr, Scope scope) {
     resolveExpr(expr.lhs, scope);
     resolveExpr(expr.rhs, scope);
+
+    switch (expr.operator.type) {
+      case DoubleEqual:
+      case NotEqual:
+        if (!expr.lhs.getType().equals(expr.rhs.getType())) {
+          throw new IllegalStateException(
+              "Cannot compare on different types, use Object#equals instead");
+        }
+        break;
+      case DoubleAmpersand:
+      case DoublePipe:
+        if (expr.lhs.getType() != PrimitiveType.BOOL || expr.rhs.getType() != PrimitiveType.BOOL) {
+          throw new IllegalStateException(
+              "Cannot perform logical operation on different types");
+        }
+        break;
+      case Plus:
+      case Minus:
+        if (!expr.lhs.getType().equals(expr.rhs.getType())) {
+          throw new IllegalStateException("Cannot perform arithmetic operation on different types");
+        }
+        break;
+    }
   }
 
   private void resolveAssignmentExpr(AssignmentExpr expr, Scope scope) {
@@ -334,8 +350,17 @@ public final class Resolver {
               expr.lhs.getType().getInternalName()));
     }
   }
+  
+  private void resolveCastExpr(CastExpr expr, Scope scope) {
+    resolveExpr(expr.targetCastExpr, scope);
+    resolveTypeRef(expr.targetTypeRef, false);
+    
+    if (!TypeUtils.typesCanCast(expr.targetTypeRef.getType(), expr.targetTypeRef.getType())) {
+      throw new IllegalStateException("Cannot explicitly cast type");
+    }
+  }
 
-  private static void resolveNameExpr(NameExpr expr, Scope scope) {
+  private void resolveNameExpr(NameExpr expr, Scope scope) {
     LocalVarRef localVarRef = scope.findLocalVar(expr.varIdentifier.literal);
 
     if (localVarRef != null) {
@@ -487,7 +512,7 @@ public final class Resolver {
     Scope blockScope = scope.extend();
 
     for (int i = 0; i < expr.statementCount; i++) {
-      resolveStatment(expr.statements[i], blockScope);
+      resolveStatement(expr.statements[i], blockScope);
     }
   }
 

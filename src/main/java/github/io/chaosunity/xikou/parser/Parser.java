@@ -16,6 +16,7 @@ import github.io.chaosunity.xikou.ast.XkFile;
 import github.io.chaosunity.xikou.ast.expr.ArrayInitExpr;
 import github.io.chaosunity.xikou.ast.expr.AssignmentExpr;
 import github.io.chaosunity.xikou.ast.expr.BlockExpr;
+import github.io.chaosunity.xikou.ast.expr.CastExpr;
 import github.io.chaosunity.xikou.ast.expr.CharLiteralExpr;
 import github.io.chaosunity.xikou.ast.expr.ConstructorCallExpr;
 import github.io.chaosunity.xikou.ast.expr.Expr;
@@ -537,6 +538,14 @@ public class Parser {
       }
 
       lexer.advanceToken();
+      
+      if (operatorToken.type == TokenType.As) {
+        AbstractTypeRef targetTypeRef = parseTypeRef();
+
+        lhs = new CastExpr(lhs, targetTypeRef);
+        continue;
+      }
+      
       Expr rhs = parseInfixExpr(precedence);
 
       if (operatorToken.type == TokenType.Equal) {

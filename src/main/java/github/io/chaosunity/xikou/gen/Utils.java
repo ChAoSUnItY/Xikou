@@ -174,4 +174,109 @@ public final class Utils {
   static int getDupX2Opcode(AbstractType type) {
     return type.getSize() == 2 ? Opcodes.DUP2_X2 : Opcodes.DUP_X2;
   }
+  
+  static int getAddOpcode(AbstractType type) {
+    if (!(type instanceof PrimitiveType)) {
+      return 0;
+    }
+    
+    switch ((PrimitiveType) type) {
+      case INT:
+        return Opcodes.IADD;
+      case LONG:
+        return Opcodes.LADD;
+      case FLOAT:
+        return Opcodes.FADD;
+      case DOUBLE:
+        return Opcodes.DADD;
+      default:
+        return 0;
+    }
+  }
+
+  static int getSubOpcode(AbstractType type) {
+    if (!(type instanceof PrimitiveType)) {
+      return 0;
+    }
+
+    switch ((PrimitiveType) type) {
+      case INT:
+        return Opcodes.ISUB;
+      case LONG:
+        return Opcodes.LSUB;
+      case FLOAT:
+        return Opcodes.FSUB;
+      case DOUBLE:
+        return Opcodes.DSUB;
+      default:
+        return 0;
+    }
+  }
+  
+  static int[] getPrimitiveCastOpcodeSeq(PrimitiveType fromType, PrimitiveType toType) {
+    switch (fromType) {
+      case CHAR:
+        switch (toType) {
+          case LONG:
+            return new int[]{Opcodes.I2L};
+          case FLOAT:
+            return new int[]{Opcodes.I2F};
+          case DOUBLE:
+            return new int[]{Opcodes.I2D};
+        }
+        break;
+      case INT:
+        switch (toType) {
+          case CHAR:
+            return new int[]{Opcodes.I2C};
+          case LONG:
+            return new int[]{Opcodes.I2L};
+          case FLOAT:
+            return new int[]{Opcodes.I2F};
+          case DOUBLE:
+            return new int[]{Opcodes.I2D};
+          default:
+        }
+        break;
+      case LONG:
+        switch (toType) {
+          case CHAR:
+            return new int[]{Opcodes.L2I, Opcodes.I2C};
+          case INT:
+            return new int[]{Opcodes.L2I};
+          case FLOAT:
+            return new int[]{Opcodes.L2F};
+          case DOUBLE:
+            return new int[]{Opcodes.L2D};
+        }
+        break;
+      case FLOAT:
+        switch (toType) {
+          case CHAR:
+            return new int[]{Opcodes.F2I, Opcodes.I2C};
+          case INT:
+            return new int[]{Opcodes.F2I};
+          case LONG:
+            return new int[]{Opcodes.F2L};
+          case DOUBLE:
+            return new int[]{Opcodes.F2D};
+        }
+        break;
+      case DOUBLE:
+        switch (toType) {
+          case CHAR:
+            return new int[]{Opcodes.D2I, Opcodes.I2C};
+          case INT:
+            return new int[]{Opcodes.D2I};
+          case LONG:
+            return new int[]{Opcodes.D2L};
+          case FLOAT:
+            return new int[]{Opcodes.D2F};
+        }
+        break;
+    }
+
+    // Type widening does not require opcode 
+    return new int[0];
+  }
 }

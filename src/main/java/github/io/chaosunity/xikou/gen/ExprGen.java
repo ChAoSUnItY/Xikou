@@ -3,6 +3,7 @@ package github.io.chaosunity.xikou.gen;
 import github.io.chaosunity.xikou.ast.expr.ArrayInitExpr;
 import github.io.chaosunity.xikou.ast.expr.AssignmentExpr;
 import github.io.chaosunity.xikou.ast.expr.BlockExpr;
+import github.io.chaosunity.xikou.ast.expr.CastExpr;
 import github.io.chaosunity.xikou.ast.expr.CharLiteralExpr;
 import github.io.chaosunity.xikou.ast.expr.ConstructorCallExpr;
 import github.io.chaosunity.xikou.ast.expr.Expr;
@@ -23,6 +24,7 @@ import github.io.chaosunity.xikou.resolver.types.AbstractType;
 import github.io.chaosunity.xikou.resolver.types.ArrayType;
 import github.io.chaosunity.xikou.resolver.types.ClassType;
 import github.io.chaosunity.xikou.resolver.types.PrimitiveType;
+import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
@@ -33,6 +35,8 @@ public class ExprGen {
       genInfixExpr(mw, (InfixExpr) expr);
     } else if (expr instanceof AssignmentExpr) {
       genAssignmentExpr(mw, (AssignmentExpr) expr);
+    } else if (expr instanceof CastExpr) {
+      genCastExpr(mw, (CastExpr) expr);
     } else if (expr instanceof MethodCallExpr) {
       genMethodCallExpr(mw, (MethodCallExpr) expr);
     } else if (expr instanceof MemberAccessExpr) {
@@ -64,11 +68,100 @@ public class ExprGen {
     Expr lhs = infixExpr.lhs, rhs = infixExpr.rhs;
     TokenType operatorType = infixExpr.operator.type;
 
+    if (operatorType != TokenType.DoubleAmpersand && operatorType != TokenType.DoublePipe) {
+      genExpr(mw, lhs);
+      genExpr(mw, rhs);
+    }
+
     switch (operatorType) {
+      case DoubleEqual:
+      case NotEqual:
+        genCompareExpr(mw, operatorType);
+        break;
+      case DoubleAmpersand:
+      case DoublePipe:
+        genShortCircuitExpr(mw, infixExpr, infixExpr.operator.type);
+        break;
+      case Plus:
+        mw.visitInsn(Utils.getAddOpcode(infixExpr.getType()));
+        break;
+      case Minus:
+        mw.visitInsn(Utils.getSubOpcode(infixExpr.getType()));
+        break;
       default:
         throw new IllegalStateException(
             String.format("Token %s is not an valid infix operator", operatorType));
     }
+  }
+  
+  private void genCompareExpr(MethodVisitor mw, TokenType operatorType) {
+    Label endLabel = new Label(), falseLabel = new Label();
+    
+    switch (operatorType) {
+      case DoubleEqual:
+        mw.visitJumpInsn(Opcodes.IF_ICMPEQ, falseLabel);
+        break;
+      case NotEqual:
+        mw.visitJumpInsn(Opcodes.IF_ICMPNE, falseLabel);
+        break;
+    }
+
+    mw.visitLdcInsn(1);
+    mw.visitJumpInsn(Opcodes.GOTO, endLabel);
+    mw.visitLabel(falseLabel);
+    mw.visitLdcInsn(0);
+    mw.visitLabel(endLabel);
+  }
+
+  private void genShortCircuitExpr(MethodVisitor mw, InfixExpr infixExpr, TokenType operatorType) {
+    int conditionCount = 0;
+    Expr[] conditions = new Expr[1];
+    Expr infixHolder = infixExpr;
+
+    // Collect all conditions
+    while (infixHolder != null) {
+      if (conditionCount >= conditions.length) {
+        Expr[] newArr = new Expr[conditions.length * 2];
+        System.arraycopy(conditions, 0, newArr, 0, conditions.length);
+        conditions = newArr;
+      }
+
+      if (!(infixHolder instanceof InfixExpr)
+          || ((InfixExpr) infixHolder).operator.type != operatorType) {
+        conditions[conditionCount++] = infixHolder;
+        break;
+      }
+
+      InfixExpr lhsCond = (InfixExpr) infixHolder;
+
+      conditions[conditionCount++] = lhsCond.rhs;
+      infixHolder = lhsCond.lhs;
+    }
+
+    Label endLabel = new Label(), falseLabel = new Label();
+    int jumpOpcode;
+
+    switch (operatorType) {
+      case DoubleAmpersand:
+        jumpOpcode = Opcodes.IFNE;
+        break;
+      case DoublePipe:
+        jumpOpcode = Opcodes.IFEQ;
+        break;
+      default:
+        throw new IllegalStateException("Incompatible opcode for generating short circuit expression");
+    }
+
+    for (int i = conditionCount - 1; i >= 0; i--) {
+      genExpr(mw, conditions[i]);
+      mw.visitJumpInsn(jumpOpcode, falseLabel);
+    }
+    
+    mw.visitLdcInsn(1);
+    mw.visitJumpInsn(Opcodes.GOTO, endLabel);
+    mw.visitLabel(falseLabel);
+    mw.visitLdcInsn(0);
+    mw.visitLabel(endLabel);
   }
 
   private void genAssignmentExpr(MethodVisitor mw, AssignmentExpr assignmentExpr) {
@@ -123,7 +216,7 @@ public class ExprGen {
         FieldRef fieldRef = memberAccessExpr.resolvedFieldRef;
 
         if (!isLastAssignment) {
-          mw.visitInsn(Opcodes.DUP_X1);
+          mw.visitInsn(Utils.getDupX1Opcode(fieldRef.fieldType));
         }
 
         mw.visitFieldInsn(fieldRef.isStatic ? Opcodes.PUTSTATIC : Opcodes.PUTFIELD,
@@ -134,7 +227,7 @@ public class ExprGen {
         NameExpr nameExpr = (NameExpr) assignmentTarget;
 
         if (!isLastAssignment) {
-          mw.visitInsn(Opcodes.DUP);
+          mw.visitInsn(Utils.getDupOpcode(nameExpr.resolvedType));
         }
 
         mw.visitVarInsn(Utils.getStoreOpcode(nameExpr.getType()), nameExpr.localVarRef.index);
@@ -142,10 +235,22 @@ public class ExprGen {
         IndexExpr indexExpr = (IndexExpr) assignmentTarget;
 
         if (!isLastAssignment) {
-          mw.visitInsn(Opcodes.DUP_X2);
+          mw.visitInsn(Utils.getDupX2Opcode(indexExpr.getType()));
         }
 
         mw.visitInsn(Utils.getArrayStoreOpcode(indexExpr.getType()));
+      }
+    }
+  }
+  
+  private void genCastExpr(MethodVisitor mw, CastExpr castExpr) {
+    genExpr(mw, castExpr.targetCastExpr);
+    
+    if (castExpr.targetCastExpr.getType() instanceof PrimitiveType && castExpr.targetTypeRef.getType() instanceof PrimitiveType) {
+      int[] castOpcodeSeq = Utils.getPrimitiveCastOpcodeSeq((PrimitiveType) castExpr.targetCastExpr.getType(), (PrimitiveType) castExpr.targetTypeRef.getType());
+      
+      for (int castOpcode : castOpcodeSeq) {
+        mw.visitInsn(castOpcode);
       }
     }
   }

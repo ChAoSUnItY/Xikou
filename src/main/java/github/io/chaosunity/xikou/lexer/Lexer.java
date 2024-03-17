@@ -12,7 +12,7 @@ public class Lexer {
   }
 
   private static boolean isWhitespace(char ch) {
-    return Character.isWhitespace(ch) || ch == '\n' || ch == '\r' || ch == '\t';
+    return Character.isWhitespace(ch);
   }
 
   private static boolean isNumeric(char ch) {
@@ -105,8 +105,39 @@ public class Lexer {
     }
 
     if (currentChar == '=') {
+      if (peekChar(1) == '=') {
+        readChar(2);
+        return new Token(TokenType.DoubleEqual, "==");
+      }
+      
       readChar(1);
       return new Token(TokenType.Equal, "=");
+    }
+    
+    if (currentChar == '!') {
+      if (peekChar(1) == '=') {
+        readChar(2);
+        return new Token(TokenType.NotEqual, "!=");
+      }
+    }
+
+    if (currentChar == '&') {
+      if (peekChar(1) == '&') {
+        readChar(2);
+        return new Token(TokenType.DoublePipe, "&&");
+      }
+    }
+    
+    if (currentChar == '|') {
+      if (peekChar(1) == '|') {
+        readChar(2);
+        return new Token(TokenType.DoublePipe, "||");
+      }
+    }
+    
+    if (currentChar == '+') {
+      readChar(1);
+      return new Token(TokenType.Plus, "+");
     }
 
     if (currentChar == '-') {

@@ -6,6 +6,8 @@ import github.io.chaosunity.xikou.ast.ConstructorDecl;
 import github.io.chaosunity.xikou.ast.EnumDecl;
 import github.io.chaosunity.xikou.ast.EnumVariantDecl;
 import github.io.chaosunity.xikou.ast.FieldDecl;
+import github.io.chaosunity.xikou.ast.FnDecl;
+import github.io.chaosunity.xikou.ast.ImplDecl;
 import github.io.chaosunity.xikou.resolver.types.AbstractType;
 import github.io.chaosunity.xikou.resolver.types.ClassType;
 import github.io.chaosunity.xikou.resolver.types.PrimitiveType;
@@ -58,9 +60,35 @@ public class SymbolTable {
         continue;
       }
 
-      if (decl instanceof ClassDecl) {
-        // TODO: Support method decl in ClassDecl
+      ImplDecl implDecl = decl.getImplDecl();
+      
+      if (implDecl == null) {
+        return null;
+      }
 
+      if (decl instanceof ClassDecl) {
+        for (int j = 0; j < implDecl.functionCount; j++) {
+          FnDecl fnDecl = implDecl.functionDecls[j];
+          
+          if (!fnDecl.nameToken.literal.equals(name)) {
+            continue;
+          }
+          
+          boolean hasIncompatibleType = false;
+          
+          for (int k = 0; k < fnDecl.parameterCount; k++) {
+            if (!fnDecl.parameters[k].typeRef.getType().equals(parameterTypes[k])) {
+              hasIncompatibleType = true;
+              break;
+            }
+          }
+          
+          if (hasIncompatibleType) {
+            continue;
+          }
+          
+          return fnDecl.asMethodRef();
+        }
       } else if (decl instanceof EnumDecl) {
         // TODO: Support method decl in EnumDecl
       }

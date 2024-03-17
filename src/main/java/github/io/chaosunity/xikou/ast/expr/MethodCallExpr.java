@@ -10,7 +10,6 @@ public class MethodCallExpr implements Expr {
   public final Token nameToken;
   public final int argumentCount;
   public final Expr[] arguments;
-  public AbstractType resolvedType;
   public MethodRef resolvedMethodRef;
 
   public MethodCallExpr(Expr ownerExpr, Token nameToken, int argumentCount, Expr[] arguments) {
@@ -22,7 +21,7 @@ public class MethodCallExpr implements Expr {
 
   @Override
   public AbstractType getType() {
-    return resolvedType;
+    return resolvedMethodRef.returnType;
   }
 
   @Override
