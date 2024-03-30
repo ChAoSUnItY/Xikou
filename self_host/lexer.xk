@@ -17,7 +17,7 @@ impl Lexer {
         return java::lang::Character.isDigit(ch);
     }
     
-    priv fn isIdentStart(self, ch: char) -> bool {
+    fn isIdentStart(self, ch: char) -> bool {
         return java::lang::Character.isAlphabetic(ch as i32) || ch == '_';
     }
     
@@ -31,7 +31,6 @@ impl Lexer {
     
     pub fn main(args: [java::lang::String]) {
       let lexer = Lexer.self("java");
-      java::lang::System.out.println(lexer.isIdentStart('a'));
     }
 }
 

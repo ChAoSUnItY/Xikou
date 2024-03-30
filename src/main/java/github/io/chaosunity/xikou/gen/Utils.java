@@ -174,12 +174,12 @@ public final class Utils {
   static int getDupX2Opcode(AbstractType type) {
     return type.getSize() == 2 ? Opcodes.DUP2_X2 : Opcodes.DUP_X2;
   }
-  
+
   static int getAddOpcode(AbstractType type) {
     if (!(type instanceof PrimitiveType)) {
       return 0;
     }
-    
+
     switch ((PrimitiveType) type) {
       case INT:
         return Opcodes.IADD;
@@ -212,7 +212,7 @@ public final class Utils {
         return 0;
     }
   }
-  
+
   static int[] getPrimitiveCastOpcodeSeq(PrimitiveType fromType, PrimitiveType toType) {
     switch (fromType) {
       case CHAR:

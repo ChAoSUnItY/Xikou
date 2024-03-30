@@ -109,11 +109,11 @@ public class Lexer {
         readChar(2);
         return new Token(TokenType.DoubleEqual, "==");
       }
-      
+
       readChar(1);
       return new Token(TokenType.Equal, "=");
     }
-    
+
     if (currentChar == '!') {
       if (peekChar(1) == '=') {
         readChar(2);
@@ -127,14 +127,14 @@ public class Lexer {
         return new Token(TokenType.DoublePipe, "&&");
       }
     }
-    
+
     if (currentChar == '|') {
       if (peekChar(1) == '|') {
         readChar(2);
         return new Token(TokenType.DoublePipe, "||");
       }
     }
-    
+
     if (currentChar == '+') {
       readChar(1);
       return new Token(TokenType.Plus, "+");

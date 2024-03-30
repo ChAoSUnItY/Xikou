@@ -18,15 +18,19 @@ import github.io.chaosunity.xikou.ast.expr.AssignmentExpr;
 import github.io.chaosunity.xikou.ast.expr.BlockExpr;
 import github.io.chaosunity.xikou.ast.expr.CastExpr;
 import github.io.chaosunity.xikou.ast.expr.CharLiteralExpr;
+import github.io.chaosunity.xikou.ast.expr.CondExpr;
 import github.io.chaosunity.xikou.ast.expr.ConstructorCallExpr;
+import github.io.chaosunity.xikou.ast.expr.EqualExpr;
 import github.io.chaosunity.xikou.ast.expr.Expr;
 import github.io.chaosunity.xikou.ast.expr.IndexExpr;
-import github.io.chaosunity.xikou.ast.expr.InfixExpr;
 import github.io.chaosunity.xikou.ast.expr.IntegerLiteralExpr;
 import github.io.chaosunity.xikou.ast.expr.MemberAccessExpr;
 import github.io.chaosunity.xikou.ast.expr.MethodCallExpr;
+import github.io.chaosunity.xikou.ast.expr.MinusExpr;
 import github.io.chaosunity.xikou.ast.expr.NameExpr;
+import github.io.chaosunity.xikou.ast.expr.NotEqualExpr;
 import github.io.chaosunity.xikou.ast.expr.NullLiteral;
+import github.io.chaosunity.xikou.ast.expr.PlusExpr;
 import github.io.chaosunity.xikou.ast.expr.ReturnExpr;
 import github.io.chaosunity.xikou.ast.expr.StringLiteralExpr;
 import github.io.chaosunity.xikou.ast.expr.TypeExpr;
@@ -538,20 +542,53 @@ public class Parser {
       }
 
       lexer.advanceToken();
-      
+
       if (operatorToken.type == TokenType.As) {
         AbstractTypeRef targetTypeRef = parseTypeRef();
 
         lhs = new CastExpr(lhs, targetTypeRef);
         continue;
       }
-      
+
       Expr rhs = parseInfixExpr(precedence);
 
-      if (operatorToken.type == TokenType.Equal) {
-        lhs = new AssignmentExpr(lhs, operatorToken, rhs);
-      } else {
-        lhs = new InfixExpr(lhs, operatorToken, rhs);
+      switch (operatorToken.type) {
+        case Plus:
+          lhs = new PlusExpr(lhs, rhs);
+          break;
+        case Minus:
+          lhs = new MinusExpr(lhs, rhs);
+          break;
+        case DoubleAmpersand:
+        case DoublePipe: {
+          int exprCount = 2;
+          Expr[] exprs = {lhs, rhs};
+
+          while (lexer.acceptToken(operatorToken.type)) {
+            if (exprCount >= exprs.length) {
+              Expr[] newArr = new Expr[exprCount * 2];
+              System.arraycopy(exprs, 0, newArr, 0, exprCount);
+              exprs = newArr;
+            }
+
+            exprs[exprCount++] = parseInfixExpr(precedence);
+          }
+
+          lhs = new CondExpr(exprCount, exprs, operatorToken);
+          break;
+        }
+        case DoubleEqual:
+          lhs = new EqualExpr(lhs, rhs);
+          break;
+        case NotEqual:
+          lhs = new NotEqualExpr(lhs, rhs);
+          break;
+        case Equal:
+          lhs = new AssignmentExpr(lhs, operatorToken, rhs);
+          break;
+        default:
+          throw new IllegalStateException(
+              String.format("ICE: %s is not a valid infix operator", operatorToken.type));
       }
     }
 

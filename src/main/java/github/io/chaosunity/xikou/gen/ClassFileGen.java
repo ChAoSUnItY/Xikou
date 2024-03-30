@@ -84,7 +84,11 @@ public abstract class ClassFileGen {
         if (!(exprStmt.expr instanceof ReturnExpr) && fnDecl.returnType == PrimitiveType.VOID) {
           mw.visitInsn(Opcodes.RETURN);
         }
+      } else {
+        mw.visitInsn(Opcodes.RETURN);
       }
+    } else {
+      mw.visitInsn(Opcodes.RETURN);
     }
 
     mw.visitMaxs(-1, -1);

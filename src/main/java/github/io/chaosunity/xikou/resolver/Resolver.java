@@ -14,13 +14,18 @@ import github.io.chaosunity.xikou.ast.expr.ArrayInitExpr;
 import github.io.chaosunity.xikou.ast.expr.AssignmentExpr;
 import github.io.chaosunity.xikou.ast.expr.BlockExpr;
 import github.io.chaosunity.xikou.ast.expr.CastExpr;
+import github.io.chaosunity.xikou.ast.expr.CondExpr;
 import github.io.chaosunity.xikou.ast.expr.ConstructorCallExpr;
+import github.io.chaosunity.xikou.ast.expr.EqualExpr;
 import github.io.chaosunity.xikou.ast.expr.Expr;
 import github.io.chaosunity.xikou.ast.expr.IndexExpr;
 import github.io.chaosunity.xikou.ast.expr.InfixExpr;
 import github.io.chaosunity.xikou.ast.expr.MemberAccessExpr;
 import github.io.chaosunity.xikou.ast.expr.MethodCallExpr;
+import github.io.chaosunity.xikou.ast.expr.MinusExpr;
 import github.io.chaosunity.xikou.ast.expr.NameExpr;
+import github.io.chaosunity.xikou.ast.expr.NotEqualExpr;
+import github.io.chaosunity.xikou.ast.expr.PlusExpr;
 import github.io.chaosunity.xikou.ast.expr.ReturnExpr;
 import github.io.chaosunity.xikou.ast.expr.TypeableExpr;
 import github.io.chaosunity.xikou.ast.stmt.ExprStmt;
@@ -275,6 +280,8 @@ public final class Resolver {
   public void resolveExpr(Expr expr, Scope scope) {
     if (expr instanceof InfixExpr) {
       resolveInfixExpr((InfixExpr) expr, scope);
+    } else if (expr instanceof CondExpr) {
+      resolveCondExpr((CondExpr) expr, scope);
     } else if (expr instanceof AssignmentExpr) {
       resolveAssignmentExpr((AssignmentExpr) expr, scope);
     } else if (expr instanceof CastExpr) {
@@ -299,30 +306,39 @@ public final class Resolver {
   }
 
   private void resolveInfixExpr(InfixExpr expr, Scope scope) {
-    resolveExpr(expr.lhs, scope);
-    resolveExpr(expr.rhs, scope);
+    resolveExpr(expr.getLhs(), scope);
+    resolveExpr(expr.getRhs(), scope);
 
-    switch (expr.operator.type) {
-      case DoubleEqual:
-      case NotEqual:
-        if (!expr.lhs.getType().equals(expr.rhs.getType())) {
-          throw new IllegalStateException(
-              "Cannot compare on different types, use Object#equals instead");
-        }
-        break;
-      case DoubleAmpersand:
-      case DoublePipe:
-        if (expr.lhs.getType() != PrimitiveType.BOOL || expr.rhs.getType() != PrimitiveType.BOOL) {
-          throw new IllegalStateException(
-              "Cannot perform logical operation on different types");
-        }
-        break;
-      case Plus:
-      case Minus:
-        if (!expr.lhs.getType().equals(expr.rhs.getType())) {
-          throw new IllegalStateException("Cannot perform arithmetic operation on different types");
-        }
-        break;
+    if (expr instanceof EqualExpr || expr instanceof NotEqualExpr) {
+      resolveLogicalEqual(expr, scope);
+    } else if (expr instanceof PlusExpr || expr instanceof MinusExpr) {
+      resolveArithmeticOpExpr(expr, scope);
+    } else if (expr instanceof AssignmentExpr) {
+      resolveAssignmentExpr((AssignmentExpr) expr, scope);
+    }
+  }
+
+  private void resolveLogicalEqual(InfixExpr infixExpr, Scope scope) {
+    if (!infixExpr.getLhs().getType().equals(infixExpr.getRhs().getType())) {
+      throw new IllegalStateException(
+          "Cannot compare on different types, use Object#equals instead");
+    }
+  }
+
+  private void resolveCondExpr(CondExpr condExpr, Scope scope) {
+    for (int i = 0; i < condExpr.exprCount; i++) {
+      resolveExpr(condExpr.exprs[i], scope);
+
+      if (condExpr.exprs[i].getType() != PrimitiveType.BOOL) {
+        throw new IllegalStateException(
+            "Cannot perform logical operation on different types");
+      }
+    }
+  }
+
+  private void resolveArithmeticOpExpr(InfixExpr infixExpr, Scope scope) {
+    if (!infixExpr.getLhs().getType().equals(infixExpr.getRhs().getType())) {
+      throw new IllegalStateException("Cannot perform arithmetic operation on different types");
     }
   }
 
@@ -350,11 +366,11 @@ public final class Resolver {
               expr.lhs.getType().getInternalName()));
     }
   }
-  
+
   private void resolveCastExpr(CastExpr expr, Scope scope) {
     resolveExpr(expr.targetCastExpr, scope);
     resolveTypeRef(expr.targetTypeRef, false);
-    
+
     if (!TypeUtils.typesCanCast(expr.targetTypeRef.getType(), expr.targetTypeRef.getType())) {
       throw new IllegalStateException("Cannot explicitly cast type");
     }

@@ -61,7 +61,7 @@ public class SymbolTable {
       }
 
       ImplDecl implDecl = decl.getImplDecl();
-      
+
       if (implDecl == null) {
         return null;
       }
@@ -69,24 +69,24 @@ public class SymbolTable {
       if (decl instanceof ClassDecl) {
         for (int j = 0; j < implDecl.functionCount; j++) {
           FnDecl fnDecl = implDecl.functionDecls[j];
-          
+
           if (!fnDecl.nameToken.literal.equals(name)) {
             continue;
           }
-          
+
           boolean hasIncompatibleType = false;
-          
+
           for (int k = 0; k < fnDecl.parameterCount; k++) {
             if (!fnDecl.parameters[k].typeRef.getType().equals(parameterTypes[k])) {
               hasIncompatibleType = true;
               break;
             }
           }
-          
+
           if (hasIncompatibleType) {
             continue;
           }
-          
+
           return fnDecl.asMethodRef();
         }
       } else if (decl instanceof EnumDecl) {
