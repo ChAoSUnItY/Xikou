@@ -121,6 +121,26 @@ public class Lexer {
       }
     }
 
+    if (currentChar == '>') {
+      if (peekChar(1) == '=') {
+        readChar(2);
+        return new Token(TokenType.GreaterEqual, ">=");
+      }
+
+      readChar(1);
+      return new Token(TokenType.Greater, ">");
+    }
+
+    if (currentChar == '<') {
+      if (peekChar(1) == '=') {
+        readChar(2);
+        return new Token(TokenType.LesserEqual, "<=");
+      }
+
+      readChar(1);
+      return new Token(TokenType.Lesser, "<");
+    }
+
     if (currentChar == '&') {
       if (peekChar(1) == '&') {
         readChar(2);

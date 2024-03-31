@@ -18,17 +18,16 @@ import github.io.chaosunity.xikou.ast.expr.AssignmentExpr;
 import github.io.chaosunity.xikou.ast.expr.BlockExpr;
 import github.io.chaosunity.xikou.ast.expr.CastExpr;
 import github.io.chaosunity.xikou.ast.expr.CharLiteralExpr;
+import github.io.chaosunity.xikou.ast.expr.CompareExpr;
 import github.io.chaosunity.xikou.ast.expr.CondExpr;
 import github.io.chaosunity.xikou.ast.expr.ConstructorCallExpr;
-import github.io.chaosunity.xikou.ast.expr.EqualExpr;
 import github.io.chaosunity.xikou.ast.expr.Expr;
+import github.io.chaosunity.xikou.ast.expr.FieldAccessExpr;
 import github.io.chaosunity.xikou.ast.expr.IndexExpr;
 import github.io.chaosunity.xikou.ast.expr.IntegerLiteralExpr;
-import github.io.chaosunity.xikou.ast.expr.FieldAccessExpr;
 import github.io.chaosunity.xikou.ast.expr.MethodCallExpr;
 import github.io.chaosunity.xikou.ast.expr.MinusExpr;
 import github.io.chaosunity.xikou.ast.expr.NameExpr;
-import github.io.chaosunity.xikou.ast.expr.NotEqualExpr;
 import github.io.chaosunity.xikou.ast.expr.NullLiteral;
 import github.io.chaosunity.xikou.ast.expr.PlusExpr;
 import github.io.chaosunity.xikou.ast.expr.ReturnExpr;
@@ -578,10 +577,12 @@ public class Parser {
           break;
         }
         case DoubleEqual:
-          lhs = new EqualExpr(lhs, rhs);
-          break;
         case NotEqual:
-          lhs = new NotEqualExpr(lhs, rhs);
+        case Greater:
+        case GreaterEqual:
+        case Lesser:
+        case LesserEqual:
+          lhs = new CompareExpr(lhs, operatorToken, rhs);
           break;
         case Equal:
           lhs = new AssignmentExpr(lhs, operatorToken, rhs);

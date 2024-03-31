@@ -5,18 +5,17 @@ import github.io.chaosunity.xikou.ast.expr.AssignmentExpr;
 import github.io.chaosunity.xikou.ast.expr.BlockExpr;
 import github.io.chaosunity.xikou.ast.expr.CastExpr;
 import github.io.chaosunity.xikou.ast.expr.CharLiteralExpr;
+import github.io.chaosunity.xikou.ast.expr.CompareExpr;
 import github.io.chaosunity.xikou.ast.expr.CondExpr;
 import github.io.chaosunity.xikou.ast.expr.ConstructorCallExpr;
-import github.io.chaosunity.xikou.ast.expr.EqualExpr;
 import github.io.chaosunity.xikou.ast.expr.Expr;
+import github.io.chaosunity.xikou.ast.expr.FieldAccessExpr;
 import github.io.chaosunity.xikou.ast.expr.IndexExpr;
 import github.io.chaosunity.xikou.ast.expr.InfixExpr;
 import github.io.chaosunity.xikou.ast.expr.IntegerLiteralExpr;
-import github.io.chaosunity.xikou.ast.expr.FieldAccessExpr;
 import github.io.chaosunity.xikou.ast.expr.MethodCallExpr;
 import github.io.chaosunity.xikou.ast.expr.MinusExpr;
 import github.io.chaosunity.xikou.ast.expr.NameExpr;
-import github.io.chaosunity.xikou.ast.expr.NotEqualExpr;
 import github.io.chaosunity.xikou.ast.expr.NullLiteral;
 import github.io.chaosunity.xikou.ast.expr.PlusExpr;
 import github.io.chaosunity.xikou.ast.expr.ReturnExpr;
@@ -74,21 +73,43 @@ public class ExprGen {
     genExpr(mw, infixExpr.getLhs());
     genExpr(mw, infixExpr.getRhs());
 
-    if (infixExpr instanceof EqualExpr || infixExpr instanceof NotEqualExpr) {
-      genCmpResult(mw);
+    if (infixExpr instanceof CompareExpr) {
+      genCompareExpr(mw, (CompareExpr) infixExpr);
     } else if (infixExpr instanceof PlusExpr || infixExpr instanceof MinusExpr) {
       mw.visitInsn(Utils.getAddOpcode(infixExpr.getType()));
     }
   }
 
-  private void genCmpResult(MethodVisitor mw) {
+  private void genCompareExpr(MethodVisitor mw, CompareExpr compareExpr) {
     Label endLabel = new Label(), falseLabel = new Label();
+    int jmpOpcode = 0;
 
-    mw.visitJumpInsn(Opcodes.IF_ICMPNE, falseLabel);
-    mw.visitLdcInsn(1);
+    switch (compareExpr.compareOperatorToken.type) {
+      case DoubleEqual:
+        jmpOpcode = Opcodes.IF_ICMPNE;
+        break;
+      case NotEqual:
+        jmpOpcode = Opcodes.IF_ICMPEQ;
+        break;
+      case Greater:
+        jmpOpcode = Opcodes.IF_ICMPLE;
+        break;
+      case GreaterEqual:
+        jmpOpcode = Opcodes.IF_ICMPLT;
+        break;
+      case Lesser:
+        jmpOpcode = Opcodes.IF_ICMPGE;
+        break;
+      case LesserEqual:
+        jmpOpcode = Opcodes.IF_ICMPGT;
+        break;
+    }
+
+    mw.visitJumpInsn(jmpOpcode, falseLabel);
+    mw.visitInsn(Opcodes.ICONST_1);
     mw.visitJumpInsn(Opcodes.GOTO, endLabel);
     mw.visitLabel(falseLabel);
-    mw.visitLdcInsn(0);
+    mw.visitInsn(Opcodes.ICONST_0);
     mw.visitLabel(endLabel);
   }
 
@@ -106,10 +127,10 @@ public class ExprGen {
         }
 
         mw.visitJumpInsn(Opcodes.IFEQ, endLabel);
-        mw.visitLdcInsn(1);
+        mw.visitInsn(Opcodes.ICONST_1);
         mw.visitJumpInsn(Opcodes.GOTO, endLabel);
         mw.visitLabel(falseLabel);
-        mw.visitLdcInsn(0);
+        mw.visitInsn(Opcodes.ICONST_0);
         mw.visitLabel(endLabel);
       }
       case DoublePipe: {

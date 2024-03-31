@@ -3,7 +3,7 @@ package github.io.chaosunity.xikou.lexer;
 public enum TokenType {
   CharLiteral, StringLiteral, NumberLiteral, Identifier, OpenParenthesis, CloseParenthesis,
   OpenBrace, CloseBrace, OpenBracket, CloseBracket, Dot, Comma, SemiColon, Colon, DoubleColon,
-  Equal, DoubleEqual, NotEqual, DoubleAmpersand, DoublePipe, Plus, Minus, SlimArrow, Pub, Priv,
+  Equal, DoubleEqual, NotEqual, Greater, GreaterEqual, Lesser, LesserEqual, DoubleAmpersand, DoublePipe, Plus, Minus, SlimArrow, Pub, Priv,
   Mut, Pkg, Class, Enum, Fn, Const, Let, Self, Impl, Null, Return, As, EOF;
 
   public static final TokenType[] KEYWORDS = new TokenType[]{Pub, Priv, Mut, Pkg, Class, Enum, Fn,
@@ -18,6 +18,10 @@ public enum TokenType {
         return 5;
       case DoubleEqual:
       case NotEqual:
+      case Greater:
+      case GreaterEqual:
+      case Lesser:
+      case LesserEqual:
         return 4;
       case DoubleAmpersand:
         return 3;

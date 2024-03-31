@@ -1,15 +1,18 @@
 package github.io.chaosunity.xikou.ast.expr;
 
+import github.io.chaosunity.xikou.lexer.Token;
 import github.io.chaosunity.xikou.resolver.types.AbstractType;
 import github.io.chaosunity.xikou.resolver.types.PrimitiveType;
 
-public final class NotEqualExpr implements InfixExpr {
+public final class CompareExpr implements InfixExpr {
 
   public final Expr lhs;
+  public final Token compareOperatorToken;
   public final Expr rhs;
 
-  public NotEqualExpr(Expr lhs, Expr rhs) {
+  public CompareExpr(Expr lhs, Token compareOperatorToken, Expr rhs) {
     this.lhs = lhs;
+    this.compareOperatorToken = compareOperatorToken;
     this.rhs = rhs;
   }
 

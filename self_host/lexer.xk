@@ -17,7 +17,7 @@ impl Lexer {
         return java::lang::Character.isDigit(ch);
     }
     
-    fn isIdentStart(ch: char) -> bool {
+    priv fn isIdentStart(ch: char) -> bool {
         return java::lang::Character.isAlphabetic(ch as i32) || ch == '_';
     }
     
@@ -27,6 +27,10 @@ impl Lexer {
     
     priv fn readChar(self, offset: i32) {
       self.pos = self.pos + offset;
+    }
+    
+    priv fn lel(self, offset: i32) -> bool {
+      return offset + self.pos >= self.source.length();
     }
     
     pub fn main(args: [java::lang::String]) {

@@ -14,17 +14,16 @@ import github.io.chaosunity.xikou.ast.expr.ArrayInitExpr;
 import github.io.chaosunity.xikou.ast.expr.AssignmentExpr;
 import github.io.chaosunity.xikou.ast.expr.BlockExpr;
 import github.io.chaosunity.xikou.ast.expr.CastExpr;
+import github.io.chaosunity.xikou.ast.expr.CompareExpr;
 import github.io.chaosunity.xikou.ast.expr.CondExpr;
 import github.io.chaosunity.xikou.ast.expr.ConstructorCallExpr;
-import github.io.chaosunity.xikou.ast.expr.EqualExpr;
 import github.io.chaosunity.xikou.ast.expr.Expr;
+import github.io.chaosunity.xikou.ast.expr.FieldAccessExpr;
 import github.io.chaosunity.xikou.ast.expr.IndexExpr;
 import github.io.chaosunity.xikou.ast.expr.InfixExpr;
-import github.io.chaosunity.xikou.ast.expr.FieldAccessExpr;
 import github.io.chaosunity.xikou.ast.expr.MethodCallExpr;
 import github.io.chaosunity.xikou.ast.expr.MinusExpr;
 import github.io.chaosunity.xikou.ast.expr.NameExpr;
-import github.io.chaosunity.xikou.ast.expr.NotEqualExpr;
 import github.io.chaosunity.xikou.ast.expr.PlusExpr;
 import github.io.chaosunity.xikou.ast.expr.ReturnExpr;
 import github.io.chaosunity.xikou.ast.expr.TypeableExpr;
@@ -309,8 +308,8 @@ public final class Resolver {
     resolveExpr(expr.getLhs(), scope);
     resolveExpr(expr.getRhs(), scope);
 
-    if (expr instanceof EqualExpr || expr instanceof NotEqualExpr) {
-      resolveLogicalEqual(expr, scope);
+    if (expr instanceof CompareExpr) {
+      resolveCompareExpr((CompareExpr) expr, scope);
     } else if (expr instanceof PlusExpr || expr instanceof MinusExpr) {
       resolveArithmeticOpExpr(expr, scope);
     } else if (expr instanceof AssignmentExpr) {
@@ -318,10 +317,33 @@ public final class Resolver {
     }
   }
 
-  private void resolveLogicalEqual(InfixExpr infixExpr, Scope scope) {
-    if (!infixExpr.getLhs().getType().equals(infixExpr.getRhs().getType())) {
-      throw new IllegalStateException(
-          "Cannot compare on different types, use Object#equals instead");
+  private void resolveCompareExpr(CompareExpr compareExpr, Scope scope) {
+    AbstractType lhsType = compareExpr.getLhs().getType(), rhsType = compareExpr.getRhs().getType();
+
+    switch (compareExpr.compareOperatorToken.type) {
+      case Equal:
+      case NotEqual:
+        if (!lhsType.equals(rhsType)) {
+          throw new IllegalStateException(
+              "Cannot compare on different types, use Object#equals instead");
+        }
+        break;
+      case Greater:
+      case GreaterEqual:
+      case Lesser:
+      case LesserEqual: {
+        if (!(lhsType instanceof PrimitiveType) || !(rhsType instanceof PrimitiveType)) {
+          throw new IllegalStateException("Cannot compare on non-numerical types");
+        }
+
+        PrimitiveType lhsPrimitiveType = (PrimitiveType) lhsType, rhsPrimitiveType = (PrimitiveType) rhsType;
+
+        if (lhsPrimitiveType != rhsPrimitiveType) {
+          throw new IllegalStateException(
+              "Cannot compare on different numerical types, cast one of the type to another first");
+        }
+        break;
+      }
     }
   }
 
@@ -450,8 +472,7 @@ public final class Resolver {
     }
 
     AbstractType ownerType;
-    
-    
+
     if (expr.ownerExpr == null) {
       ownerType = scope.parentClassType;
     } else {
@@ -463,7 +484,7 @@ public final class Resolver {
         arguementTypes);
     checkMethodCallAccessibility(expr, scope, methodRef);
   }
-  
+
   private void checkMethodCallAccessibility(MethodCallExpr expr, Scope scope, MethodRef methodRef) {
     if (methodRef == null) {
       throw new IllegalStateException(
@@ -490,7 +511,7 @@ public final class Resolver {
         FieldRef fieldRef = table.getField(ownerType,
             expr.nameToken.literal);
 
-        checkFieldAccessibility(expr, scope ,fieldRef);
+        checkFieldAccessibility(expr, scope, fieldRef);
         return;
       }
     }
@@ -499,9 +520,9 @@ public final class Resolver {
 
     FieldRef fieldRef = table.getField(expr.ownerExpr.getType(),
         expr.nameToken.literal);
-    checkFieldAccessibility(expr, scope ,fieldRef);
+    checkFieldAccessibility(expr, scope, fieldRef);
   }
-  
+
   private void checkFieldAccessibility(FieldAccessExpr expr, Scope scope, FieldRef fieldRef) {
     if (fieldRef == null) {
       throw new IllegalStateException(
