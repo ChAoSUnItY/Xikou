@@ -23,6 +23,7 @@ import github.io.chaosunity.xikou.ast.expr.CondExpr;
 import github.io.chaosunity.xikou.ast.expr.ConstructorCallExpr;
 import github.io.chaosunity.xikou.ast.expr.Expr;
 import github.io.chaosunity.xikou.ast.expr.FieldAccessExpr;
+import github.io.chaosunity.xikou.ast.expr.IfExpr;
 import github.io.chaosunity.xikou.ast.expr.IndexExpr;
 import github.io.chaosunity.xikou.ast.expr.IntegerLiteralExpr;
 import github.io.chaosunity.xikou.ast.expr.MethodCallExpr;
@@ -703,21 +704,20 @@ public class Parser {
       return new ReturnExpr(expr);
     }
 
-    if (lexer.acceptToken(TokenType.OpenBrace)) {
-      int statementCount = 0;
-      Statement[] statements = new Statement[1];
+    if (lexer.acceptToken(TokenType.If)) {
+      Expr condExpr = parseExpr();
+      BlockExpr trueBranchExpr = parseBlockExpr();
+      Expr falseBranchExpr = null;
 
-      while (!lexer.acceptToken(TokenType.CloseBrace)) {
-        if (statementCount >= statements.length) {
-          Statement[] newArr = new Statement[statements.length * 2];
-          System.arraycopy(statements, 0, newArr, 0, statements.length);
-          statements = newArr;
-        }
-
-        statements[statementCount++] = parseStatement();
+      if (lexer.acceptToken(TokenType.Else)) {
+        falseBranchExpr = parseExpr();
       }
 
-      return new BlockExpr(statementCount, statements);
+      return new IfExpr(condExpr, trueBranchExpr, falseBranchExpr);
+    }
+
+    if (lexer.peekToken(TokenType.OpenBrace)) {
+      return parseBlockExpr();
     }
 
     if (lexer.peekToken(TokenType.CharLiteral)) {
@@ -781,6 +781,25 @@ public class Parser {
 
   private NameExpr parseSelfNameExpr() {
     return new NameExpr(lexer.expectToken(TokenType.Self));
+  }
+
+  private BlockExpr parseBlockExpr() {
+    lexer.expectToken(TokenType.OpenBrace);
+
+    int statementCount = 0;
+    Statement[] statements = new Statement[1];
+
+    while (!lexer.acceptToken(TokenType.CloseBrace)) {
+      if (statementCount >= statements.length) {
+        Statement[] newArr = new Statement[statements.length * 2];
+        System.arraycopy(statements, 0, newArr, 0, statements.length);
+        statements = newArr;
+      }
+
+      statements[statementCount++] = parseStatement();
+    }
+
+    return new BlockExpr(statementCount, statements);
   }
 
   private AbstractTypeRef parseTypeRef() {

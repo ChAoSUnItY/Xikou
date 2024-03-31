@@ -19,6 +19,7 @@ import github.io.chaosunity.xikou.ast.expr.CondExpr;
 import github.io.chaosunity.xikou.ast.expr.ConstructorCallExpr;
 import github.io.chaosunity.xikou.ast.expr.Expr;
 import github.io.chaosunity.xikou.ast.expr.FieldAccessExpr;
+import github.io.chaosunity.xikou.ast.expr.IfExpr;
 import github.io.chaosunity.xikou.ast.expr.IndexExpr;
 import github.io.chaosunity.xikou.ast.expr.InfixExpr;
 import github.io.chaosunity.xikou.ast.expr.MethodCallExpr;
@@ -301,6 +302,8 @@ public final class Resolver {
       resolveBlockExpr((BlockExpr) expr, scope);
     } else if (expr instanceof NameExpr) {
       resolveNameExpr((NameExpr) expr, scope);
+    } else if (expr instanceof IfExpr) {
+      resolveIfExpr((IfExpr) expr, scope);
     }
   }
 
@@ -406,6 +409,19 @@ public final class Resolver {
       expr.localVarRef = localVarRef;
     } else {
       throw new IllegalStateException("Unknown reference to local variable");
+    }
+  }
+
+  private void resolveIfExpr(IfExpr expr, Scope scope) {
+    resolveExpr(expr.condExpr, scope);
+    resolveBlockExpr(expr.trueBranchExpr, scope.extend());
+
+    if (expr.falseBranchExpr != null) {
+      resolveExpr(expr.falseBranchExpr, scope.extend());
+    }
+
+    if (expr.condExpr.getType() != PrimitiveType.BOOL) {
+      throw new IllegalStateException("If-else condition must be bool");
     }
   }
 

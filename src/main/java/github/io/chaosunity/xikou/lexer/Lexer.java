@@ -176,6 +176,9 @@ public class Lexer {
       if (currentChar == '\\') {
         // Escaped character
         switch (currentChar = peekChar(2)) {
+          case '0':
+            currentChar = '\0';
+            break;
           case 't':
             currentChar = '\t';
             break;
@@ -224,6 +227,9 @@ public class Lexer {
         if (currentChar == '\\') {
           // Escaped character
           switch (currentChar = peekChar(length + 1)) {
+            case '0':
+              currentChar = '\0';
+              break;
             case 't':
               currentChar = '\t';
               break;

@@ -29,8 +29,12 @@ impl Lexer {
       self.pos = self.pos + offset;
     }
     
-    priv fn lel(self, offset: i32) -> bool {
-      return offset + self.pos >= self.source.length();
+    priv fn peekChar(self, offset: i32) -> char {
+      if self.pos + offset >= self.source.length() {
+        return '\0';
+      }
+      
+      return self.source.charAt(self.pos + offset);
     }
     
     pub fn main(args: [java::lang::String]) {

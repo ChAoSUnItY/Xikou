@@ -10,6 +10,7 @@ import github.io.chaosunity.xikou.ast.expr.CondExpr;
 import github.io.chaosunity.xikou.ast.expr.ConstructorCallExpr;
 import github.io.chaosunity.xikou.ast.expr.Expr;
 import github.io.chaosunity.xikou.ast.expr.FieldAccessExpr;
+import github.io.chaosunity.xikou.ast.expr.IfExpr;
 import github.io.chaosunity.xikou.ast.expr.IndexExpr;
 import github.io.chaosunity.xikou.ast.expr.InfixExpr;
 import github.io.chaosunity.xikou.ast.expr.IntegerLiteralExpr;
@@ -58,6 +59,8 @@ public class ExprGen {
       genBlockExpr(mw, (BlockExpr) expr);
     } else if (expr instanceof NameExpr) {
       genNameExpr(mw, (NameExpr) expr);
+    } else if (expr instanceof IfExpr) {
+      genIfExpr(mw, (IfExpr) expr);
     } else if (expr instanceof CharLiteralExpr) {
       genCharLiteralExpr(mw, (CharLiteralExpr) expr);
     } else if (expr instanceof StringLiteralExpr) {
@@ -116,12 +119,12 @@ public class ExprGen {
   private void genCondExpr(MethodVisitor mw, CondExpr condExpr) {
     switch (condExpr.condOperatorToken.type) {
       case DoubleAmpersand: {
-        Label falseLabel = new Label(), endLabel = new Label();
+        Label falseBranch = new Label(), endLabel = new Label();
 
         genExpr(mw, condExpr.exprs[0]);
 
         for (int i = 1; i < condExpr.exprCount; i++) {
-          mw.visitJumpInsn(Opcodes.IFEQ, falseLabel);
+          mw.visitJumpInsn(Opcodes.IFEQ, falseBranch);
 
           genExpr(mw, condExpr.exprs[i]);
         }
@@ -129,26 +132,27 @@ public class ExprGen {
         mw.visitJumpInsn(Opcodes.IFEQ, endLabel);
         mw.visitInsn(Opcodes.ICONST_1);
         mw.visitJumpInsn(Opcodes.GOTO, endLabel);
-        mw.visitLabel(falseLabel);
+        mw.visitLabel(falseBranch);
         mw.visitInsn(Opcodes.ICONST_0);
         mw.visitLabel(endLabel);
       }
       case DoublePipe: {
-        Label falseLabel = new Label(), endLabel = new Label();
+        Label trueBranch = new Label(), falseBranch = new Label(), endLabel = new Label();
 
         genExpr(mw, condExpr.exprs[0]);
 
         for (int i = 1; i < condExpr.exprCount; i++) {
-          mw.visitJumpInsn(Opcodes.IFEQ, falseLabel);
+          mw.visitJumpInsn(Opcodes.IFNE, trueBranch);
 
           genExpr(mw, condExpr.exprs[i]);
         }
 
-        mw.visitJumpInsn(Opcodes.IFEQ, endLabel);
-        mw.visitLdcInsn(1);
+        mw.visitJumpInsn(Opcodes.IFEQ, falseBranch);
+        mw.visitLabel(trueBranch);
+        mw.visitInsn(Opcodes.ICONST_1);
         mw.visitJumpInsn(Opcodes.GOTO, endLabel);
-        mw.visitLabel(falseLabel);
-        mw.visitLdcInsn(0);
+        mw.visitLabel(falseBranch);
+        mw.visitInsn(Opcodes.ICONST_0);
         mw.visitLabel(endLabel);
       }
     }
@@ -350,6 +354,20 @@ public class ExprGen {
     AbstractType varType = nameExpr.getType();
 
     mw.visitVarInsn(Utils.getLoadOpcode(varType), localVarRef.index);
+  }
+
+  private void genIfExpr(MethodVisitor mw, IfExpr ifExpr) {
+    Label falseBranch = new Label();
+
+    genExpr(mw, ifExpr.condExpr);
+
+    mw.visitJumpInsn(Opcodes.IFEQ, falseBranch);
+    genExpr(mw, ifExpr.trueBranchExpr);
+    mw.visitLabel(falseBranch);
+
+    if (ifExpr.falseBranchExpr != null) {
+      genExpr(mw, ifExpr.falseBranchExpr);
+    }
   }
 
   private void genCharLiteralExpr(MethodVisitor mw, CharLiteralExpr charLiteralExpr) {
