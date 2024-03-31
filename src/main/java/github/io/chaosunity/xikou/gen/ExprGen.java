@@ -21,6 +21,7 @@ import github.io.chaosunity.xikou.ast.expr.NullLiteral;
 import github.io.chaosunity.xikou.ast.expr.ReturnExpr;
 import github.io.chaosunity.xikou.ast.expr.StringLiteralExpr;
 import github.io.chaosunity.xikou.ast.expr.WhileExpr;
+import github.io.chaosunity.xikou.lexer.TokenType;
 import github.io.chaosunity.xikou.resolver.FieldRef;
 import github.io.chaosunity.xikou.resolver.LocalVarRef;
 import github.io.chaosunity.xikou.resolver.MethodRef;
@@ -86,6 +87,12 @@ public class ExprGen {
   }
 
   private void genCompareExpr(MethodVisitor mw, CompareExpr compareExpr) {
+    if (compareExpr.getLhs().getType() instanceof ClassType) {
+      // Enum variant comparison
+      genObjectCompareExpr(mw, compareExpr.compareOperatorToken.type == TokenType.NotEqual);
+      return;
+    }
+
     Label endLabel = new Label(), falseLabel = new Label();
     int jmpOpcode = 0;
 
@@ -114,6 +121,17 @@ public class ExprGen {
     mw.visitInsn(Opcodes.ICONST_1);
     mw.visitJumpInsn(Opcodes.GOTO, endLabel);
     mw.visitLabel(falseLabel);
+    mw.visitInsn(Opcodes.ICONST_0);
+    mw.visitLabel(endLabel);
+  }
+
+  private void genObjectCompareExpr(MethodVisitor mw, boolean negate) {
+    Label falseBranch = new Label(), endLabel = new Label();
+
+    mw.visitJumpInsn(negate ? Opcodes.IF_ACMPEQ : Opcodes.IF_ACMPNE, falseBranch);
+    mw.visitInsn(Opcodes.ICONST_1);
+    mw.visitJumpInsn(Opcodes.GOTO, endLabel);
+    mw.visitLabel(falseBranch);
     mw.visitInsn(Opcodes.ICONST_0);
     mw.visitLabel(endLabel);
   }
@@ -382,10 +400,10 @@ public class ExprGen {
       genExpr(mw, ifExpr.falseBranchExpr);
     }
   }
-  
+
   private void genWhileExpr(MethodVisitor mw, WhileExpr whileExpr) {
     Label condLabel = new Label(), endLabel = new Label();
-    
+
     mw.visitLabel(condLabel);
     genExpr(mw, whileExpr.condExpr);
     mw.visitJumpInsn(Opcodes.IFEQ, endLabel);

@@ -37,8 +37,42 @@ impl Lexer {
       return self.source.charAt(self.pos + offset);
     }
     
+    priv fn skipWhitespaces(self) {
+      while isWhitespace(self.peekChar(0)) {
+        self.readChar(1);
+      }
+    }
+    
+    priv fn nextToken(self) -> Token {
+      self.skipWhitespaces();
+      let ch = self.peekChar(0);
+      
+      if ch == '(' {
+        self.readChar(1);
+        return Token.self(TokenType.OpenParenthesis, "(");
+      }
+      
+      if ch == ')' {
+        self.readChar(1);
+        return Token.self(TokenType.CloseParenthesis, ")");
+      }
+      
+      if ch == '\0' {
+        self.readChar(1);
+        return Token.self(TokenType.EOF, "\0");
+      }
+      
+      return null;
+    }
+    
     pub fn main(args: [java::lang::String]) {
-      let lexer = Lexer.self("java");
+      let lexer = Lexer.self("()))\0");
+      let mut token = lexer.nextToken();
+      
+      while token.type != TokenType.EOF {
+        java::lang::System.out.println(token.type);
+        token = lexer.nextToken();
+      }
     }
 }
 
