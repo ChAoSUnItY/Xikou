@@ -1,6 +1,6 @@
 package github.io.chaosunity.xikou.ast;
 
-public class PackageRef {
+public final class PackageRef {
 
   public final String qualifiedPath;
 

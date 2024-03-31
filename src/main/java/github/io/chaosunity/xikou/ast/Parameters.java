@@ -3,7 +3,7 @@ package github.io.chaosunity.xikou.ast;
 /**
  * Intermediate structure for parsing purpose, not directly stored in AST.
  */
-public class Parameters {
+public final class Parameters {
 
   public final int parameterCount;
   public final Parameter[] parameters;

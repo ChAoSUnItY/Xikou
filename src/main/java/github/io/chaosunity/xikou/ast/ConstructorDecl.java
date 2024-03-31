@@ -5,7 +5,7 @@ import github.io.chaosunity.xikou.resolver.MethodRef;
 import github.io.chaosunity.xikou.resolver.Scope;
 import github.io.chaosunity.xikou.resolver.types.AbstractType;
 
-public class ConstructorDecl {
+public final class ConstructorDecl {
 
   public final int constructorModifiers;
   public final int parameterCount;

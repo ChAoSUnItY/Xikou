@@ -4,7 +4,7 @@ import github.io.chaosunity.xikou.ast.expr.Expr;
 import github.io.chaosunity.xikou.lexer.Token;
 import github.io.chaosunity.xikou.resolver.LocalVarRef;
 
-public class VarDeclStmt implements Statement {
+public final class VarDeclStmt implements Statement {
 
   public final Token mutToken;
   public final Token nameToken;

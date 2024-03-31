@@ -4,7 +4,7 @@ import github.io.chaosunity.xikou.ast.expr.Expr;
 import github.io.chaosunity.xikou.ast.types.AbstractTypeRef;
 import github.io.chaosunity.xikou.lexer.Token;
 
-public class FieldDecl {
+public final class FieldDecl {
 
   public final int fieldModifiers;
   public final Token name;

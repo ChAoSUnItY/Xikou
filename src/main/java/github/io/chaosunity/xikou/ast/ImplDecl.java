@@ -2,7 +2,7 @@ package github.io.chaosunity.xikou.ast;
 
 import github.io.chaosunity.xikou.lexer.Token;
 
-public class ImplDecl {
+public final class ImplDecl {
 
   public final Token targetClass;
   public final ConstructorDecl constructorDecl;

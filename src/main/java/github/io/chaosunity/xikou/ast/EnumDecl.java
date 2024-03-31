@@ -4,7 +4,7 @@ import github.io.chaosunity.xikou.ast.types.ClassTypeRef;
 import github.io.chaosunity.xikou.lexer.Token;
 import github.io.chaosunity.xikou.resolver.types.ClassType;
 
-public class EnumDecl implements BoundableDecl {
+public final class EnumDecl implements BoundableDecl {
 
   public final PackageRef packageRef;
   public final int modifiers;

@@ -7,7 +7,7 @@ import github.io.chaosunity.xikou.resolver.MethodRef;
 import github.io.chaosunity.xikou.resolver.Scope;
 import github.io.chaosunity.xikou.resolver.types.AbstractType;
 
-public class FnDecl {
+public final class FnDecl {
 
   public final int fnModifiers;
   public final Token nameToken;

@@ -2,7 +2,7 @@ package github.io.chaosunity.xikou.ast;
 
 import java.nio.file.Path;
 
-public class XkFile {
+public final class XkFile {
 
   public final Path absoluteFilePath;
   public final PackageRef packageRef;

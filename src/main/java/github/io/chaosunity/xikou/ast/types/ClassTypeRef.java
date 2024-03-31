@@ -4,7 +4,7 @@ import github.io.chaosunity.xikou.lexer.Token;
 import github.io.chaosunity.xikou.resolver.types.AbstractType;
 import github.io.chaosunity.xikou.resolver.types.ClassType;
 
-public class ClassTypeRef implements AbstractTypeRef {
+public final class ClassTypeRef implements AbstractTypeRef {
 
   public final int selectorCount;
   public final Token[] selectors;
