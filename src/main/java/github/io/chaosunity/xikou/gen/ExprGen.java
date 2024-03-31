@@ -12,7 +12,7 @@ import github.io.chaosunity.xikou.ast.expr.Expr;
 import github.io.chaosunity.xikou.ast.expr.IndexExpr;
 import github.io.chaosunity.xikou.ast.expr.InfixExpr;
 import github.io.chaosunity.xikou.ast.expr.IntegerLiteralExpr;
-import github.io.chaosunity.xikou.ast.expr.MemberAccessExpr;
+import github.io.chaosunity.xikou.ast.expr.FieldAccessExpr;
 import github.io.chaosunity.xikou.ast.expr.MethodCallExpr;
 import github.io.chaosunity.xikou.ast.expr.MinusExpr;
 import github.io.chaosunity.xikou.ast.expr.NameExpr;
@@ -45,8 +45,8 @@ public class ExprGen {
       genCastExpr(mw, (CastExpr) expr);
     } else if (expr instanceof MethodCallExpr) {
       genMethodCallExpr(mw, (MethodCallExpr) expr);
-    } else if (expr instanceof MemberAccessExpr) {
-      genMemberAccessExpr(mw, (MemberAccessExpr) expr);
+    } else if (expr instanceof FieldAccessExpr) {
+      genMemberAccessExpr(mw, (FieldAccessExpr) expr);
     } else if (expr instanceof ConstructorCallExpr) {
       genConstructorCallExpr(mw, (ConstructorCallExpr) expr);
     } else if (expr instanceof IndexExpr) {
@@ -161,10 +161,10 @@ public class ExprGen {
     for (int i = 0; i < assignmentTargetCount; i++) {
       Expr assignmentTarget = assignmentTargets[i];
 
-      if (assignmentTarget instanceof MemberAccessExpr) {
-        MemberAccessExpr memberAccessExpr = (MemberAccessExpr) assignmentTarget;
+      if (assignmentTarget instanceof FieldAccessExpr) {
+        FieldAccessExpr fieldAccessExpr = (FieldAccessExpr) assignmentTarget;
 
-        genExpr(mw, memberAccessExpr.ownerExpr);
+        genExpr(mw, fieldAccessExpr.ownerExpr);
       } else if (assignmentTarget instanceof IndexExpr) {
         IndexExpr indexExpr = (IndexExpr) assignmentTarget;
 
@@ -180,18 +180,18 @@ public class ExprGen {
       Expr assignmentTarget = assignmentTargets[i];
       boolean isLastAssignment = i == assignmentTargetCount - 1;
 
-      if (assignmentTarget instanceof MemberAccessExpr) {
-        MemberAccessExpr memberAccessExpr = (MemberAccessExpr) assignmentTarget;
-        FieldRef fieldRef = memberAccessExpr.resolvedFieldRef;
+      if (assignmentTarget instanceof FieldAccessExpr) {
+        FieldAccessExpr fieldAccessExpr = (FieldAccessExpr) assignmentTarget;
+        FieldRef fieldRef = fieldAccessExpr.resolvedFieldRef;
 
         if (!isLastAssignment) {
           mw.visitInsn(Utils.getDupX1Opcode(fieldRef.fieldType));
         }
 
         mw.visitFieldInsn(fieldRef.isStatic ? Opcodes.PUTSTATIC : Opcodes.PUTFIELD,
-            memberAccessExpr.ownerExpr.getType().getInternalName(),
-            memberAccessExpr.nameToken.literal,
-            memberAccessExpr.getType().getDescriptor());
+            fieldAccessExpr.ownerExpr.getType().getInternalName(),
+            fieldAccessExpr.nameToken.literal,
+            fieldAccessExpr.getType().getDescriptor());
       } else if (assignmentTarget instanceof NameExpr) {
         NameExpr nameExpr = (NameExpr) assignmentTarget;
 
@@ -246,8 +246,8 @@ public class ExprGen {
         Utils.getMethodDescriptor(methodRef), false);
   }
 
-  private void genMemberAccessExpr(MethodVisitor mw, MemberAccessExpr memberAccessExpr) {
-    FieldRef fieldRef = memberAccessExpr.resolvedFieldRef;
+  private void genMemberAccessExpr(MethodVisitor mw, FieldAccessExpr fieldAccessExpr) {
+    FieldRef fieldRef = fieldAccessExpr.resolvedFieldRef;
 
     if (fieldRef.isStatic) {
       mw.visitFieldInsn(Opcodes.GETSTATIC, fieldRef.ownerClassType.getInternalName(),
@@ -255,7 +255,7 @@ public class ExprGen {
       return;
     }
 
-    genExpr(mw, memberAccessExpr.ownerExpr);
+    genExpr(mw, fieldAccessExpr.ownerExpr);
     mw.visitFieldInsn(Opcodes.GETFIELD, fieldRef.ownerClassType.getInternalName(),
         fieldRef.name, fieldRef.fieldType.getDescriptor());
   }

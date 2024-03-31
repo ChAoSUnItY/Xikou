@@ -20,7 +20,7 @@ import github.io.chaosunity.xikou.ast.expr.EqualExpr;
 import github.io.chaosunity.xikou.ast.expr.Expr;
 import github.io.chaosunity.xikou.ast.expr.IndexExpr;
 import github.io.chaosunity.xikou.ast.expr.InfixExpr;
-import github.io.chaosunity.xikou.ast.expr.MemberAccessExpr;
+import github.io.chaosunity.xikou.ast.expr.FieldAccessExpr;
 import github.io.chaosunity.xikou.ast.expr.MethodCallExpr;
 import github.io.chaosunity.xikou.ast.expr.MinusExpr;
 import github.io.chaosunity.xikou.ast.expr.NameExpr;
@@ -140,7 +140,7 @@ public final class Resolver {
       resolveTypeRef(parameter.typeRef, false);
     }
 
-    constructorDecl.scope = new Scope(ownerType, true);
+    constructorDecl.scope = new Scope(ownerType, true, true);
   }
 
   private void resolveFunctionDeclEarly(ClassType ownerType, FnDecl fnDecl) {
@@ -158,7 +158,7 @@ public final class Resolver {
       fnDecl.returnType = PrimitiveType.VOID;
     }
 
-    fnDecl.scope = new Scope(ownerType, false);
+    fnDecl.scope = new Scope(ownerType, false, fnDecl.selfToken != null);
   }
 
   private void resolveDeclBody(XkFile file) {
@@ -288,8 +288,8 @@ public final class Resolver {
       resolveCastExpr((CastExpr) expr, scope);
     } else if (expr instanceof MethodCallExpr) {
       resolveMethodCallExpr((MethodCallExpr) expr, scope);
-    } else if (expr instanceof MemberAccessExpr) {
-      resolveMemberAccessExpr((MemberAccessExpr) expr, scope);
+    } else if (expr instanceof FieldAccessExpr) {
+      resolveFieldAccessExpr((FieldAccessExpr) expr, scope);
     } else if (expr instanceof ConstructorCallExpr) {
       resolveConstructorCallExpr((ConstructorCallExpr) expr, scope);
     } else if (expr instanceof IndexExpr) {
@@ -346,8 +346,8 @@ public final class Resolver {
     resolveExpr(expr.lhs, scope);
     resolveExpr(expr.rhs, scope);
 
-    boolean assignable = scope.isInConstructor && expr.lhs instanceof MemberAccessExpr
-        && ((MemberAccessExpr) expr.lhs).resolvedFieldRef.ownerClassType.equals(
+    boolean assignable = scope.isInConstructor && expr.lhs instanceof FieldAccessExpr
+        && ((FieldAccessExpr) expr.lhs).resolvedFieldRef.ownerClassType.equals(
         scope.parentClassType);
     assignable |= expr.lhs.isAssignable();
 
@@ -444,34 +444,44 @@ public final class Resolver {
       if (ownerType != null) {
         MethodRef methodRef = table.getMethod(ownerType, expr.nameToken.literal, arguementTypes);
 
-        if (methodRef != null) {
-          expr.resolvedMethodRef = methodRef;
-          return;
-        } else {
-          throw new IllegalStateException(
-              String.format("Type %s does not have method %s",
-                  ownerType.getInternalName(),
-                  expr.nameToken.literal));
-        }
+        checkMethodCallAccessibility(expr, scope, methodRef);
+        return;
       }
     }
 
-    resolveExpr(expr.ownerExpr, scope);
-
-    MethodRef methodRef = table.getMethod(expr.ownerExpr.getType(), expr.nameToken.literal,
-        arguementTypes);
-
-    if (methodRef != null) {
-      expr.resolvedMethodRef = methodRef;
+    AbstractType ownerType;
+    
+    
+    if (expr.ownerExpr == null) {
+      ownerType = scope.parentClassType;
     } else {
+      resolveExpr(expr.ownerExpr, scope);
+      ownerType = expr.ownerExpr.getType();
+    }
+
+    MethodRef methodRef = table.getMethod(ownerType, expr.nameToken.literal,
+        arguementTypes);
+    checkMethodCallAccessibility(expr, scope, methodRef);
+  }
+  
+  private void checkMethodCallAccessibility(MethodCallExpr expr, Scope scope, MethodRef methodRef) {
+    if (methodRef == null) {
       throw new IllegalStateException(
           String.format("Type %s does not have method %s",
               expr.ownerExpr.getType(),
               expr.nameToken.literal));
     }
+
+    if (!methodRef.isStatic && !scope.isInInstance) {
+      throw new IllegalStateException(
+          String.format("Instance method %s cannot be called in static scope",
+              expr.nameToken.literal));
+    }
+
+    expr.resolvedMethodRef = methodRef;
   }
 
-  private void resolveMemberAccessExpr(MemberAccessExpr expr, Scope scope) {
+  private void resolveFieldAccessExpr(FieldAccessExpr expr, Scope scope) {
     if (expr.ownerExpr instanceof TypeableExpr) {
       // Special check for type ref
       ClassType ownerType = resolveTypeableExpr((TypeableExpr) expr.ownerExpr, true);
@@ -480,15 +490,8 @@ public final class Resolver {
         FieldRef fieldRef = table.getField(ownerType,
             expr.nameToken.literal);
 
-        if (fieldRef != null) {
-          expr.resolvedFieldRef = fieldRef;
-          return;
-        } else {
-          throw new IllegalStateException(
-              String.format("Type %s does not have field %s",
-                  ownerType.getInternalName(),
-                  expr.nameToken.literal));
-        }
+        checkFieldAccessibility(expr, scope ,fieldRef);
+        return;
       }
     }
 
@@ -496,15 +499,24 @@ public final class Resolver {
 
     FieldRef fieldRef = table.getField(expr.ownerExpr.getType(),
         expr.nameToken.literal);
-
-    if (fieldRef != null) {
-      expr.resolvedFieldRef = fieldRef;
-    } else {
+    checkFieldAccessibility(expr, scope ,fieldRef);
+  }
+  
+  private void checkFieldAccessibility(FieldAccessExpr expr, Scope scope, FieldRef fieldRef) {
+    if (fieldRef == null) {
       throw new IllegalStateException(
           String.format("Type %s does not have field %s",
               expr.ownerExpr.getType().getInternalName(),
               expr.nameToken.literal));
     }
+
+    if (!fieldRef.isStatic && !scope.isInInstance) {
+      throw new IllegalStateException(
+          String.format("Instance field %s cannot be called in static scope",
+              expr.nameToken.literal));
+    }
+
+    expr.resolvedFieldRef = fieldRef;
   }
 
   private void resolveIndexExpr(IndexExpr expr, Scope scope) {

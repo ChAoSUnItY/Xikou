@@ -24,7 +24,7 @@ import github.io.chaosunity.xikou.ast.expr.EqualExpr;
 import github.io.chaosunity.xikou.ast.expr.Expr;
 import github.io.chaosunity.xikou.ast.expr.IndexExpr;
 import github.io.chaosunity.xikou.ast.expr.IntegerLiteralExpr;
-import github.io.chaosunity.xikou.ast.expr.MemberAccessExpr;
+import github.io.chaosunity.xikou.ast.expr.FieldAccessExpr;
 import github.io.chaosunity.xikou.ast.expr.MethodCallExpr;
 import github.io.chaosunity.xikou.ast.expr.MinusExpr;
 import github.io.chaosunity.xikou.ast.expr.NameExpr;
@@ -606,6 +606,18 @@ public class Parser {
         lexer.expectToken(TokenType.CloseBracket);
 
         lhs = new IndexExpr(lhs, indexExpr);
+      } else if (lhs instanceof NameExpr && lexer.acceptToken(TokenType.OpenParenthesis)) {
+        // (Instance / Static) Method call
+        Arguments arguments;
+
+        if (!lexer.acceptToken(TokenType.CloseParenthesis)) {
+          arguments = parseArguments();
+        } else {
+          arguments = new Arguments(0, new Expr[0]);
+        }
+
+        lhs = new MethodCallExpr(null, ((NameExpr) lhs).varIdentifier, arguments.argumentCount,
+            arguments.arguments);
       } else {
         break;
       }
@@ -633,7 +645,7 @@ public class Parser {
             arguments.arguments);
       } else {
         // (Instance / Static) Member access
-        return new MemberAccessExpr(lhs, memberNameToken);
+        return new FieldAccessExpr(lhs, memberNameToken);
       }
     } else {
       // Constructor call, e.g. Integer.self(...)

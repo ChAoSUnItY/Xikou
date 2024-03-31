@@ -7,18 +7,20 @@ public class Scope {
 
   public final ClassType parentClassType;
   public final boolean isInConstructor;
+  public final boolean isInInstance;
   private int localVarCount = 0;
   private LocalVarRef[] localVarRefs = new LocalVarRef[1];
 
-  public Scope(ClassType parentClassType, boolean isInConstructor) {
+  public Scope(ClassType parentClassType, boolean isInConstructor, boolean isInInstance) {
     this.parentClassType = parentClassType;
     this.isInConstructor = isInConstructor;
+    this.isInInstance = isInInstance;
   }
 
   public Scope extend() {
     LocalVarRef[] extendedLocalVarRefs = new LocalVarRef[localVarRefs.length];
     System.arraycopy(localVarRefs, 0, extendedLocalVarRefs, 0, localVarCount);
-    Scope newScope = new Scope(parentClassType, isInConstructor);
+    Scope newScope = new Scope(parentClassType, isInConstructor, isInInstance);
     newScope.localVarCount = localVarCount;
     newScope.localVarRefs = extendedLocalVarRefs;
 

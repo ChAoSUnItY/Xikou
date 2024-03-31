@@ -9,20 +9,20 @@ impl Lexer {
         self.source = source;
     }
     
-    priv fn isWhitespace(self, ch: char) -> bool {
+    priv fn isWhitespace(ch: char) -> bool {
         return java::lang::Character.isWhitespace(ch);
     }
 
-    priv fn isNumeric(self, ch: char) -> bool {
+    priv fn isNumeric(ch: char) -> bool {
         return java::lang::Character.isDigit(ch);
     }
     
-    fn isIdentStart(self, ch: char) -> bool {
+    fn isIdentStart(ch: char) -> bool {
         return java::lang::Character.isAlphabetic(ch as i32) || ch == '_';
     }
     
-    priv fn isIdent(self, ch: char) -> bool {
-        return self.isNumeric(ch) || self.isIdentStart(ch);
+    priv fn isIdent(ch: char) -> bool {
+        return isNumeric(ch) || isIdentStart(ch);
     }
     
     priv fn readChar(self, offset: i32) {
