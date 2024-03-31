@@ -6,5 +6,7 @@ public interface Expr {
 
   AbstractType getType();
 
-  boolean isAssignable();
+  default boolean isAssignable() {
+    return false;
+  }
 }

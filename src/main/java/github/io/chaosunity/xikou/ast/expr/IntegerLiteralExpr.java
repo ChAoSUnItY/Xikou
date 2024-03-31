@@ -20,9 +20,4 @@ public class IntegerLiteralExpr implements Expr {
   public AbstractType getType() {
     return PrimitiveType.INT;
   }
-
-  @Override
-  public boolean isAssignable() {
-    return false;
-  }
 }

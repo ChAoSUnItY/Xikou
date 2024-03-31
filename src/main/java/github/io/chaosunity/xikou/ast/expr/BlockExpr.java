@@ -23,9 +23,4 @@ public class BlockExpr implements Expr {
       return PrimitiveType.VOID;
     }
   }
-
-  @Override
-  public boolean isAssignable() {
-    return false;
-  }
 }

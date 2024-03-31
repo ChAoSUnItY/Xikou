@@ -17,9 +17,4 @@ public class CastExpr implements Expr {
   public AbstractType getType() {
     return targetTypeRef.getType();
   }
-
-  @Override
-  public boolean isAssignable() {
-    return false;
-  }
 }

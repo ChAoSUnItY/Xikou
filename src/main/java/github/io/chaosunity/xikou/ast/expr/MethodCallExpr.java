@@ -23,9 +23,4 @@ public class MethodCallExpr implements Expr {
   public AbstractType getType() {
     return resolvedMethodRef.returnType;
   }
-
-  @Override
-  public boolean isAssignable() {
-    return false;
-  }
 }

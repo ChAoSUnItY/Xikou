@@ -16,9 +16,4 @@ public class NullLiteral implements Expr {
   public AbstractType getType() {
     return NullType.INSTANCE;
   }
-
-  @Override
-  public boolean isAssignable() {
-    return false;
-  }
 }

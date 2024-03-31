@@ -16,9 +16,4 @@ public class StringLiteralExpr implements Expr {
   public AbstractType getType() {
     return ClassType.STRING_CLASS_TYPE;
   }
-
-  @Override
-  public boolean isAssignable() {
-    return false;
-  }
 }

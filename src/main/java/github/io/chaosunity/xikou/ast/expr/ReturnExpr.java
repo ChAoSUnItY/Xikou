@@ -15,9 +15,4 @@ public class ReturnExpr implements Expr {
   public AbstractType getType() {
     return PrimitiveType.VOID;
   }
-
-  @Override
-  public boolean isAssignable() {
-    return false;
-  }
 }

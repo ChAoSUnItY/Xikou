@@ -19,11 +19,6 @@ public final class PlusExpr implements InfixExpr {
   }
 
   @Override
-  public boolean isAssignable() {
-    return false;
-  }
-
-  @Override
   public Expr getLhs() {
     return lhs;
   }

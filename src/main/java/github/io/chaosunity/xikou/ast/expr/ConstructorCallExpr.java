@@ -21,9 +21,4 @@ public class ConstructorCallExpr implements Expr {
   public AbstractType getType() {
     return resolvedType;
   }
-
-  @Override
-  public boolean isAssignable() {
-    return false;
-  }
 }

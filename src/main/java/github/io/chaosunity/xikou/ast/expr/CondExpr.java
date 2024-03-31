@@ -20,9 +20,4 @@ public final class CondExpr implements Expr {
   public AbstractType getType() {
     return PrimitiveType.BOOL;
   }
-
-  @Override
-  public boolean isAssignable() {
-    return false;
-  }
 }

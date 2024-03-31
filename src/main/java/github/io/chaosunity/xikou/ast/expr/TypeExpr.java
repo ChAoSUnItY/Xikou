@@ -17,11 +17,6 @@ public class TypeExpr implements TypeableExpr {
   }
 
   @Override
-  public boolean isAssignable() {
-    return false;
-  }
-
-  @Override
   public ClassTypeRef asTypeRef() {
     return typeRef;
   }

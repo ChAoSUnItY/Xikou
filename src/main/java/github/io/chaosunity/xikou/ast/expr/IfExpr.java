@@ -22,9 +22,4 @@ public final class IfExpr implements Expr {
 
     return trueBranchExpr.getType();
   }
-
-  @Override
-  public boolean isAssignable() {
-    return false;
-  }
 }

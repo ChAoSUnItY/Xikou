@@ -23,11 +23,6 @@ public class ArrayInitExpr implements Expr {
     return getComponentType().asArrayType();
   }
 
-  @Override
-  public boolean isAssignable() {
-    return false;
-  }
-
   public AbstractType getComponentType() {
     return componentTypeRef.getType();
   }

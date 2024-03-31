@@ -16,9 +16,4 @@ public class CharLiteralExpr implements Expr {
   public AbstractType getType() {
     return PrimitiveType.CHAR;
   }
-
-  @Override
-  public boolean isAssignable() {
-    return false;
-  }
 }
