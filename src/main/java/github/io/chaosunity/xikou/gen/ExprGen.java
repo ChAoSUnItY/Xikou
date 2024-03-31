@@ -114,7 +114,7 @@ public class ExprGen {
     mw.visitInsn(Opcodes.ICONST_0);
     mw.visitLabel(endLabel);
   }
-  
+
   private void genArithmeticExpr(MethodVisitor mw, ArithmeticExpr arithmeticExpr) {
     switch (arithmeticExpr.arithOperatorToken.type) {
       case Plus:

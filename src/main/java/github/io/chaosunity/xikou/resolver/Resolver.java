@@ -350,8 +350,9 @@ public final class Resolver {
   }
 
   private void resolveArithmeticExpr(ArithmeticExpr arithmeticExpr, Scope scope) {
-    AbstractType lhsType = arithmeticExpr.getLhs().getType(), rhsType = arithmeticExpr.getRhs().getType();
-    
+    AbstractType lhsType = arithmeticExpr.getLhs().getType(), rhsType = arithmeticExpr.getRhs()
+        .getType();
+
     if (!lhsType.equals(rhsType)) {
       throw new IllegalStateException("Cannot perform arithmetic operation on different types");
     }

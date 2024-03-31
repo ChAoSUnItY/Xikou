@@ -4,7 +4,7 @@ import github.io.chaosunity.xikou.lexer.Token;
 import github.io.chaosunity.xikou.resolver.FieldRef;
 import github.io.chaosunity.xikou.resolver.types.AbstractType;
 
-public class FieldAccessExpr implements Expr {
+public final class FieldAccessExpr implements Expr {
 
   public final Expr ownerExpr;
   public final Token nameToken;

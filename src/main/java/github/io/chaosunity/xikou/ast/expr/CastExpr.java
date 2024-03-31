@@ -3,7 +3,7 @@ package github.io.chaosunity.xikou.ast.expr;
 import github.io.chaosunity.xikou.ast.types.AbstractTypeRef;
 import github.io.chaosunity.xikou.resolver.types.AbstractType;
 
-public class CastExpr implements Expr {
+public final class CastExpr implements Expr {
 
   public final Expr targetCastExpr;
   public final AbstractTypeRef targetTypeRef;

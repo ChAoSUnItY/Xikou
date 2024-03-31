@@ -3,7 +3,7 @@ package github.io.chaosunity.xikou.ast.expr;
 import github.io.chaosunity.xikou.resolver.types.AbstractType;
 import github.io.chaosunity.xikou.resolver.types.ArrayType;
 
-public class IndexExpr implements Expr {
+public final class IndexExpr implements Expr {
 
   public final Expr targetExpr;
   public final Expr indexExpr;

@@ -3,7 +3,7 @@ package github.io.chaosunity.xikou.ast.expr;
 import github.io.chaosunity.xikou.lexer.Token;
 import github.io.chaosunity.xikou.resolver.types.AbstractType;
 
-public class AssignmentExpr implements Expr {
+public final class AssignmentExpr implements Expr {
 
   public final Expr lhs;
   public final Token assignOpToken;
