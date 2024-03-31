@@ -13,6 +13,7 @@ import github.io.chaosunity.xikou.ast.PackageRef;
 import github.io.chaosunity.xikou.ast.Parameter;
 import github.io.chaosunity.xikou.ast.Parameters;
 import github.io.chaosunity.xikou.ast.XkFile;
+import github.io.chaosunity.xikou.ast.expr.ArithmeticExpr;
 import github.io.chaosunity.xikou.ast.expr.ArrayInitExpr;
 import github.io.chaosunity.xikou.ast.expr.AssignmentExpr;
 import github.io.chaosunity.xikou.ast.expr.BlockExpr;
@@ -27,10 +28,8 @@ import github.io.chaosunity.xikou.ast.expr.IfExpr;
 import github.io.chaosunity.xikou.ast.expr.IndexExpr;
 import github.io.chaosunity.xikou.ast.expr.IntegerLiteralExpr;
 import github.io.chaosunity.xikou.ast.expr.MethodCallExpr;
-import github.io.chaosunity.xikou.ast.expr.MinusExpr;
 import github.io.chaosunity.xikou.ast.expr.NameExpr;
 import github.io.chaosunity.xikou.ast.expr.NullLiteral;
-import github.io.chaosunity.xikou.ast.expr.PlusExpr;
 import github.io.chaosunity.xikou.ast.expr.ReturnExpr;
 import github.io.chaosunity.xikou.ast.expr.StringLiteralExpr;
 import github.io.chaosunity.xikou.ast.expr.TypeExpr;
@@ -554,10 +553,8 @@ public class Parser {
 
       switch (operatorToken.type) {
         case Plus:
-          lhs = new PlusExpr(lhs, rhs);
-          break;
         case Minus:
-          lhs = new MinusExpr(lhs, rhs);
+          lhs = new ArithmeticExpr(lhs, operatorToken, rhs);
           break;
         case DoubleAmpersand:
         case DoublePipe: {

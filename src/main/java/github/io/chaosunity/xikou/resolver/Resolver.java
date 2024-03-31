@@ -10,6 +10,7 @@ import github.io.chaosunity.xikou.ast.FnDecl;
 import github.io.chaosunity.xikou.ast.ImplDecl;
 import github.io.chaosunity.xikou.ast.Parameter;
 import github.io.chaosunity.xikou.ast.XkFile;
+import github.io.chaosunity.xikou.ast.expr.ArithmeticExpr;
 import github.io.chaosunity.xikou.ast.expr.ArrayInitExpr;
 import github.io.chaosunity.xikou.ast.expr.AssignmentExpr;
 import github.io.chaosunity.xikou.ast.expr.BlockExpr;
@@ -23,9 +24,7 @@ import github.io.chaosunity.xikou.ast.expr.IfExpr;
 import github.io.chaosunity.xikou.ast.expr.IndexExpr;
 import github.io.chaosunity.xikou.ast.expr.InfixExpr;
 import github.io.chaosunity.xikou.ast.expr.MethodCallExpr;
-import github.io.chaosunity.xikou.ast.expr.MinusExpr;
 import github.io.chaosunity.xikou.ast.expr.NameExpr;
-import github.io.chaosunity.xikou.ast.expr.PlusExpr;
 import github.io.chaosunity.xikou.ast.expr.ReturnExpr;
 import github.io.chaosunity.xikou.ast.expr.TypeableExpr;
 import github.io.chaosunity.xikou.ast.stmt.ExprStmt;
@@ -313,8 +312,8 @@ public final class Resolver {
 
     if (expr instanceof CompareExpr) {
       resolveCompareExpr((CompareExpr) expr, scope);
-    } else if (expr instanceof PlusExpr || expr instanceof MinusExpr) {
-      resolveArithmeticOpExpr(expr, scope);
+    } else if (expr instanceof ArithmeticExpr) {
+      resolveArithmeticExpr((ArithmeticExpr) expr, scope);
     } else if (expr instanceof AssignmentExpr) {
       resolveAssignmentExpr((AssignmentExpr) expr, scope);
     }
@@ -350,6 +349,14 @@ public final class Resolver {
     }
   }
 
+  private void resolveArithmeticExpr(ArithmeticExpr arithmeticExpr, Scope scope) {
+    AbstractType lhsType = arithmeticExpr.getLhs().getType(), rhsType = arithmeticExpr.getRhs().getType();
+    
+    if (!lhsType.equals(rhsType)) {
+      throw new IllegalStateException("Cannot perform arithmetic operation on different types");
+    }
+  }
+
   private void resolveCondExpr(CondExpr condExpr, Scope scope) {
     for (int i = 0; i < condExpr.exprCount; i++) {
       resolveExpr(condExpr.exprs[i], scope);
@@ -358,12 +365,6 @@ public final class Resolver {
         throw new IllegalStateException(
             "Cannot perform logical operation on different types");
       }
-    }
-  }
-
-  private void resolveArithmeticOpExpr(InfixExpr infixExpr, Scope scope) {
-    if (!infixExpr.getLhs().getType().equals(infixExpr.getRhs().getType())) {
-      throw new IllegalStateException("Cannot perform arithmetic operation on different types");
     }
   }
 

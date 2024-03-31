@@ -1,5 +1,6 @@
 package github.io.chaosunity.xikou.gen;
 
+import github.io.chaosunity.xikou.ast.expr.ArithmeticExpr;
 import github.io.chaosunity.xikou.ast.expr.ArrayInitExpr;
 import github.io.chaosunity.xikou.ast.expr.AssignmentExpr;
 import github.io.chaosunity.xikou.ast.expr.BlockExpr;
@@ -15,10 +16,8 @@ import github.io.chaosunity.xikou.ast.expr.IndexExpr;
 import github.io.chaosunity.xikou.ast.expr.InfixExpr;
 import github.io.chaosunity.xikou.ast.expr.IntegerLiteralExpr;
 import github.io.chaosunity.xikou.ast.expr.MethodCallExpr;
-import github.io.chaosunity.xikou.ast.expr.MinusExpr;
 import github.io.chaosunity.xikou.ast.expr.NameExpr;
 import github.io.chaosunity.xikou.ast.expr.NullLiteral;
-import github.io.chaosunity.xikou.ast.expr.PlusExpr;
 import github.io.chaosunity.xikou.ast.expr.ReturnExpr;
 import github.io.chaosunity.xikou.ast.expr.StringLiteralExpr;
 import github.io.chaosunity.xikou.resolver.FieldRef;
@@ -78,8 +77,8 @@ public class ExprGen {
 
     if (infixExpr instanceof CompareExpr) {
       genCompareExpr(mw, (CompareExpr) infixExpr);
-    } else if (infixExpr instanceof PlusExpr || infixExpr instanceof MinusExpr) {
-      mw.visitInsn(Utils.getAddOpcode(infixExpr.getType()));
+    } else if (infixExpr instanceof ArithmeticExpr) {
+      genArithmeticExpr(mw, (ArithmeticExpr) infixExpr);
     }
   }
 
@@ -114,6 +113,17 @@ public class ExprGen {
     mw.visitLabel(falseLabel);
     mw.visitInsn(Opcodes.ICONST_0);
     mw.visitLabel(endLabel);
+  }
+  
+  private void genArithmeticExpr(MethodVisitor mw, ArithmeticExpr arithmeticExpr) {
+    switch (arithmeticExpr.arithOperatorToken.type) {
+      case Plus:
+        mw.visitInsn(Utils.getAddOpcode(arithmeticExpr.getType()));
+        break;
+      case Minus:
+        mw.visitInsn(Utils.getSubOpcode(arithmeticExpr.getType()));
+        break;
+    }
   }
 
   private void genCondExpr(MethodVisitor mw, CondExpr condExpr) {
