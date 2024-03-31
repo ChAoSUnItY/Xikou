@@ -20,6 +20,7 @@ import github.io.chaosunity.xikou.ast.expr.NameExpr;
 import github.io.chaosunity.xikou.ast.expr.NullLiteral;
 import github.io.chaosunity.xikou.ast.expr.ReturnExpr;
 import github.io.chaosunity.xikou.ast.expr.StringLiteralExpr;
+import github.io.chaosunity.xikou.ast.expr.WhileExpr;
 import github.io.chaosunity.xikou.resolver.FieldRef;
 import github.io.chaosunity.xikou.resolver.LocalVarRef;
 import github.io.chaosunity.xikou.resolver.MethodRef;
@@ -60,6 +61,8 @@ public class ExprGen {
       genNameExpr(mw, (NameExpr) expr);
     } else if (expr instanceof IfExpr) {
       genIfExpr(mw, (IfExpr) expr);
+    } else if (expr instanceof WhileExpr) {
+      genWhileExpr(mw, (WhileExpr) expr);
     } else if (expr instanceof CharLiteralExpr) {
       genCharLiteralExpr(mw, (CharLiteralExpr) expr);
     } else if (expr instanceof StringLiteralExpr) {
@@ -378,6 +381,17 @@ public class ExprGen {
     if (ifExpr.falseBranchExpr != null) {
       genExpr(mw, ifExpr.falseBranchExpr);
     }
+  }
+  
+  private void genWhileExpr(MethodVisitor mw, WhileExpr whileExpr) {
+    Label condLabel = new Label(), endLabel = new Label();
+    
+    mw.visitLabel(condLabel);
+    genExpr(mw, whileExpr.condExpr);
+    mw.visitJumpInsn(Opcodes.IFEQ, endLabel);
+    genExpr(mw, whileExpr.iterExpr);
+    mw.visitJumpInsn(Opcodes.GOTO, condLabel);
+    mw.visitLabel(endLabel);
   }
 
   private void genCharLiteralExpr(MethodVisitor mw, CharLiteralExpr charLiteralExpr) {

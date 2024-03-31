@@ -34,6 +34,7 @@ import github.io.chaosunity.xikou.ast.expr.ReturnExpr;
 import github.io.chaosunity.xikou.ast.expr.StringLiteralExpr;
 import github.io.chaosunity.xikou.ast.expr.TypeExpr;
 import github.io.chaosunity.xikou.ast.expr.TypeableExpr;
+import github.io.chaosunity.xikou.ast.expr.WhileExpr;
 import github.io.chaosunity.xikou.ast.stmt.ExprStmt;
 import github.io.chaosunity.xikou.ast.stmt.Statement;
 import github.io.chaosunity.xikou.ast.stmt.VarDeclStmt;
@@ -414,7 +415,7 @@ public class Parser {
     if (lexer.peekToken(TokenType.Self)) {
       selfToken = lexer.advanceToken();
 
-      if (!lexer.acceptToken(TokenType.CloseParenthesis)) {
+      if (!lexer.peekToken(TokenType.CloseParenthesis)) {
         lexer.expectToken(TokenType.Comma);
       }
     }
@@ -711,6 +712,13 @@ public class Parser {
       }
 
       return new IfExpr(condExpr, trueBranchExpr, falseBranchExpr);
+    }
+    
+    if (lexer.acceptToken(TokenType.While)) {
+      Expr condExpr = parseExpr();
+      BlockExpr iterExpr = parseBlockExpr();
+      
+      return new WhileExpr(condExpr, iterExpr);
     }
 
     if (lexer.peekToken(TokenType.OpenBrace)) {

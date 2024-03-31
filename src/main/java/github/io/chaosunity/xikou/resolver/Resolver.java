@@ -27,6 +27,7 @@ import github.io.chaosunity.xikou.ast.expr.MethodCallExpr;
 import github.io.chaosunity.xikou.ast.expr.NameExpr;
 import github.io.chaosunity.xikou.ast.expr.ReturnExpr;
 import github.io.chaosunity.xikou.ast.expr.TypeableExpr;
+import github.io.chaosunity.xikou.ast.expr.WhileExpr;
 import github.io.chaosunity.xikou.ast.stmt.ExprStmt;
 import github.io.chaosunity.xikou.ast.stmt.Statement;
 import github.io.chaosunity.xikou.ast.stmt.VarDeclStmt;
@@ -303,6 +304,8 @@ public final class Resolver {
       resolveNameExpr((NameExpr) expr, scope);
     } else if (expr instanceof IfExpr) {
       resolveIfExpr((IfExpr) expr, scope);
+    } else if (expr instanceof WhileExpr) {
+      resolveWhileExpr((WhileExpr) expr, scope);
     }
   }
 
@@ -314,8 +317,6 @@ public final class Resolver {
       resolveCompareExpr((CompareExpr) expr, scope);
     } else if (expr instanceof ArithmeticExpr) {
       resolveArithmeticExpr((ArithmeticExpr) expr, scope);
-    } else if (expr instanceof AssignmentExpr) {
-      resolveAssignmentExpr((AssignmentExpr) expr, scope);
     }
   }
 
@@ -426,6 +427,15 @@ public final class Resolver {
       throw new IllegalStateException("If-else condition must be bool");
     }
   }
+  
+  private void resolveWhileExpr(WhileExpr expr, Scope scope) {
+    resolveExpr(expr.condExpr, scope);
+    resolveExpr(expr.iterExpr, scope.extend());
+
+    if (expr.condExpr.getType() != PrimitiveType.BOOL) {
+      throw new IllegalStateException("While condition must be bool");
+    }
+  }
 
   private void resolveArrayInitExpr(ArrayInitExpr expr, Scope scope) {
     resolveTypeRef(expr.componentTypeRef, false);
@@ -511,7 +521,7 @@ public final class Resolver {
               expr.nameToken.literal));
     }
 
-    if (!methodRef.isStatic && !scope.isInInstance) {
+    if (!methodRef.isStatic && expr.ownerExpr == null && !scope.isInInstance) {
       throw new IllegalStateException(
           String.format("Instance method %s cannot be called in static scope",
               expr.nameToken.literal));
@@ -549,7 +559,7 @@ public final class Resolver {
               expr.nameToken.literal));
     }
 
-    if (!fieldRef.isStatic && !scope.isInInstance) {
+    if (!fieldRef.isStatic && expr.ownerExpr == null && !scope.isInInstance) {
       throw new IllegalStateException(
           String.format("Instance field %s cannot be called in static scope",
               expr.nameToken.literal));
