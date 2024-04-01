@@ -534,7 +534,7 @@ public class Parser {
   private Expr parseInfixExpr(int parentPrecedence) {
     Expr lhs = parseSuffixExpr();
 
-    while (true) {
+    while (!lexer.peekToken(TokenType.EOF)) {
       Token operatorToken = lexer.getCurrentToken();
       int precedence = operatorToken.type.getInfixPrecedence();
       if (precedence == 0 || precedence <= parentPrecedence) {
@@ -584,8 +584,12 @@ public class Parser {
           lhs = new CompareExpr(lhs, operatorToken, rhs);
           break;
         case Equal:
-          lhs = new AssignmentExpr(lhs, operatorToken, rhs);
-          break;
+        case PlusEqual:
+        case MinusEqual: {
+          int targetCount = 0;
+          Expr[] targets = new Expr[1];
+          
+        }
         default:
           throw new IllegalStateException(
               String.format("ICE: %s is not a valid infix operator", operatorToken.type));

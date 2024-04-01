@@ -156,6 +156,11 @@ public class Lexer {
     }
 
     if (currentChar == '+') {
+      if (peekChar(1) == '=') {
+        readChar(2);
+        return new Token(TokenType.PlusEqual, "+=");
+      }
+      
       readChar(1);
       return new Token(TokenType.Plus, "+");
     }
@@ -164,6 +169,11 @@ public class Lexer {
       if (peekChar(1) == '>') {
         readChar(2);
         return new Token(TokenType.SlimArrow, "->");
+      }
+
+      if (peekChar(1) == '=') {
+        readChar(2);
+        return new Token(TokenType.MinusEqual, "-=");
       }
 
       readChar(1);

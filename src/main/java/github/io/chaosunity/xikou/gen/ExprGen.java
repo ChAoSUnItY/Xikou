@@ -21,6 +21,7 @@ import github.io.chaosunity.xikou.ast.expr.NullLiteral;
 import github.io.chaosunity.xikou.ast.expr.ReturnExpr;
 import github.io.chaosunity.xikou.ast.expr.StringLiteralExpr;
 import github.io.chaosunity.xikou.ast.expr.WhileExpr;
+import github.io.chaosunity.xikou.lexer.Token;
 import github.io.chaosunity.xikou.lexer.TokenType;
 import github.io.chaosunity.xikou.resolver.FieldRef;
 import github.io.chaosunity.xikou.resolver.LocalVarRef;
@@ -192,14 +193,18 @@ public class ExprGen {
   private void genAssignmentExpr(MethodVisitor mw, AssignmentExpr assignmentExpr) {
     int assignmentTargetCount = 0;
     Expr[] assignmentTargets = new Expr[1];
+    Token[] assignOperators = new Token[1];
     Expr lhsHolder = assignmentExpr.lhs, rhs = assignmentExpr.rhs;
 
     // Collect all assignment targets
     while (lhsHolder != null) {
       if (assignmentTargetCount >= assignmentTargets.length) {
-        Expr[] newArr = new Expr[assignmentTargets.length * 2];
-        System.arraycopy(assignmentTargets, 0, newArr, 0, assignmentTargets.length);
-        assignmentTargets = newArr;
+        Expr[] newTargetArr = new Expr[assignmentTargets.length * 2];
+        System.arraycopy(assignmentTargets, 0, newTargetArr, 0, assignmentTargets.length);
+        assignmentTargets = newTargetArr;
+        Token[] newTokenArr = new Token[assignmentTargets.length * 2];
+        System.arraycopy(assignOperators, 0, newTokenArr, 0, assignOperators.length);
+        assignOperators = newTokenArr;
       }
 
       if (!(lhsHolder instanceof AssignmentExpr)) {
@@ -209,7 +214,7 @@ public class ExprGen {
 
       AssignmentExpr lhsAssignment = (AssignmentExpr) lhsHolder;
 
-      assignmentTargets[assignmentTargetCount++] = lhsAssignment.rhs;
+      assignmentTargets[assignmentTargetCount] = lhsAssignment.rhs;
       lhsHolder = lhsAssignment.lhs;
     }
 

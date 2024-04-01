@@ -383,16 +383,30 @@ public final class Resolver {
       throw new IllegalStateException("Illegal assignment");
     }
 
+    AbstractType lhsType = expr.lhs.getType(), rhsType = expr.rhs.getType();
+
     if (expr.rhs.getType() == PrimitiveType.VOID) {
       throw new IllegalStateException("void type cannot be used as value");
     }
 
-    if (!TypeUtils.isInstanceOf(expr.rhs.getType(), expr.lhs.getType())) {
-      throw new IllegalStateException(
-          String.format("Illegal assignment: %s is not compatible with %s",
-              expr.rhs.getType().getInternalName(),
-              expr.lhs.getType().getInternalName()));
+    switch (expr.assignOpToken.type) {
+      case Equal:
+        if (!TypeUtils.isInstanceOf(rhsType, lhsType)) {
+          throw new IllegalStateException(
+              String.format("Illegal assignment: %s is not compatible with %s",
+                  expr.rhs.getType().getInternalName(),
+                  expr.lhs.getType().getInternalName()));
+        }
+        break;
+      case PlusEqual:
+      case MinusEqual:
+        if (!lhsType.equals(rhsType)) {
+          throw new IllegalStateException(
+              "Illegal assignment: cannot perform arithmetic operation on different types");
+        }
+        break;
     }
+
   }
 
   private void resolveCastExpr(CastExpr expr, Scope scope) {
@@ -427,7 +441,7 @@ public final class Resolver {
       throw new IllegalStateException("If-else condition must be bool");
     }
   }
-  
+
   private void resolveWhileExpr(WhileExpr expr, Scope scope) {
     resolveExpr(expr.condExpr, scope);
     resolveExpr(expr.iterExpr, scope.extend());
