@@ -586,9 +586,24 @@ public class Parser {
         case Equal:
         case PlusEqual:
         case MinusEqual: {
-          int targetCount = 0;
-          Expr[] targets = new Expr[1];
-          
+          int targetCount = 2;
+          Expr[] targets = {lhs, rhs};
+
+          while (lexer.acceptToken(operatorToken.type)) {
+            if (targetCount >= targets.length) {
+              Expr[] newArr = new Expr[targetCount * 2];
+              System.arraycopy(targets, 0, newArr, 0, targetCount);
+              targets = newArr;
+            }
+
+            targets[targetCount++] = parseInfixExpr(precedence);
+          }
+
+          rhs = targets[targetCount - 1];
+          targets[--targetCount] = null;
+
+          lhs = new AssignmentExpr(targetCount, targets, operatorToken, rhs);
+          break;
         }
         default:
           throw new IllegalStateException(
@@ -717,11 +732,11 @@ public class Parser {
 
       return new IfExpr(condExpr, trueBranchExpr, falseBranchExpr);
     }
-    
+
     if (lexer.acceptToken(TokenType.While)) {
       Expr condExpr = parseExpr();
       BlockExpr iterExpr = parseBlockExpr();
-      
+
       return new WhileExpr(condExpr, iterExpr);
     }
 

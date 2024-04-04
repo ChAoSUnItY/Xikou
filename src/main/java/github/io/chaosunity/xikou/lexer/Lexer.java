@@ -160,7 +160,7 @@ public class Lexer {
         readChar(2);
         return new Token(TokenType.PlusEqual, "+=");
       }
-      
+
       readChar(1);
       return new Token(TokenType.Plus, "+");
     }

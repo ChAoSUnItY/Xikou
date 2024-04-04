@@ -371,42 +371,47 @@ public final class Resolver {
   }
 
   private void resolveAssignmentExpr(AssignmentExpr expr, Scope scope) {
-    resolveExpr(expr.lhs, scope);
     resolveExpr(expr.rhs, scope);
+    AbstractType rhsType = expr.rhs.getType();
 
-    boolean assignable = scope.isInConstructor && expr.lhs instanceof FieldAccessExpr
-        && ((FieldAccessExpr) expr.lhs).resolvedFieldRef.ownerClassType.equals(
-        scope.parentClassType);
-    assignable |= expr.lhs.isAssignable();
-
-    if (!assignable) {
-      throw new IllegalStateException("Illegal assignment");
-    }
-
-    AbstractType lhsType = expr.lhs.getType(), rhsType = expr.rhs.getType();
-
-    if (expr.rhs.getType() == PrimitiveType.VOID) {
+    if (rhsType == PrimitiveType.VOID) {
       throw new IllegalStateException("void type cannot be used as value");
     }
 
-    switch (expr.assignOpToken.type) {
-      case Equal:
-        if (!TypeUtils.isInstanceOf(rhsType, lhsType)) {
-          throw new IllegalStateException(
-              String.format("Illegal assignment: %s is not compatible with %s",
-                  expr.rhs.getType().getInternalName(),
-                  expr.lhs.getType().getInternalName()));
-        }
-        break;
-      case PlusEqual:
-      case MinusEqual:
-        if (!lhsType.equals(rhsType)) {
-          throw new IllegalStateException(
-              "Illegal assignment: cannot perform arithmetic operation on different types");
-        }
-        break;
-    }
+    for (int i = 0; i < expr.targetCount; i++) {
+      Expr target = expr.targets[i];
 
+      resolveExpr(target, scope);
+
+      AbstractType targetType = target.getType();
+
+      boolean assignable = scope.isInConstructor && target instanceof FieldAccessExpr
+          && ((FieldAccessExpr) target).resolvedFieldRef.ownerClassType.equals(
+          scope.parentClassType);
+      assignable |= target.isAssignable();
+
+      if (!assignable) {
+        throw new IllegalStateException("Illegal assignment");
+      }
+
+      switch (expr.assignOpToken.type) {
+        case Equal:
+          if (!TypeUtils.isInstanceOf(rhsType, targetType)) {
+            throw new IllegalStateException(
+                String.format("Illegal assignment: %s is not compatible with %s",
+                    rhsType.getInternalName(),
+                    targetType.getInternalName()));
+          }
+          break;
+        case PlusEqual:
+        case MinusEqual:
+          if (!targetType.equals(rhsType)) {
+            throw new IllegalStateException(
+                "Illegal assignment: cannot perform arithmetic operation on different types");
+          }
+          break;
+      }
+    }
   }
 
   private void resolveCastExpr(CastExpr expr, Scope scope) {

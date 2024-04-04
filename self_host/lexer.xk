@@ -26,7 +26,7 @@ impl Lexer {
     }
     
     priv fn readChar(self, offset: i32) {
-      self.pos = self.pos + offset;
+      self.pos += offset;
     }
     
     priv fn peekChar(self, offset: i32) -> char {
