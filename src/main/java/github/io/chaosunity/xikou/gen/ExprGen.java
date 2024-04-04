@@ -190,32 +190,11 @@ public class ExprGen {
   }
 
   private void genAssignmentExpr(MethodVisitor mw, AssignmentExpr assignmentExpr) {
-    int assignmentTargetCount = 0;
-    Expr[] assignmentTargets = new Expr[1];
-    Expr lhsHolder = assignmentExpr.lhs, rhs = assignmentExpr.rhs;
-
-    // Collect all assignment targets
-    while (lhsHolder != null) {
-      if (assignmentTargetCount >= assignmentTargets.length) {
-        Expr[] newArr = new Expr[assignmentTargets.length * 2];
-        System.arraycopy(assignmentTargets, 0, newArr, 0, assignmentTargets.length);
-        assignmentTargets = newArr;
-      }
-
-      if (!(lhsHolder instanceof AssignmentExpr)) {
-        assignmentTargets[assignmentTargetCount++] = lhsHolder;
-        break;
-      }
-
-      AssignmentExpr lhsAssignment = (AssignmentExpr) lhsHolder;
-
-      assignmentTargets[assignmentTargetCount++] = lhsAssignment.rhs;
-      lhsHolder = lhsAssignment.lhs;
-    }
+    boolean requiresLhs = assignmentExpr.assignOpToken.type != TokenType.Equal;
 
     // Setup targets
-    for (int i = 0; i < assignmentTargetCount; i++) {
-      Expr assignmentTarget = assignmentTargets[i];
+    for (int i = 0; i < assignmentExpr.targetCount; i++) {
+      Expr assignmentTarget = assignmentExpr.targets[i];
 
       if (assignmentTarget instanceof FieldAccessExpr) {
         FieldAccessExpr fieldAccessExpr = (FieldAccessExpr) assignmentTarget;
@@ -229,12 +208,28 @@ public class ExprGen {
       }
     }
 
-    // Gen assign value then dup if needed
-    genExpr(mw, rhs);
+    for (int i = assignmentExpr.targetCount - 1; i >= 0; i--) {
+      Expr assignmentTarget = assignmentExpr.targets[i];
+      boolean isLastAssignment = i == 0;
 
-    for (int i = 0; i < assignmentTargetCount; i++) {
-      Expr assignmentTarget = assignmentTargets[i];
-      boolean isLastAssignment = i == assignmentTargetCount - 1;
+      if (requiresLhs) {
+        genExpr(mw, assignmentTarget);
+      }
+
+      if (i == assignmentExpr.targetCount - 1) {
+        genExpr(mw, assignmentExpr.rhs);
+      }
+
+      if (requiresLhs) {
+        switch (assignmentExpr.assignOpToken.type) {
+          case PlusEqual:
+            mw.visitInsn(Utils.getAddOpcode(assignmentTarget.getType()));
+            break;
+          case MinusEqual:
+            mw.visitInsn(Utils.getSubOpcode(assignmentTarget.getType()));
+            break;
+        }
+      }
 
       if (assignmentTarget instanceof FieldAccessExpr) {
         FieldAccessExpr fieldAccessExpr = (FieldAccessExpr) assignmentTarget;
