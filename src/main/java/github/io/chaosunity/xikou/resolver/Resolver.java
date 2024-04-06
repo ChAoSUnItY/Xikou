@@ -430,7 +430,7 @@ public final class Resolver {
       expr.resolvedType = localVarRef.type;
       expr.localVarRef = localVarRef;
     } else {
-      throw new IllegalStateException("Unknown reference to local variable");
+      throw new IllegalStateException(String.format("Unknown reference to local variable %s", expr.varIdentifier.literal));
     }
   }
 

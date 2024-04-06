@@ -56,6 +56,31 @@ impl Lexer {
         self.readChar(1);
         return Token.self(TokenType.CloseParenthesis, ")");
       }
+
+      if isIdentStart(ch) {
+        let mut length = 1;
+
+        while isIdent(ch) {
+          length += 1;
+        }
+
+        let literal = self.source.substring(self.pos, self.pos + length);
+
+        self.readChar(length);
+        return Token.self(TokenType.Identifier, literal);
+      }
+
+      if isNumeric(ch) {
+        let mut length = 1;
+
+        while isNumeric(self.peekChar(length)) {
+          length += 1;
+        }
+
+        let token = Token.self(TokenType.NumberLiteral, self.source.substring(self.pos, self.pos + length));
+        self.readChar(length);
+        return token;
+      }
       
       if ch == '\0' {
         self.readChar(1);
@@ -66,7 +91,7 @@ impl Lexer {
     }
     
     pub fn main(args: [java::lang::String]) {
-      let lexer = Lexer.self("()))\0");
+      let lexer = Lexer.self("(4142))1231)\0");
       let mut token = lexer.nextToken();
       
       while token.type != TokenType.EOF {
