@@ -49,12 +49,12 @@ idea {
                 add(Application("Compile Self Hosting Compiler", project).apply {
                     mainClass = "github.io.chaosunity.xikou.Main"
                     moduleName = "${project.idea.module.name}.main"
-                    programParameters = "self_host/lexer.xk output"
+                    programParameters = "self_host output"
                 })
                 add(Application("Compile Example", project).apply {
                     mainClass = "github.io.chaosunity.xikou.Main"
                     moduleName = "${project.idea.module.name}.main"
-                    programParameters = "example/Box.xk output"
+                    programParameters = "example output"
                 })
             }
             compiler.javac {
