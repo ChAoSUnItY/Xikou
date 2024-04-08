@@ -9,8 +9,8 @@ public final class XkFile {
   public final int declCount;
   public final BoundableDecl[] decls;
 
-  public XkFile(Path absoluteFilePath, PackageRef packageRef, int declCount,
-      BoundableDecl[] decls) {
+  public XkFile(
+      Path absoluteFilePath, PackageRef packageRef, int declCount, BoundableDecl[] decls) {
     this.absoluteFilePath = absoluteFilePath;
     this.packageRef = packageRef;
     this.declCount = declCount;

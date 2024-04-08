@@ -21,8 +21,14 @@ public final class FnDecl {
   public Scope scope;
   public AbstractType returnType;
 
-  public FnDecl(int fnModifiers, Token nameToken, Token selfToken, int parameterCount,
-      Parameter[] parameters, AbstractTypeRef returnTypeRef, int statementCount,
+  public FnDecl(
+      int fnModifiers,
+      Token nameToken,
+      Token selfToken,
+      int parameterCount,
+      Parameter[] parameters,
+      AbstractTypeRef returnTypeRef,
+      int statementCount,
       Statement[] statements) {
     this.fnModifiers = fnModifiers;
     this.nameToken = nameToken;
@@ -41,8 +47,13 @@ public final class FnDecl {
       parameterTypes[i] = parameters[i].typeRef.getType();
     }
 
-    return new MethodRef(implDecl.boundDecl.getType(), nameToken.literal, parameterCount,
+    return new MethodRef(
+        implDecl.boundDecl.getType(),
+        nameToken.literal,
+        parameterCount,
         parameterTypes,
-        returnType, selfToken == null, false);
+        returnType,
+        selfToken == null,
+        false);
   }
 }

@@ -1,13 +1,6 @@
 package github.io.chaosunity.xikou.resolver;
 
-import github.io.chaosunity.xikou.ast.BoundableDecl;
-import github.io.chaosunity.xikou.ast.ClassDecl;
-import github.io.chaosunity.xikou.ast.ConstructorDecl;
-import github.io.chaosunity.xikou.ast.EnumDecl;
-import github.io.chaosunity.xikou.ast.EnumVariantDecl;
-import github.io.chaosunity.xikou.ast.FieldDecl;
-import github.io.chaosunity.xikou.ast.FnDecl;
-import github.io.chaosunity.xikou.ast.ImplDecl;
+import github.io.chaosunity.xikou.ast.*;
 import github.io.chaosunity.xikou.resolver.types.AbstractType;
 import github.io.chaosunity.xikou.resolver.types.ClassType;
 import github.io.chaosunity.xikou.resolver.types.PrimitiveType;
@@ -97,7 +90,10 @@ public class SymbolTable {
     try {
       String ownerClassInternalName = ownerType.getInternalName();
       Class clazz = Class.forName(ownerClassInternalName.replace('/', '.'));
-      Method[] methods = clazz.getMethods(); // TODO: Narrow down resolution if current class does not have matching method
+      Method[] methods =
+          clazz
+              .getMethods(); // TODO: Narrow down resolution if current class does not have matching
+      // method
 
       for (Method method : methods) {
         if (!method.getName().equals(name)) {
@@ -128,9 +124,13 @@ public class SymbolTable {
           continue;
         }
 
-        return new MethodRef(getTypeFromClass(method.getDeclaringClass()), name,
-            resolvedParameterTypes.length, resolvedParameterTypes,
-            getTypeFromClass(method.getReturnType()), Modifier.isStatic(method.getModifiers()),
+        return new MethodRef(
+            getTypeFromClass(method.getDeclaringClass()),
+            name,
+            resolvedParameterTypes.length,
+            resolvedParameterTypes,
+            getTypeFromClass(method.getReturnType()),
+            Modifier.isStatic(method.getModifiers()),
             false);
       }
     } catch (ClassNotFoundException e) {
@@ -145,6 +145,16 @@ public class SymbolTable {
 
       if (!decl.getType().equals(ownerType)) {
         continue;
+      }
+
+      ImplDecl implDecl = decl.getImplDecl();
+
+      if (implDecl != null) {
+        FieldRef fieldRef = getConstRef(implDecl.constCount, implDecl.constDecls, ownerType, name);
+
+        if (fieldRef != null) {
+          return fieldRef;
+        }
       }
 
       if (decl instanceof ClassDecl) {
@@ -173,21 +183,38 @@ public class SymbolTable {
       int modifiers = field.getModifiers();
       AbstractType fieldType = getFieldType(name, clazz);
 
-      return new FieldRef(ownerType, Modifier.isStatic(modifiers), !Modifier.isFinal(modifiers),
-          name, fieldType);
+      return new FieldRef(
+          ownerType, Modifier.isStatic(modifiers), !Modifier.isFinal(modifiers), name, fieldType);
     } catch (ClassNotFoundException | NoSuchFieldException ignored) {
     }
 
     return null;
   }
 
-  private FieldRef getFieldRef(int fieldCount, FieldDecl[] fieldDecls, AbstractType ownerType,
-      String name) {
-    for (int j = 0; j < fieldCount; j++) {
-      FieldDecl fieldDecl = fieldDecls[j];
+  private FieldRef getConstRef(
+      int constCount, ConstDecl[] constDecls, AbstractType ownerType, String name) {
+    for (int i = 0; i < constCount; i++) {
+      ConstDecl constDecl = constDecls[i];
 
-      if (fieldDecl.name.literal.equals(name)) {
-        return new FieldRef(ownerType, false, !Modifier.isFinal(fieldDecl.fieldModifiers), name,
+      if (constDecl.nameToken.literal.equals(name)) {
+        return new FieldRef(ownerType, true, true, name, constDecl.resolvedType);
+      }
+    }
+
+    return null;
+  }
+
+  private FieldRef getFieldRef(
+      int fieldCount, FieldDecl[] fieldDecls, AbstractType ownerType, String name) {
+    for (int i = 0; i < fieldCount; i++) {
+      FieldDecl fieldDecl = fieldDecls[i];
+
+      if (fieldDecl.nameToken.literal.equals(name)) {
+        return new FieldRef(
+            ownerType,
+            false,
+            !Modifier.isFinal(fieldDecl.fieldModifiers),
+            name,
             fieldDecl.typeRef.getType());
       }
     }
@@ -215,11 +242,16 @@ public class SymbolTable {
         parameterTypes[j] = constructorDecl.parameters[j].typeRef.getType();
       }
 
-      return new MethodRef[]{new MethodRef(ownerType, "<init>", constructorDecl.statementCount,
-          parameterTypes,
-          constructorDecl.implDecl.boundDecl.getType(),
-          false,
-          true)};
+      return new MethodRef[] {
+        new MethodRef(
+            ownerType,
+            "<init>",
+            constructorDecl.statementCount,
+            parameterTypes,
+            constructorDecl.implDecl.boundDecl.getType(),
+            false,
+            true)
+      };
     }
 
     try {
@@ -239,8 +271,8 @@ public class SymbolTable {
     return null;
   }
 
-  private static MethodRef getMethodRefFromConstrutor(AbstractType ownerType,
-      Constructor constructor) {
+  private static MethodRef getMethodRefFromConstrutor(
+      AbstractType ownerType, Constructor constructor) {
     int parameterCount = constructor.getParameterCount();
     Class[] parameterReflectionTypes = constructor.getParameterTypes();
     AbstractType[] parameterTypes = new AbstractType[parameterCount];
@@ -249,8 +281,8 @@ public class SymbolTable {
       parameterTypes[i] = getTypeFromClass(parameterReflectionTypes[i]);
     }
 
-    return new MethodRef(ownerType, "<init>", parameterCount, parameterTypes, ownerType, false,
-        true);
+    return new MethodRef(
+        ownerType, "<init>", parameterCount, parameterTypes, ownerType, false, true);
   }
 
   private static AbstractType getFieldType(String name, Class clazz) throws NoSuchFieldException {

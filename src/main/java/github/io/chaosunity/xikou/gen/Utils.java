@@ -31,8 +31,8 @@ public final class Utils {
     return builder.toString();
   }
 
-  static int[] genLocalRefIndicesFromMethodDesc(AbstractType ownerType,
-      AbstractType... parameters) {
+  static int[] genLocalRefIndicesFromMethodDesc(
+      AbstractType ownerType, AbstractType... parameters) {
     int length = (ownerType != null ? 1 : 0) + parameters.length;
     AbstractType[] localRefs = parameters;
     int[] indices = new int[length];
@@ -218,65 +218,65 @@ public final class Utils {
       case CHAR:
         switch (toType) {
           case LONG:
-            return new int[]{Opcodes.I2L};
+            return new int[] {Opcodes.I2L};
           case FLOAT:
-            return new int[]{Opcodes.I2F};
+            return new int[] {Opcodes.I2F};
           case DOUBLE:
-            return new int[]{Opcodes.I2D};
+            return new int[] {Opcodes.I2D};
         }
         break;
       case INT:
         switch (toType) {
           case CHAR:
-            return new int[]{Opcodes.I2C};
+            return new int[] {Opcodes.I2C};
           case LONG:
-            return new int[]{Opcodes.I2L};
+            return new int[] {Opcodes.I2L};
           case FLOAT:
-            return new int[]{Opcodes.I2F};
+            return new int[] {Opcodes.I2F};
           case DOUBLE:
-            return new int[]{Opcodes.I2D};
+            return new int[] {Opcodes.I2D};
           default:
         }
         break;
       case LONG:
         switch (toType) {
           case CHAR:
-            return new int[]{Opcodes.L2I, Opcodes.I2C};
+            return new int[] {Opcodes.L2I, Opcodes.I2C};
           case INT:
-            return new int[]{Opcodes.L2I};
+            return new int[] {Opcodes.L2I};
           case FLOAT:
-            return new int[]{Opcodes.L2F};
+            return new int[] {Opcodes.L2F};
           case DOUBLE:
-            return new int[]{Opcodes.L2D};
+            return new int[] {Opcodes.L2D};
         }
         break;
       case FLOAT:
         switch (toType) {
           case CHAR:
-            return new int[]{Opcodes.F2I, Opcodes.I2C};
+            return new int[] {Opcodes.F2I, Opcodes.I2C};
           case INT:
-            return new int[]{Opcodes.F2I};
+            return new int[] {Opcodes.F2I};
           case LONG:
-            return new int[]{Opcodes.F2L};
+            return new int[] {Opcodes.F2L};
           case DOUBLE:
-            return new int[]{Opcodes.F2D};
+            return new int[] {Opcodes.F2D};
         }
         break;
       case DOUBLE:
         switch (toType) {
           case CHAR:
-            return new int[]{Opcodes.D2I, Opcodes.I2C};
+            return new int[] {Opcodes.D2I, Opcodes.I2C};
           case INT:
-            return new int[]{Opcodes.D2I};
+            return new int[] {Opcodes.D2I};
           case LONG:
-            return new int[]{Opcodes.D2L};
+            return new int[] {Opcodes.D2L};
           case FLOAT:
-            return new int[]{Opcodes.D2F};
+            return new int[] {Opcodes.D2F};
         }
         break;
     }
 
-    // Type widening does not require opcode 
+    // Type widening does not require opcode
     return new int[0];
   }
 }

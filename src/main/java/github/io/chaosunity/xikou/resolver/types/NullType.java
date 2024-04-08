@@ -4,8 +4,7 @@ public final class NullType implements AbstractType {
 
   public static final NullType INSTANCE = new NullType();
 
-  private NullType() {
-  }
+  private NullType() {}
 
   @Override
   public String getInternalName() {

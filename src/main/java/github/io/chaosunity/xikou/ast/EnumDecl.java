@@ -19,9 +19,16 @@ public final class EnumDecl implements BoundableDecl {
   public ClassType enumType;
   public ClassType[] interfaceTypes;
 
-  public EnumDecl(PackageRef packageRef, int modifiers, Token enumNameToken, int interfacCount,
-      ClassTypeRef[] interfaces, int fieldCount,
-      FieldDecl[] fieldDecls, int variantCount, EnumVariantDecl[] enumVariantDecls) {
+  public EnumDecl(
+      PackageRef packageRef,
+      int modifiers,
+      Token enumNameToken,
+      int interfacCount,
+      ClassTypeRef[] interfaces,
+      int fieldCount,
+      FieldDecl[] fieldDecls,
+      int variantCount,
+      EnumVariantDecl[] enumVariantDecls) {
     this.packageRef = packageRef;
     this.modifiers = modifiers;
     this.enumNameToken = enumNameToken;

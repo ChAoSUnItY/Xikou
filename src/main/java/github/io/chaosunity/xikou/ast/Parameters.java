@@ -1,8 +1,6 @@
 package github.io.chaosunity.xikou.ast;
 
-/**
- * Intermediate structure for parsing purpose, not directly stored in AST.
- */
+/** Intermediate structure for parsing purpose, not directly stored in AST. */
 public final class Parameters {
 
   public final int parameterCount;

@@ -16,8 +16,12 @@ public final class ConstructorDecl {
   public ImplDecl implDecl;
   public Scope scope;
 
-  public ConstructorDecl(int constructorModifiers, int parameterCount,
-      Parameter[] parameters, int statementCount, Statement[] statements) {
+  public ConstructorDecl(
+      int constructorModifiers,
+      int parameterCount,
+      Parameter[] parameters,
+      int statementCount,
+      Statement[] statements) {
     this.constructorModifiers = constructorModifiers;
     this.parameterCount = parameterCount;
     this.parameters = parameters;
@@ -32,7 +36,13 @@ public final class ConstructorDecl {
       parameterTypes[i] = parameters[i].typeRef.getType();
     }
 
-    return new MethodRef(implDecl.boundDecl.getType(), "<init>", statementCount, parameterTypes,
-        implDecl.boundDecl.getType(), false, true);
+    return new MethodRef(
+        implDecl.boundDecl.getType(),
+        "<init>",
+        statementCount,
+        parameterTypes,
+        implDecl.boundDecl.getType(),
+        false,
+        true);
   }
 }

@@ -30,8 +30,13 @@ public class ClassGen extends ClassFileGen {
     }
 
     ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS);
-    cw.visit(Opcodes.V1_8, classDecl.modifiers, classDecl.getType().getInternalName(), null,
-        classDecl.getSuperclassType().getInternalName(), interfaceInternalNames);
+    cw.visit(
+        Opcodes.V1_8,
+        classDecl.modifiers,
+        classDecl.getType().getInternalName(),
+        null,
+        classDecl.getSuperclassType().getInternalName(),
+        interfaceInternalNames);
 
     genConstructor(cw);
 
@@ -42,6 +47,7 @@ public class ClassGen extends ClassFileGen {
     }
 
     genImplDecl(cw, classDecl.getImplDecl());
+    finalizeWriters();
 
     cw.visitEnd();
     return cw.toByteArray();
@@ -65,9 +71,13 @@ public class ClassGen extends ClassFileGen {
         parameterTypes[i] = constructorDecl.parameters[i].typeRef.getType();
       }
 
-      mw = cw.visitMethod(Opcodes.ACC_PUBLIC, "<init>",
-          Utils.getMethodDescriptor(PrimitiveType.VOID, parameterTypes), null,
-          null);
+      mw =
+          cw.visitMethod(
+              Opcodes.ACC_PUBLIC,
+              "<init>",
+              Utils.getMethodDescriptor(PrimitiveType.VOID, parameterTypes),
+              null,
+              null);
 
       for (int i = 0; i < parameterCount; i++) {
         mw.visitParameter(constructorDecl.parameters[i].name.literal, 0);
@@ -75,8 +85,8 @@ public class ClassGen extends ClassFileGen {
 
       mw.visitCode();
       mw.visitVarInsn(Opcodes.ALOAD, 0);
-      mw.visitMethodInsn(Opcodes.INVOKESPECIAL, "java/lang/Object", "<init>", "()V",
-          classDecl.isInterface());
+      mw.visitMethodInsn(
+          Opcodes.INVOKESPECIAL, "java/lang/Object", "<init>", "()V", classDecl.isInterface());
     } else {
       mw = genDefaultPrimaryConstructor(cw);
     }
@@ -87,8 +97,10 @@ public class ClassGen extends ClassFileGen {
       if (fieldDecl.initialExpr != null) {
         mw.visitVarInsn(Opcodes.ALOAD, 0);
         exprGen.genExpr(mw, fieldDecl.initialExpr);
-        mw.visitFieldInsn(Opcodes.PUTFIELD, classDecl.getType().getInternalName(),
-            fieldDecl.name.literal,
+        mw.visitFieldInsn(
+            Opcodes.PUTFIELD,
+            classDecl.getType().getInternalName(),
+            fieldDecl.nameToken.literal,
             fieldDecl.typeRef.getType().getDescriptor());
       }
     }
@@ -112,7 +124,11 @@ public class ClassGen extends ClassFileGen {
   }
 
   private void genFieldDecl(ClassWriter cw, FieldDecl fieldDecl) {
-    cw.visitField(fieldDecl.fieldModifiers, fieldDecl.name.literal,
-        fieldDecl.typeRef.getType().getDescriptor(), null, null);
+    cw.visitField(
+        fieldDecl.fieldModifiers,
+        fieldDecl.nameToken.literal,
+        fieldDecl.typeRef.getType().getDescriptor(),
+        null,
+        null);
   }
 }

@@ -51,7 +51,8 @@ public class TypeUtils {
 
   public static boolean typesCanCast(AbstractType fromType, AbstractType toType) {
     if (fromType instanceof PrimitiveType && toType instanceof PrimitiveType) {
-      return toType != PrimitiveType.BOOL && fromType != PrimitiveType.VOID
+      return toType != PrimitiveType.BOOL
+          && fromType != PrimitiveType.VOID
           && toType != PrimitiveType.VOID;
     }
 

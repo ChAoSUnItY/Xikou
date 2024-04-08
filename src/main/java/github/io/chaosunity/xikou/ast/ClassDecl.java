@@ -18,8 +18,14 @@ public final class ClassDecl implements BoundableDecl {
   private ClassType superclassType;
   private ClassType[] interfaceTypes;
 
-  public ClassDecl(PackageRef packageRef, int modifiers, Token classNameToken, int inheritedCount,
-      ClassTypeRef[] inheritedClasses, int fieldCount, FieldDecl[] fieldDecls) {
+  public ClassDecl(
+      PackageRef packageRef,
+      int modifiers,
+      Token classNameToken,
+      int inheritedCount,
+      ClassTypeRef[] inheritedClasses,
+      int fieldCount,
+      FieldDecl[] fieldDecls) {
     this.packageRef = packageRef;
     this.modifiers = modifiers;
     this.classNameToken = classNameToken;
@@ -57,7 +63,8 @@ public final class ClassDecl implements BoundableDecl {
 
   @Override
   public ClassType getSuperclassType() {
-    return inheritedClasses[0] != null ? inheritedClasses[0].resolvedType
+    return inheritedClasses[0] != null
+        ? inheritedClasses[0].resolvedType
         : ClassType.OBJECT_CLASS_TYPE;
   }
 

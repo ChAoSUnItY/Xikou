@@ -141,3 +141,19 @@ pub enum TokenType {
     Impl,
     EOF
 }
+
+impl TokenType {
+    pub const KEYWORDS: [TokenType] = [TokenType;] {
+        TokenType.Pub,
+        TokenType.Priv,
+        TokenType.Mut,
+        TokenType.Pkg,
+        TokenType.Class,
+        TokenType.Enum,
+        TokenType.Fn,
+        TokenType.Const,
+        TokenType.Let,
+        TokenType.Self,
+        TokenType.Impl
+    };
+}

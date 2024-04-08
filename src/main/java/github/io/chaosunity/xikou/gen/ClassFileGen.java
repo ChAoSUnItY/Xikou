@@ -1,5 +1,6 @@
 package github.io.chaosunity.xikou.gen;
 
+import github.io.chaosunity.xikou.ast.ConstDecl;
 import github.io.chaosunity.xikou.ast.ConstructorDecl;
 import github.io.chaosunity.xikou.ast.FnDecl;
 import github.io.chaosunity.xikou.ast.ImplDecl;
@@ -18,6 +19,7 @@ import org.objectweb.asm.Opcodes;
 public abstract class ClassFileGen {
 
   protected final Path outputFolderPath;
+  protected MethodVisitor clinitMw;
   protected final ExprGen exprGen = new ExprGen();
   protected final StmtGen stmtGen = new StmtGen(exprGen);
 
@@ -39,8 +41,8 @@ public abstract class ClassFileGen {
 
   protected abstract void genConstructor(ClassWriter cw);
 
-  protected void genConstructorBody(ClassWriter cw, MethodVisitor mw,
-      ConstructorDecl constructorDecl) {
+  protected void genConstructorBody(
+      ClassWriter cw, MethodVisitor mw, ConstructorDecl constructorDecl) {
     if (constructorDecl != null) {
       for (int i = 0; i < constructorDecl.statementCount; i++) {
         stmtGen.genStatement(mw, constructorDecl.statements[i]);
@@ -51,6 +53,10 @@ public abstract class ClassFileGen {
   protected void genImplDecl(ClassWriter cw, ImplDecl implDecl) {
     if (implDecl == null) {
       return;
+    }
+
+    for (int i = 0; i < implDecl.constCount; i++) {
+      genConstDecl(cw, implDecl.constDecls[i]);
     }
 
     for (int i = 0; i < implDecl.functionCount; i++) {
@@ -65,8 +71,13 @@ public abstract class ClassFileGen {
       modifiers |= Opcodes.ACC_STATIC;
     }
 
-    MethodVisitor mw = cw.visitMethod(modifiers, fnDecl.nameToken.literal,
-        Utils.getMethodDescriptor(fnDecl.asMethodRef()), null, null);
+    MethodVisitor mw =
+        cw.visitMethod(
+            modifiers,
+            fnDecl.nameToken.literal,
+            Utils.getMethodDescriptor(fnDecl.asMethodRef()),
+            null,
+            null);
 
     mw.visitCode();
 
@@ -96,4 +107,45 @@ public abstract class ClassFileGen {
   }
 
   protected abstract MethodVisitor genDefaultPrimaryConstructor(ClassWriter cw);
+
+  protected MethodVisitor genStaticCtor(ClassWriter cw) {
+    if (clinitMw == null) {
+      clinitMw =
+          cw.visitMethod(Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC, "<clinit>", "()V", null, null);
+      clinitMw.visitCode();
+    }
+
+    return clinitMw;
+  }
+
+  protected void genConstDecl(ClassWriter cw, ConstDecl constDecl) {
+    MethodVisitor mw = genStaticCtor(cw);
+
+    cw.visitField(
+        constDecl.modifiers | Opcodes.ACC_STATIC | Opcodes.ACC_FINAL,
+        constDecl.nameToken.literal,
+        constDecl.resolvedType.getDescriptor(),
+        null,
+        null);
+
+    exprGen.genExpr(mw, constDecl.initialExpression);
+
+    mw.visitFieldInsn(
+        Opcodes.PUTSTATIC,
+        constDecl.implDecl.boundDecl.getType().getInternalName(),
+        constDecl.nameToken.literal,
+        constDecl.resolvedType.getDescriptor());
+  }
+
+  protected void finalizeWriters() {
+    if (clinitMw == null) {
+      return;
+    }
+
+    MethodVisitor mw = clinitMw;
+
+    mw.visitInsn(Opcodes.RETURN);
+    mw.visitMaxs(-1, -1);
+    mw.visitEnd();
+  }
 }

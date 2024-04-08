@@ -2,6 +2,8 @@ pub class Box {
 }
 
 impl Box {
+    pub const a: i32 = 20;
+
     pub self() {
         let mut a = 1;
         a = 2;
@@ -10,7 +12,7 @@ impl Box {
 
     pub fn main(args: [java::lang::String]) {
         let mut a = [i32;] { 1 };
-        a[0] = a[0] = 20;
+        a[0] = a[0] = Box.a;
         java::lang::System.out.println(a[0]);
         return {};
     }

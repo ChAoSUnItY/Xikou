@@ -149,43 +149,45 @@ public class ExprGen {
 
   private void genCondExpr(MethodVisitor mw, CondExpr condExpr) {
     switch (condExpr.condOperatorToken.type) {
-      case DoubleAmpersand: {
-        Label falseBranch = new Label(), endLabel = new Label();
+      case DoubleAmpersand:
+        {
+          Label falseBranch = new Label(), endLabel = new Label();
 
-        genExpr(mw, condExpr.exprs[0]);
+          genExpr(mw, condExpr.exprs[0]);
 
-        for (int i = 1; i < condExpr.exprCount; i++) {
+          for (int i = 1; i < condExpr.exprCount; i++) {
+            mw.visitJumpInsn(Opcodes.IFEQ, falseBranch);
+
+            genExpr(mw, condExpr.exprs[i]);
+          }
+
+          mw.visitJumpInsn(Opcodes.IFEQ, endLabel);
+          mw.visitInsn(Opcodes.ICONST_1);
+          mw.visitJumpInsn(Opcodes.GOTO, endLabel);
+          mw.visitLabel(falseBranch);
+          mw.visitInsn(Opcodes.ICONST_0);
+          mw.visitLabel(endLabel);
+        }
+      case DoublePipe:
+        {
+          Label trueBranch = new Label(), falseBranch = new Label(), endLabel = new Label();
+
+          genExpr(mw, condExpr.exprs[0]);
+
+          for (int i = 1; i < condExpr.exprCount; i++) {
+            mw.visitJumpInsn(Opcodes.IFNE, trueBranch);
+
+            genExpr(mw, condExpr.exprs[i]);
+          }
+
           mw.visitJumpInsn(Opcodes.IFEQ, falseBranch);
-
-          genExpr(mw, condExpr.exprs[i]);
+          mw.visitLabel(trueBranch);
+          mw.visitInsn(Opcodes.ICONST_1);
+          mw.visitJumpInsn(Opcodes.GOTO, endLabel);
+          mw.visitLabel(falseBranch);
+          mw.visitInsn(Opcodes.ICONST_0);
+          mw.visitLabel(endLabel);
         }
-
-        mw.visitJumpInsn(Opcodes.IFEQ, endLabel);
-        mw.visitInsn(Opcodes.ICONST_1);
-        mw.visitJumpInsn(Opcodes.GOTO, endLabel);
-        mw.visitLabel(falseBranch);
-        mw.visitInsn(Opcodes.ICONST_0);
-        mw.visitLabel(endLabel);
-      }
-      case DoublePipe: {
-        Label trueBranch = new Label(), falseBranch = new Label(), endLabel = new Label();
-
-        genExpr(mw, condExpr.exprs[0]);
-
-        for (int i = 1; i < condExpr.exprCount; i++) {
-          mw.visitJumpInsn(Opcodes.IFNE, trueBranch);
-
-          genExpr(mw, condExpr.exprs[i]);
-        }
-
-        mw.visitJumpInsn(Opcodes.IFEQ, falseBranch);
-        mw.visitLabel(trueBranch);
-        mw.visitInsn(Opcodes.ICONST_1);
-        mw.visitJumpInsn(Opcodes.GOTO, endLabel);
-        mw.visitLabel(falseBranch);
-        mw.visitInsn(Opcodes.ICONST_0);
-        mw.visitLabel(endLabel);
-      }
     }
   }
 
@@ -239,7 +241,8 @@ public class ExprGen {
           mw.visitInsn(Utils.getDupX1Opcode(fieldRef.fieldType));
         }
 
-        mw.visitFieldInsn(fieldRef.isStatic ? Opcodes.PUTSTATIC : Opcodes.PUTFIELD,
+        mw.visitFieldInsn(
+            fieldRef.isStatic ? Opcodes.PUTSTATIC : Opcodes.PUTFIELD,
             fieldAccessExpr.ownerExpr.getType().getInternalName(),
             fieldAccessExpr.nameToken.literal,
             fieldAccessExpr.getType().getDescriptor());
@@ -268,9 +271,10 @@ public class ExprGen {
 
     if (castExpr.targetCastExpr.getType() instanceof PrimitiveType
         && castExpr.targetTypeRef.getType() instanceof PrimitiveType) {
-      int[] castOpcodeSeq = Utils.getPrimitiveCastOpcodeSeq(
-          (PrimitiveType) castExpr.targetCastExpr.getType(),
-          (PrimitiveType) castExpr.targetTypeRef.getType());
+      int[] castOpcodeSeq =
+          Utils.getPrimitiveCastOpcodeSeq(
+              (PrimitiveType) castExpr.targetCastExpr.getType(),
+              (PrimitiveType) castExpr.targetTypeRef.getType());
 
       for (int castOpcode : castOpcodeSeq) {
         mw.visitInsn(castOpcode);
@@ -293,22 +297,32 @@ public class ExprGen {
       genExpr(mw, methodCallExpr.arguments[i]);
     }
 
-    mw.visitMethodInsn(opcode, methodRef.ownerClassType.getInternalName(), methodRef.name,
-        Utils.getMethodDescriptor(methodRef), false);
+    mw.visitMethodInsn(
+        opcode,
+        methodRef.ownerClassType.getInternalName(),
+        methodRef.name,
+        Utils.getMethodDescriptor(methodRef),
+        false);
   }
 
   private void genMemberAccessExpr(MethodVisitor mw, FieldAccessExpr fieldAccessExpr) {
     FieldRef fieldRef = fieldAccessExpr.resolvedFieldRef;
 
     if (fieldRef.isStatic) {
-      mw.visitFieldInsn(Opcodes.GETSTATIC, fieldRef.ownerClassType.getInternalName(),
-          fieldRef.name, fieldRef.fieldType.getDescriptor());
+      mw.visitFieldInsn(
+          Opcodes.GETSTATIC,
+          fieldRef.ownerClassType.getInternalName(),
+          fieldRef.name,
+          fieldRef.fieldType.getDescriptor());
       return;
     }
 
     genExpr(mw, fieldAccessExpr.ownerExpr);
-    mw.visitFieldInsn(Opcodes.GETFIELD, fieldRef.ownerClassType.getInternalName(),
-        fieldRef.name, fieldRef.fieldType.getDescriptor());
+    mw.visitFieldInsn(
+        Opcodes.GETFIELD,
+        fieldRef.ownerClassType.getInternalName(),
+        fieldRef.name,
+        fieldRef.fieldType.getDescriptor());
   }
 
   private void genConstructorCallExpr(MethodVisitor mw, ConstructorCallExpr constructorCallExpr) {
@@ -319,8 +333,12 @@ public class ExprGen {
       genExpr(mw, constructorCallExpr.arguments[i]);
     }
 
-    mw.visitMethodInsn(Opcodes.INVOKESPECIAL, constructorCallExpr.getType().getInternalName(),
-        "<init>", Utils.getMethodDescriptor(constructorCallExpr.resolvedMethodRef), false);
+    mw.visitMethodInsn(
+        Opcodes.INVOKESPECIAL,
+        constructorCallExpr.getType().getInternalName(),
+        "<init>",
+        Utils.getMethodDescriptor(constructorCallExpr.resolvedMethodRef),
+        false);
   }
 
   private void genIndexExpr(MethodVisitor mw, IndexExpr expr) {

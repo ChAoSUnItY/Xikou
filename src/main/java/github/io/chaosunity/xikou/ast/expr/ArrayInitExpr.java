@@ -10,8 +10,8 @@ public final class ArrayInitExpr implements Expr {
   public final int initExprCount;
   public final Expr[] initExprs;
 
-  public ArrayInitExpr(AbstractTypeRef componentTypeRef, Expr sizeExpr, int initExprCount,
-      Expr[] initExprs) {
+  public ArrayInitExpr(
+      AbstractTypeRef componentTypeRef, Expr sizeExpr, int initExprCount, Expr[] initExprs) {
     this.componentTypeRef = componentTypeRef;
     this.sizeExpr = sizeExpr;
     this.initExprCount = initExprCount;

@@ -8,7 +8,6 @@ public final class ArrayTypeRef implements AbstractTypeRef {
   public final AbstractTypeRef componentTypeRef;
   public ArrayType resolvedType;
 
-
   public ArrayTypeRef(AbstractTypeRef componentTypeRef) {
     this.componentTypeRef = componentTypeRef;
   }

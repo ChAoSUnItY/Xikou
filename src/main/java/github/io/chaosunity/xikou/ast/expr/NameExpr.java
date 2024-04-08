@@ -27,6 +27,6 @@ public final class NameExpr implements TypeableExpr {
 
   @Override
   public ClassTypeRef asTypeRef() {
-    return new ClassTypeRef(1, new Token[]{varIdentifier});
+    return new ClassTypeRef(1, new Token[] {varIdentifier});
   }
 }

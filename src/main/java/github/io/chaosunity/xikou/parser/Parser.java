@@ -1,18 +1,6 @@
 package github.io.chaosunity.xikou.parser;
 
-import github.io.chaosunity.xikou.ast.Arguments;
-import github.io.chaosunity.xikou.ast.BoundableDecl;
-import github.io.chaosunity.xikou.ast.ClassDecl;
-import github.io.chaosunity.xikou.ast.ConstructorDecl;
-import github.io.chaosunity.xikou.ast.EnumDecl;
-import github.io.chaosunity.xikou.ast.EnumVariantDecl;
-import github.io.chaosunity.xikou.ast.FieldDecl;
-import github.io.chaosunity.xikou.ast.FnDecl;
-import github.io.chaosunity.xikou.ast.ImplDecl;
-import github.io.chaosunity.xikou.ast.PackageRef;
-import github.io.chaosunity.xikou.ast.Parameter;
-import github.io.chaosunity.xikou.ast.Parameters;
-import github.io.chaosunity.xikou.ast.XkFile;
+import github.io.chaosunity.xikou.ast.*;
 import github.io.chaosunity.xikou.ast.expr.ArithmeticExpr;
 import github.io.chaosunity.xikou.ast.expr.ArrayInitExpr;
 import github.io.chaosunity.xikou.ast.expr.AssignmentExpr;
@@ -105,8 +93,7 @@ public class Parser {
 
         if (!bound) {
           throw new IllegalStateException(
-              String.format("Unknown implementation to class %s",
-                  implDecl.targetClass.literal));
+              String.format("Unknown implementation to class %s", implDecl.targetClass.literal));
         }
 
         continue;
@@ -223,8 +210,14 @@ public class Parser {
       fieldDecls[fieldCount++] = parseFieldDecl();
     }
 
-    return new ClassDecl(packageRef, modifiers, classNameToken, inheritedCount, inheritedClasses,
-        fieldCount, fieldDecls);
+    return new ClassDecl(
+        packageRef,
+        modifiers,
+        classNameToken,
+        inheritedCount,
+        inheritedClasses,
+        fieldCount,
+        fieldDecls);
   }
 
   private EnumDecl parseEnumDecl(PackageRef packageRef, int modifiers) {
@@ -284,8 +277,8 @@ public class Parser {
         fieldDecls = newArr;
       }
 
-      fieldDecls[fieldCount++] = new FieldDecl(fieldModifiers, cachedIdentifierToken,
-          fieldTypeRef, null, null);
+      fieldDecls[fieldCount++] =
+          new FieldDecl(fieldModifiers, cachedIdentifierToken, fieldTypeRef, null, null);
     }
 
     while (!lexer.peekToken(TokenType.CloseBrace)) {
@@ -305,19 +298,27 @@ public class Parser {
 
     lexer.expectToken(TokenType.CloseBrace);
 
-    return new EnumDecl(packageRef, modifiers, enumNameToken, interfaceCount, interfaces,
-        fieldCount, fieldDecls,
-        enumVariantCount, enumVariantDecls);
+    return new EnumDecl(
+        packageRef,
+        modifiers,
+        enumNameToken,
+        interfaceCount,
+        interfaces,
+        fieldCount,
+        fieldDecls,
+        enumVariantCount,
+        enumVariantDecls);
   }
 
   private EnumVariantDecl parseEnumVariantDecl(Token cachedIdentifierToken) {
     Token variantNameToken =
-        cachedIdentifierToken != null ? cachedIdentifierToken : lexer.expectToken(
-            TokenType.Identifier);
+        cachedIdentifierToken != null
+            ? cachedIdentifierToken
+            : lexer.expectToken(TokenType.Identifier);
     Arguments arguments;
 
-    if (lexer.acceptToken(TokenType.OpenParenthesis) && !lexer.acceptToken(
-        TokenType.CloseParenthesis)) {
+    if (lexer.acceptToken(TokenType.OpenParenthesis)
+        && !lexer.acceptToken(TokenType.CloseParenthesis)) {
       arguments = parseArguments();
     } else {
       arguments = new Arguments(0, new Expr[0]);
@@ -348,6 +349,8 @@ public class Parser {
 
   private ImplDecl parseImplDecl() {
     Token targetClass = lexer.expectToken(TokenType.Identifier);
+    int constCount = 0;
+    ConstDecl[] constDecls = new ConstDecl[1];
     ConstructorDecl constructorDecl = null;
     int functionCount = 0;
     FnDecl[] functionDecls = new FnDecl[1];
@@ -356,6 +359,17 @@ public class Parser {
 
     while (!lexer.peekToken(TokenType.CloseBrace)) {
       int modifiers = parseAccessModifiers();
+
+      if (lexer.acceptToken(TokenType.Const)) {
+        if (constCount >= constDecls.length) {
+          ConstDecl[] newArr = new ConstDecl[constDecls.length * 2];
+          System.arraycopy(constDecls, 0, newArr, 0, constDecls.length);
+          constDecls = newArr;
+        }
+
+        constDecls[constCount++] = parseConstDecl(modifiers);
+        continue;
+      }
 
       if (lexer.acceptToken(TokenType.Self)) {
         constructorDecl = parseConstructorDecl(modifiers);
@@ -374,13 +388,30 @@ public class Parser {
       }
 
       throw new IllegalStateException(
-          String.format("Unexpected token %s while parsing implementation",
-              lexer.getCurrentToken().type));
+          String.format(
+              "Unexpected token %s while parsing implementation", lexer.getCurrentToken().type));
     }
 
     lexer.expectToken(TokenType.CloseBrace);
 
-    return new ImplDecl(targetClass, constructorDecl, functionCount, functionDecls);
+    return new ImplDecl(
+        targetClass, constCount, constDecls, constructorDecl, functionCount, functionDecls);
+  }
+
+  private ConstDecl parseConstDecl(int modifiers) {
+    Token nameToken = lexer.expectToken(TokenType.Identifier);
+
+    lexer.expectToken(TokenType.Colon);
+
+    AbstractTypeRef explicitTypeRef = parseTypeRef();
+
+    lexer.expectToken(TokenType.Equal);
+
+    Expr initialExpr = parseExpr();
+
+    lexer.expectToken(TokenType.SemiColon);
+
+    return new ConstDecl(modifiers, nameToken, explicitTypeRef, initialExpr);
   }
 
   private ConstructorDecl parseConstructorDecl(int modifiers) {
@@ -403,8 +434,8 @@ public class Parser {
       statements[statementCount++] = parseStatement();
     }
 
-    return new ConstructorDecl(modifiers, parameters.parameterCount,
-        parameters.parameters, statementCount, statements);
+    return new ConstructorDecl(
+        modifiers, parameters.parameterCount, parameters.parameters, statementCount, statements);
   }
 
   private FnDecl parseFunctionDecl(int modifiers) {
@@ -443,9 +474,15 @@ public class Parser {
       statements[statementCount++] = parseStatement();
     }
 
-    return new FnDecl(modifiers, nameToken, selfToken, parameters.parameterCount,
+    return new FnDecl(
+        modifiers,
+        nameToken,
+        selfToken,
+        parameters.parameterCount,
         parameters.parameters,
-        returnTypeRef, statementCount, statements);
+        returnTypeRef,
+        statementCount,
+        statements);
   }
 
   private Parameters parseParameters() {
@@ -558,23 +595,24 @@ public class Parser {
           lhs = new ArithmeticExpr(lhs, operatorToken, rhs);
           break;
         case DoubleAmpersand:
-        case DoublePipe: {
-          int exprCount = 2;
-          Expr[] exprs = {lhs, rhs};
+        case DoublePipe:
+          {
+            int exprCount = 2;
+            Expr[] exprs = {lhs, rhs};
 
-          while (lexer.acceptToken(operatorToken.type)) {
-            if (exprCount >= exprs.length) {
-              Expr[] newArr = new Expr[exprCount * 2];
-              System.arraycopy(exprs, 0, newArr, 0, exprCount);
-              exprs = newArr;
+            while (lexer.acceptToken(operatorToken.type)) {
+              if (exprCount >= exprs.length) {
+                Expr[] newArr = new Expr[exprCount * 2];
+                System.arraycopy(exprs, 0, newArr, 0, exprCount);
+                exprs = newArr;
+              }
+
+              exprs[exprCount++] = parseInfixExpr(precedence);
             }
 
-            exprs[exprCount++] = parseInfixExpr(precedence);
+            lhs = new CondExpr(exprCount, exprs, operatorToken);
+            break;
           }
-
-          lhs = new CondExpr(exprCount, exprs, operatorToken);
-          break;
-        }
         case DoubleEqual:
         case NotEqual:
         case Greater:
@@ -585,26 +623,27 @@ public class Parser {
           break;
         case Equal:
         case PlusEqual:
-        case MinusEqual: {
-          int targetCount = 2;
-          Expr[] targets = {lhs, rhs};
+        case MinusEqual:
+          {
+            int targetCount = 2;
+            Expr[] targets = {lhs, rhs};
 
-          while (lexer.acceptToken(operatorToken.type)) {
-            if (targetCount >= targets.length) {
-              Expr[] newArr = new Expr[targetCount * 2];
-              System.arraycopy(targets, 0, newArr, 0, targetCount);
-              targets = newArr;
+            while (lexer.acceptToken(operatorToken.type)) {
+              if (targetCount >= targets.length) {
+                Expr[] newArr = new Expr[targetCount * 2];
+                System.arraycopy(targets, 0, newArr, 0, targetCount);
+                targets = newArr;
+              }
+
+              targets[targetCount++] = parseInfixExpr(precedence);
             }
 
-            targets[targetCount++] = parseInfixExpr(precedence);
+            rhs = targets[targetCount - 1];
+            targets[--targetCount] = null;
+
+            lhs = new AssignmentExpr(targetCount, targets, operatorToken, rhs);
+            break;
           }
-
-          rhs = targets[targetCount - 1];
-          targets[--targetCount] = null;
-
-          lhs = new AssignmentExpr(targetCount, targets, operatorToken, rhs);
-          break;
-        }
         default:
           throw new IllegalStateException(
               String.format("ICE: %s is not a valid infix operator", operatorToken.type));
@@ -635,8 +674,9 @@ public class Parser {
           arguments = new Arguments(0, new Expr[0]);
         }
 
-        lhs = new MethodCallExpr(null, ((NameExpr) lhs).varIdentifier, arguments.argumentCount,
-            arguments.arguments);
+        lhs =
+            new MethodCallExpr(
+                null, ((NameExpr) lhs).varIdentifier, arguments.argumentCount, arguments.arguments);
       } else {
         break;
       }
@@ -660,8 +700,8 @@ public class Parser {
           arguments = new Arguments(0, new Expr[0]);
         }
 
-        return new MethodCallExpr(lhs, memberNameToken, arguments.argumentCount,
-            arguments.arguments);
+        return new MethodCallExpr(
+            lhs, memberNameToken, arguments.argumentCount, arguments.arguments);
       } else {
         // (Instance / Static) Member access
         return new FieldAccessExpr(lhs, memberNameToken);
@@ -683,8 +723,8 @@ public class Parser {
         arguments = new Arguments(0, new Expr[0]);
       }
 
-      return new ConstructorCallExpr((TypeableExpr) lhs, arguments.argumentCount,
-          arguments.arguments);
+      return new ConstructorCallExpr(
+          (TypeableExpr) lhs, arguments.argumentCount, arguments.arguments);
     }
   }
 

@@ -12,8 +12,13 @@ public class MethodRef {
   public final boolean isStatic;
   public final boolean isConstructor;
 
-  public MethodRef(AbstractType ownerClassType, String name, int parameterCount,
-      AbstractType[] parameterType, AbstractType returnType, boolean isStatic,
+  public MethodRef(
+      AbstractType ownerClassType,
+      String name,
+      int parameterCount,
+      AbstractType[] parameterType,
+      AbstractType returnType,
+      boolean isStatic,
       boolean isConstructor) {
     this.ownerClassType = ownerClassType;
     this.name = name;

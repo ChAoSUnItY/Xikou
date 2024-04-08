@@ -1,15 +1,6 @@
 package github.io.chaosunity.xikou.resolver;
 
-import github.io.chaosunity.xikou.ast.BoundableDecl;
-import github.io.chaosunity.xikou.ast.ClassDecl;
-import github.io.chaosunity.xikou.ast.ConstructorDecl;
-import github.io.chaosunity.xikou.ast.EnumDecl;
-import github.io.chaosunity.xikou.ast.EnumVariantDecl;
-import github.io.chaosunity.xikou.ast.FieldDecl;
-import github.io.chaosunity.xikou.ast.FnDecl;
-import github.io.chaosunity.xikou.ast.ImplDecl;
-import github.io.chaosunity.xikou.ast.Parameter;
-import github.io.chaosunity.xikou.ast.XkFile;
+import github.io.chaosunity.xikou.ast.*;
 import github.io.chaosunity.xikou.ast.expr.ArithmeticExpr;
 import github.io.chaosunity.xikou.ast.expr.ArrayInitExpr;
 import github.io.chaosunity.xikou.ast.expr.AssignmentExpr;
@@ -111,6 +102,10 @@ public final class Resolver {
       ImplDecl implDecl = decl.getImplDecl();
 
       if (implDecl != null) {
+        for (int j = 0; j < implDecl.constCount; j++) {
+          resolveConstDeclEarly(decl.getType(), implDecl.constDecls[j]);
+        }
+
         for (int j = 0; j < implDecl.functionCount; j++) {
           resolveFunctionDeclEarly(decl.getType(), implDecl.functionDecls[j]);
         }
@@ -132,8 +127,8 @@ public final class Resolver {
     }
   }
 
-  private void resolvePrimaryConstructorDeclEarly(ClassType ownerType,
-      ConstructorDecl constructorDecl) {
+  private void resolvePrimaryConstructorDeclEarly(
+      ClassType ownerType, ConstructorDecl constructorDecl) {
     for (int i = 0; i < constructorDecl.parameterCount; i++) {
       Parameter parameter = constructorDecl.parameters[i];
 
@@ -141,6 +136,12 @@ public final class Resolver {
     }
 
     constructorDecl.scope = new Scope(ownerType, true, true);
+  }
+
+  private void resolveConstDeclEarly(ClassType ownerType, ConstDecl constDecl) {
+    resolveTypeRef(constDecl.explicitTypeRef, false);
+
+    constDecl.resolvedType = constDecl.explicitTypeRef.getType();
   }
 
   private void resolveFunctionDeclEarly(ClassType ownerType, FnDecl fnDecl) {
@@ -173,6 +174,10 @@ public final class Resolver {
       ImplDecl implDecl = decl.getImplDecl();
 
       if (implDecl != null) {
+        for (int j = 0; j < implDecl.constCount; j++) {
+          resolveConstDecl(implDecl.constDecls[j]);
+        }
+
         for (int j = 0; j < implDecl.functionCount; j++) {
           resolveFunctionDecl(implDecl.functionDecls[j]);
         }
@@ -186,15 +191,13 @@ public final class Resolver {
     }
   }
 
-  private void resolveClassDecl(ClassDecl classDecl) {
-  }
+  private void resolveClassDecl(ClassDecl classDecl) {}
 
   private void resolveEnumDecl(EnumDecl enumDecl) {
     ConstructorDecl constructorDecl = enumDecl.getConstructorDecl();
 
     for (int i = 0; i < enumDecl.variantCount; i++) {
-      resolveEnumVariantInitialization(enumDecl, constructorDecl,
-          enumDecl.enumVariantDecls[i]);
+      resolveEnumVariantInitialization(enumDecl, constructorDecl, enumDecl.enumVariantDecls[i]);
     }
   }
 
@@ -202,14 +205,15 @@ public final class Resolver {
     resolveTypeRef(fieldDecl.typeRef, false);
   }
 
-  private void resolveEnumVariantInitialization(EnumDecl enumDecl,
-      ConstructorDecl constructorDecl,
-      EnumVariantDecl variantDecl) {
-    MethodRef constructorRef = constructorDecl != null ? constructorDecl.asMethodRef()
-        : Utils.genImplcicitPrimaryConstructorRef(
-            enumDecl.getType());
-    boolean isApplicable = Utils.isInvocationApplicable(variantDecl.argumentCount,
-        variantDecl.arguments, constructorRef);
+  private void resolveEnumVariantInitialization(
+      EnumDecl enumDecl, ConstructorDecl constructorDecl, EnumVariantDecl variantDecl) {
+    MethodRef constructorRef =
+        constructorDecl != null
+            ? constructorDecl.asMethodRef()
+            : Utils.genImplcicitPrimaryConstructorRef(enumDecl.getType());
+    boolean isApplicable =
+        Utils.isInvocationApplicable(
+            variantDecl.argumentCount, variantDecl.arguments, constructorRef);
 
     if (!isApplicable) {
       throw new IllegalStateException(
@@ -217,13 +221,26 @@ public final class Resolver {
     }
   }
 
+  private void resolveConstDecl(ConstDecl constDecl) {
+    resolveExpr(
+        constDecl.initialExpression,
+        new Scope(constDecl.implDecl.boundDecl.getType(), false, false));
+
+    if (!constDecl.resolvedType.equals(constDecl.initialExpression.getType())) {
+      throw new IllegalStateException(
+          String.format(
+              "Constant declaration %s has mismatched explicit and expression type",
+              constDecl.nameToken.literal));
+    }
+  }
+
   private void resolveConstructorDecl(ConstructorDecl constructorDecl) {
     constructorDecl.scope.addLocalVar("self", true, constructorDecl.implDecl.boundDecl.getType());
 
-    resolveParameters(constructorDecl.parameterCount, constructorDecl.parameters,
-        constructorDecl.scope);
-    resolveStatement(constructorDecl.statementCount, constructorDecl.statements,
-        constructorDecl.scope);
+    resolveParameters(
+        constructorDecl.parameterCount, constructorDecl.parameters, constructorDecl.scope);
+    resolveStatement(
+        constructorDecl.statementCount, constructorDecl.statements, constructorDecl.scope);
   }
 
   private void resolveFunctionDecl(FnDecl fnDecl) {
@@ -264,8 +281,11 @@ public final class Resolver {
   private void resolveVarDeclStatement(VarDeclStmt varDeclStmt, Scope scope) {
     if (varDeclStmt.initialValue != null) {
       resolveExpr(varDeclStmt.initialValue, scope);
-      varDeclStmt.localVarRef = scope.addLocalVar(varDeclStmt.nameToken.literal,
-          varDeclStmt.mutToken != null, varDeclStmt.initialValue.getType());
+      varDeclStmt.localVarRef =
+          scope.addLocalVar(
+              varDeclStmt.nameToken.literal,
+              varDeclStmt.mutToken != null,
+              varDeclStmt.initialValue.getType());
     }
   }
 
@@ -334,25 +354,27 @@ public final class Resolver {
       case Greater:
       case GreaterEqual:
       case Lesser:
-      case LesserEqual: {
-        if (!(lhsType instanceof PrimitiveType) || !(rhsType instanceof PrimitiveType)) {
-          throw new IllegalStateException("Cannot compare on non-numerical types");
-        }
+      case LesserEqual:
+        {
+          if (!(lhsType instanceof PrimitiveType) || !(rhsType instanceof PrimitiveType)) {
+            throw new IllegalStateException("Cannot compare on non-numerical types");
+          }
 
-        PrimitiveType lhsPrimitiveType = (PrimitiveType) lhsType, rhsPrimitiveType = (PrimitiveType) rhsType;
+          PrimitiveType lhsPrimitiveType = (PrimitiveType) lhsType,
+              rhsPrimitiveType = (PrimitiveType) rhsType;
 
-        if (lhsPrimitiveType != rhsPrimitiveType) {
-          throw new IllegalStateException(
-              "Cannot compare on different numerical types, cast one of the type to another first");
+          if (lhsPrimitiveType != rhsPrimitiveType) {
+            throw new IllegalStateException(
+                "Cannot compare on different numerical types, cast one of the type to another first");
+          }
+          break;
         }
-        break;
-      }
     }
   }
 
   private void resolveArithmeticExpr(ArithmeticExpr arithmeticExpr, Scope scope) {
-    AbstractType lhsType = arithmeticExpr.getLhs().getType(), rhsType = arithmeticExpr.getRhs()
-        .getType();
+    AbstractType lhsType = arithmeticExpr.getLhs().getType(),
+        rhsType = arithmeticExpr.getRhs().getType();
 
     if (!lhsType.equals(rhsType)) {
       throw new IllegalStateException("Cannot perform arithmetic operation on different types");
@@ -364,8 +386,7 @@ public final class Resolver {
       resolveExpr(condExpr.exprs[i], scope);
 
       if (condExpr.exprs[i].getType() != PrimitiveType.BOOL) {
-        throw new IllegalStateException(
-            "Cannot perform logical operation on different types");
+        throw new IllegalStateException("Cannot perform logical operation on different types");
       }
     }
   }
@@ -385,9 +406,11 @@ public final class Resolver {
 
       AbstractType targetType = target.getType();
 
-      boolean assignable = scope.isInConstructor && target instanceof FieldAccessExpr
-          && ((FieldAccessExpr) target).resolvedFieldRef.ownerClassType.equals(
-          scope.parentClassType);
+      boolean assignable =
+          scope.isInConstructor
+              && target instanceof FieldAccessExpr
+              && ((FieldAccessExpr) target)
+                  .resolvedFieldRef.ownerClassType.equals(scope.parentClassType);
       assignable |= target.isAssignable();
 
       if (!assignable) {
@@ -398,9 +421,9 @@ public final class Resolver {
         case Equal:
           if (!TypeUtils.isInstanceOf(rhsType, targetType)) {
             throw new IllegalStateException(
-                String.format("Illegal assignment: %s is not compatible with %s",
-                    rhsType.getInternalName(),
-                    targetType.getInternalName()));
+                String.format(
+                    "Illegal assignment: %s is not compatible with %s",
+                    rhsType.getInternalName(), targetType.getInternalName()));
           }
           break;
         case PlusEqual:
@@ -430,7 +453,8 @@ public final class Resolver {
       expr.resolvedType = localVarRef.type;
       expr.localVarRef = localVarRef;
     } else {
-      throw new IllegalStateException(String.format("Unknown reference to local variable %s", expr.varIdentifier.literal));
+      throw new IllegalStateException(
+          String.format("Unknown reference to local variable %s", expr.varIdentifier.literal));
     }
   }
 
@@ -482,8 +506,7 @@ public final class Resolver {
     boolean hasApplicableConstructor = false;
 
     for (MethodRef constructorRef : constructorRefs) {
-      if (Utils.isInvocationApplicable(expr.argumentCount,
-          expr.arguments, constructorRef)) {
+      if (Utils.isInvocationApplicable(expr.argumentCount, expr.arguments, constructorRef)) {
         hasApplicableConstructor = true;
         resolvedConstructorRef = constructorRef;
         break;
@@ -527,23 +550,21 @@ public final class Resolver {
       ownerType = expr.ownerExpr.getType();
     }
 
-    MethodRef methodRef = table.getMethod(ownerType, expr.nameToken.literal,
-        arguementTypes);
+    MethodRef methodRef = table.getMethod(ownerType, expr.nameToken.literal, arguementTypes);
     checkMethodCallAccessibility(expr, scope, methodRef);
   }
 
   private void checkMethodCallAccessibility(MethodCallExpr expr, Scope scope, MethodRef methodRef) {
     if (methodRef == null) {
       throw new IllegalStateException(
-          String.format("Type %s does not have method %s",
-              expr.ownerExpr.getType(),
-              expr.nameToken.literal));
+          String.format(
+              "Type %s does not have method %s", expr.ownerExpr.getType(), expr.nameToken.literal));
     }
 
     if (!methodRef.isStatic && expr.ownerExpr == null && !scope.isInInstance) {
       throw new IllegalStateException(
-          String.format("Instance method %s cannot be called in static scope",
-              expr.nameToken.literal));
+          String.format(
+              "Instance method %s cannot be called in static scope", expr.nameToken.literal));
     }
 
     expr.resolvedMethodRef = methodRef;
@@ -555,8 +576,7 @@ public final class Resolver {
       ClassType ownerType = resolveTypeableExpr((TypeableExpr) expr.ownerExpr, true);
 
       if (ownerType != null) {
-        FieldRef fieldRef = table.getField(ownerType,
-            expr.nameToken.literal);
+        FieldRef fieldRef = table.getField(ownerType, expr.nameToken.literal);
 
         checkFieldAccessibility(expr, scope, fieldRef);
         return;
@@ -565,23 +585,22 @@ public final class Resolver {
 
     resolveExpr(expr.ownerExpr, scope);
 
-    FieldRef fieldRef = table.getField(expr.ownerExpr.getType(),
-        expr.nameToken.literal);
+    FieldRef fieldRef = table.getField(expr.ownerExpr.getType(), expr.nameToken.literal);
     checkFieldAccessibility(expr, scope, fieldRef);
   }
 
   private void checkFieldAccessibility(FieldAccessExpr expr, Scope scope, FieldRef fieldRef) {
     if (fieldRef == null) {
       throw new IllegalStateException(
-          String.format("Type %s does not have field %s",
-              expr.ownerExpr.getType().getInternalName(),
-              expr.nameToken.literal));
+          String.format(
+              "Type %s does not have field %s",
+              expr.ownerExpr.getType().getInternalName(), expr.nameToken.literal));
     }
 
     if (!fieldRef.isStatic && expr.ownerExpr == null && !scope.isInInstance) {
       throw new IllegalStateException(
-          String.format("Instance field %s cannot be called in static scope",
-              expr.nameToken.literal));
+          String.format(
+              "Instance field %s cannot be called in static scope", expr.nameToken.literal));
     }
 
     expr.resolvedFieldRef = fieldRef;
@@ -646,8 +665,7 @@ public final class Resolver {
           return;
         }
 
-        throw new IllegalStateException(String.format("Type %s is not an ClassType",
-            builder));
+        throw new IllegalStateException(String.format("Type %s is not an ClassType", builder));
       }
 
       classTypeRef.resolvedType = (ClassType) type;

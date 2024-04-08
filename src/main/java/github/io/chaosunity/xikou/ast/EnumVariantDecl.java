@@ -9,7 +9,6 @@ public final class EnumVariantDecl {
   public final int argumentCount;
   public final Expr[] arguments;
 
-
   public EnumVariantDecl(Token name, int argumentCount, Expr[] arguments) {
     this.name = name;
     this.argumentCount = argumentCount;

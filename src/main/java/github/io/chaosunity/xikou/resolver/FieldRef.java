@@ -10,7 +10,11 @@ public class FieldRef {
   public final String name;
   public final AbstractType fieldType;
 
-  public FieldRef(AbstractType ownerClassType, boolean isStatic, boolean isMutable, String name,
+  public FieldRef(
+      AbstractType ownerClassType,
+      boolean isStatic,
+      boolean isMutable,
+      String name,
       AbstractType fieldType) {
     this.ownerClassType = ownerClassType;
     this.isStatic = isStatic;

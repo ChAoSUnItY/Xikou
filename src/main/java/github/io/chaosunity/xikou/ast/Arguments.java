@@ -2,9 +2,7 @@ package github.io.chaosunity.xikou.ast;
 
 import github.io.chaosunity.xikou.ast.expr.Expr;
 
-/**
- * Intermediate structure for parsing purpose, not directly stored in AST.
- */
+/** Intermediate structure for parsing purpose, not directly stored in AST. */
 public final class Arguments {
 
   public final int argumentCount;
