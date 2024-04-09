@@ -306,6 +306,12 @@ public class ExprGen {
   }
 
   private void genMemberAccessExpr(MethodVisitor mw, FieldAccessExpr fieldAccessExpr) {
+    if (fieldAccessExpr.isLenAccess) {
+      genExpr(mw, fieldAccessExpr.ownerExpr);
+      mw.visitInsn(Opcodes.ARRAYLENGTH);
+      return;
+    }
+
     FieldRef fieldRef = fieldAccessExpr.resolvedFieldRef;
 
     if (fieldRef.isStatic) {

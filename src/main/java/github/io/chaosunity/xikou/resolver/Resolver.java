@@ -616,6 +616,7 @@ public final class Resolver {
     if (ownerType instanceof ArrayType) {
       if (expr.nameToken.literal.equals("len")) {
         // Special case: Array type has len member property
+        expr.isLenAccess = true;
         return;
       } else {
         throw new IllegalStateException("Array type only has field `len`");
