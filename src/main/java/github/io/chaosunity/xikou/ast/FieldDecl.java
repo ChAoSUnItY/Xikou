@@ -3,6 +3,7 @@ package github.io.chaosunity.xikou.ast;
 import github.io.chaosunity.xikou.ast.expr.Expr;
 import github.io.chaosunity.xikou.ast.types.AbstractTypeRef;
 import github.io.chaosunity.xikou.lexer.Token;
+import github.io.chaosunity.xikou.resolver.FieldRef;
 
 public final class FieldDecl {
 
@@ -11,6 +12,7 @@ public final class FieldDecl {
   public final AbstractTypeRef typeRef;
   public final Token equalToken;
   public final Expr initialExpr;
+  public FieldRef resolvedFieldRef;
 
   public FieldDecl(
       int fieldModifiers,

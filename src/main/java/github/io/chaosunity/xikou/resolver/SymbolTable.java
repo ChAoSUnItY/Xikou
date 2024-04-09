@@ -1,10 +1,7 @@
 package github.io.chaosunity.xikou.resolver;
 
 import github.io.chaosunity.xikou.ast.*;
-import github.io.chaosunity.xikou.resolver.types.AbstractType;
-import github.io.chaosunity.xikou.resolver.types.ClassType;
-import github.io.chaosunity.xikou.resolver.types.PrimitiveType;
-import github.io.chaosunity.xikou.resolver.types.TypeUtils;
+import github.io.chaosunity.xikou.resolver.types.*;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -80,7 +77,7 @@ public class SymbolTable {
             continue;
           }
 
-          return fnDecl.asMethodRef();
+          return Utils.functionDeclAsMethodRef(decl.getType(), fnDecl);
         }
       } else if (decl instanceof EnumDecl) {
         // TODO: Support method decl in EnumDecl
@@ -125,7 +122,7 @@ public class SymbolTable {
         }
 
         return new MethodRef(
-            getTypeFromClass(method.getDeclaringClass()),
+            (ClassType) getTypeFromClass(method.getDeclaringClass()),
             name,
             resolvedParameterTypes.length,
             resolvedParameterTypes,
@@ -139,7 +136,7 @@ public class SymbolTable {
     return null;
   }
 
-  public FieldRef getField(AbstractType ownerType, String name) {
+  public FieldRef getField(ClassType ownerType, String name) {
     for (int i = 0; i < declCount; i++) {
       BoundableDecl decl = decls[i];
 
@@ -160,7 +157,7 @@ public class SymbolTable {
       if (decl instanceof ClassDecl) {
         ClassDecl classDecl = (ClassDecl) decl;
 
-        return getFieldRef(classDecl.fieldCount, classDecl.fieldDecls, ownerType, name);
+        return getFieldRef(classDecl.fieldCount, classDecl.fieldDecls, name);
       } else if (decl instanceof EnumDecl) {
         EnumDecl enumDecl = (EnumDecl) decl;
 
@@ -172,7 +169,7 @@ public class SymbolTable {
           }
         }
 
-        return getFieldRef(enumDecl.fieldCount, enumDecl.fieldDecls, ownerType, name);
+        return getFieldRef(enumDecl.fieldCount, enumDecl.fieldDecls, name);
       }
     }
 
@@ -192,7 +189,7 @@ public class SymbolTable {
   }
 
   private FieldRef getConstRef(
-      int constCount, ConstDecl[] constDecls, AbstractType ownerType, String name) {
+      int constCount, ConstDecl[] constDecls, ClassType ownerType, String name) {
     for (int i = 0; i < constCount; i++) {
       ConstDecl constDecl = constDecls[i];
 
@@ -204,25 +201,19 @@ public class SymbolTable {
     return null;
   }
 
-  private FieldRef getFieldRef(
-      int fieldCount, FieldDecl[] fieldDecls, AbstractType ownerType, String name) {
+  private FieldRef getFieldRef(int fieldCount, FieldDecl[] fieldDecls, String name) {
     for (int i = 0; i < fieldCount; i++) {
       FieldDecl fieldDecl = fieldDecls[i];
 
       if (fieldDecl.nameToken.literal.equals(name)) {
-        return new FieldRef(
-            ownerType,
-            false,
-            !Modifier.isFinal(fieldDecl.fieldModifiers),
-            name,
-            fieldDecl.typeRef.getType());
+        return fieldDecl.resolvedFieldRef;
       }
     }
 
     return null;
   }
 
-  public MethodRef[] getConstructors(AbstractType ownerType) {
+  public MethodRef[] getConstructors(ClassType ownerType) {
     for (int i = 0; i < declCount; i++) {
       BoundableDecl decl = decls[i];
 
@@ -248,7 +239,7 @@ public class SymbolTable {
             "<init>",
             constructorDecl.statementCount,
             parameterTypes,
-            constructorDecl.implDecl.boundDecl.getType(),
+            ownerType,
             false,
             true)
       };
@@ -272,7 +263,7 @@ public class SymbolTable {
   }
 
   private static MethodRef getMethodRefFromConstrutor(
-      AbstractType ownerType, Constructor constructor) {
+      ClassType ownerType, Constructor constructor) {
     int parameterCount = constructor.getParameterCount();
     Class[] parameterReflectionTypes = constructor.getParameterTypes();
     AbstractType[] parameterTypes = new AbstractType[parameterCount];

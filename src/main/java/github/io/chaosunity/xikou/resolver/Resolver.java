@@ -30,6 +30,7 @@ import github.io.chaosunity.xikou.resolver.types.ArrayType;
 import github.io.chaosunity.xikou.resolver.types.ClassType;
 import github.io.chaosunity.xikou.resolver.types.PrimitiveType;
 import github.io.chaosunity.xikou.resolver.types.TypeUtils;
+import java.lang.reflect.Modifier;
 
 public final class Resolver {
 
@@ -93,21 +94,21 @@ public final class Resolver {
   private void resolveDeclMembers(XkFile file) {
     for (int i = 0; i < file.declCount; i++) {
       BoundableDecl decl = file.decls[i];
+      ClassType declType = decl.getType();
       ConstructorDecl constructorDecl = decl.getConstructorDecl();
+      ImplDecl implDecl = decl.getImplDecl();
 
       if (constructorDecl != null) {
-        resolvePrimaryConstructorDeclEarly(decl.getType(), constructorDecl);
+        resolvePrimaryConstructorDeclEarly(declType, constructorDecl);
       }
-
-      ImplDecl implDecl = decl.getImplDecl();
 
       if (implDecl != null) {
         for (int j = 0; j < implDecl.constCount; j++) {
-          resolveConstDeclEarly(decl.getType(), implDecl.constDecls[j]);
+          resolveConstDeclEarly(declType, implDecl.constDecls[j]);
         }
 
         for (int j = 0; j < implDecl.functionCount; j++) {
-          resolveFunctionDeclEarly(decl.getType(), implDecl.functionDecls[j]);
+          resolveFunctionDeclEarly(declType, implDecl.functionDecls[j]);
         }
       }
 
@@ -115,41 +116,38 @@ public final class Resolver {
         ClassDecl classDecl = (ClassDecl) decl;
 
         for (int j = 0; j < classDecl.fieldCount; j++) {
-          resolveFieldDecl(classDecl.fieldDecls[j]);
+          resolveFieldDecl(declType, classDecl.fieldDecls[j]);
         }
       } else if (decl instanceof EnumDecl) {
         EnumDecl enumDecl = (EnumDecl) decl;
 
         for (int j = 0; j < enumDecl.fieldCount; j++) {
-          resolveFieldDecl(enumDecl.fieldDecls[j]);
+          resolveFieldDecl(declType, enumDecl.fieldDecls[j]);
         }
       }
     }
   }
 
   private void resolvePrimaryConstructorDeclEarly(
-      ClassType ownerType, ConstructorDecl constructorDecl) {
-    for (int i = 0; i < constructorDecl.parameterCount; i++) {
-      Parameter parameter = constructorDecl.parameters[i];
+      ClassType ownerClassType, ConstructorDecl constructorDecl) {
+    constructorDecl.parameterTypes =
+        resolveParameters(constructorDecl.parameterCount, constructorDecl.parameters);
 
-      resolveTypeRef(parameter.typeRef, false);
-    }
-
-    constructorDecl.scope = new Scope(ownerType, true, true);
+    constructorDecl.resolvedMethodRef =
+        Utils.constructorDeclAsMethodRef(ownerClassType, constructorDecl);
   }
 
-  private void resolveConstDeclEarly(ClassType ownerType, ConstDecl constDecl) {
+  private void resolveConstDeclEarly(ClassType ownerClassType, ConstDecl constDecl) {
     resolveTypeRef(constDecl.explicitTypeRef, false);
 
     constDecl.resolvedType = constDecl.explicitTypeRef.getType();
+    constDecl.resolvedFieldRef =
+        new FieldRef(
+            ownerClassType, true, false, constDecl.nameToken.literal, constDecl.resolvedType);
   }
 
-  private void resolveFunctionDeclEarly(ClassType ownerType, FnDecl fnDecl) {
-    for (int i = 0; i < fnDecl.parameterCount; i++) {
-      Parameter parameter = fnDecl.parameters[i];
-
-      resolveTypeRef(parameter.typeRef, false);
-    }
+  private void resolveFunctionDeclEarly(ClassType ownerClassType, FnDecl fnDecl) {
+    fnDecl.parameterTypes = resolveParameters(fnDecl.parameterCount, fnDecl.parameters);
 
     if (fnDecl.returnTypeRef != null) {
       resolveTypeRef(fnDecl.returnTypeRef, false);
@@ -159,7 +157,21 @@ public final class Resolver {
       fnDecl.returnType = PrimitiveType.VOID;
     }
 
-    fnDecl.scope = new Scope(ownerType, false, fnDecl.selfToken != null);
+    fnDecl.resolvedMethodRef = Utils.functionDeclAsMethodRef(ownerClassType, fnDecl);
+  }
+
+  private AbstractType[] resolveParameters(int parameterCount, Parameter[] parameters) {
+    AbstractType[] parameterTypes = new AbstractType[parameterCount];
+
+    for (int i = 0; i < parameterCount; i++) {
+      Parameter parameter = parameters[i];
+
+      resolveTypeRef(parameter.typeRef, false);
+
+      parameterTypes[i] = parameter.typeRef.getType();
+    }
+
+    return parameterTypes;
   }
 
   private void resolveDeclBody(XkFile file) {
@@ -201,15 +213,23 @@ public final class Resolver {
     }
   }
 
-  private void resolveFieldDecl(FieldDecl fieldDecl) {
+  private void resolveFieldDecl(ClassType ownerClassType, FieldDecl fieldDecl) {
     resolveTypeRef(fieldDecl.typeRef, false);
+
+    fieldDecl.resolvedFieldRef =
+        new FieldRef(
+            ownerClassType,
+            false,
+            !Modifier.isFinal(fieldDecl.fieldModifiers),
+            fieldDecl.nameToken.literal,
+            fieldDecl.typeRef.getType());
   }
 
   private void resolveEnumVariantInitialization(
       EnumDecl enumDecl, ConstructorDecl constructorDecl, EnumVariantDecl variantDecl) {
     MethodRef constructorRef =
         constructorDecl != null
-            ? constructorDecl.asMethodRef()
+            ? Utils.constructorDeclAsMethodRef(enumDecl.getType(), constructorDecl)
             : Utils.genImplcicitPrimaryConstructorRef(enumDecl.getType());
     boolean isApplicable =
         Utils.isInvocationApplicable(
@@ -222,9 +242,9 @@ public final class Resolver {
   }
 
   private void resolveConstDecl(ConstDecl constDecl) {
-    resolveExpr(
-        constDecl.initialExpression,
-        new Scope(constDecl.implDecl.boundDecl.getType(), false, false));
+    ClassType ownerClassType = constDecl.resolvedFieldRef.ownerClassType;
+
+    resolveExpr(constDecl.initialExpression, new Scope(ownerClassType, false, false));
 
     if (!constDecl.resolvedType.equals(constDecl.initialExpression.getType())) {
       throw new IllegalStateException(
@@ -235,21 +255,27 @@ public final class Resolver {
   }
 
   private void resolveConstructorDecl(ConstructorDecl constructorDecl) {
-    constructorDecl.scope.addLocalVar("self", true, constructorDecl.implDecl.boundDecl.getType());
+    ClassType ownerClassType = constructorDecl.resolvedMethodRef.ownerClassType;
+    Scope constructorScope = new Scope(ownerClassType, true, false);
 
-    resolveParameters(
-        constructorDecl.parameterCount, constructorDecl.parameters, constructorDecl.scope);
-    resolveStatement(
-        constructorDecl.statementCount, constructorDecl.statements, constructorDecl.scope);
+    constructorScope.addLocalVar("self", true, ownerClassType);
+
+    resolveParameters(constructorDecl.parameterCount, constructorDecl.parameters, constructorScope);
+    resolveStatement(constructorDecl.statementCount, constructorDecl.statements, constructorScope);
   }
 
   private void resolveFunctionDecl(FnDecl fnDecl) {
+    ClassType ownerClassType = fnDecl.resolvedMethodRef.ownerClassType;
+    Scope functionScope = new Scope(ownerClassType, false, fnDecl.selfToken != null);
+
     if (fnDecl.selfToken != null) {
-      fnDecl.scope.addLocalVar("self", true, fnDecl.implDecl.boundDecl.getType());
+      functionScope.addLocalVar("self", true, ownerClassType);
     }
 
-    resolveParameters(fnDecl.parameterCount, fnDecl.parameters, fnDecl.scope);
-    resolveStatement(fnDecl.statementCount, fnDecl.statements, fnDecl.scope);
+    fnDecl.resolvedMethodRef = Utils.functionDeclAsMethodRef(ownerClassType, fnDecl);
+
+    resolveParameters(fnDecl.parameterCount, fnDecl.parameters, functionScope);
+    resolveStatement(fnDecl.statementCount, fnDecl.statements, functionScope);
   }
 
   private void resolveParameters(int parameterCount, Parameter[] parameters, Scope scope) {
@@ -585,7 +611,18 @@ public final class Resolver {
 
     resolveExpr(expr.ownerExpr, scope);
 
-    FieldRef fieldRef = table.getField(expr.ownerExpr.getType(), expr.nameToken.literal);
+    AbstractType ownerType = expr.ownerExpr.getType();
+
+    if (ownerType instanceof ArrayType) {
+      if (expr.nameToken.literal.equals("len")) {
+        // Special case: Array type has len member property
+        return;
+      } else {
+        throw new IllegalStateException("Array type only has field `len`");
+      }
+    }
+
+    FieldRef fieldRef = table.getField((ClassType) ownerType, expr.nameToken.literal);
     checkFieldAccessibility(expr, scope, fieldRef);
   }
 

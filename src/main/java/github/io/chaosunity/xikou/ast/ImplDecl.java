@@ -25,17 +25,5 @@ public final class ImplDecl {
     this.constructorDecl = constructorDecl;
     this.functionCount = functionCount;
     this.functionDecls = functionDecls;
-
-    for (int i = 0; i < constCount; i++) {
-      constDecls[i].implDecl = this;
-    }
-
-    if (constructorDecl != null) {
-      constructorDecl.implDecl = this;
-    }
-
-    for (int i = 0; i < functionCount; i++) {
-      functionDecls[i].implDecl = this;
-    }
   }
 }

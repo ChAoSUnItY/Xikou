@@ -1,10 +1,11 @@
 package github.io.chaosunity.xikou.resolver;
 
 import github.io.chaosunity.xikou.resolver.types.AbstractType;
+import github.io.chaosunity.xikou.resolver.types.ClassType;
 
 public class MethodRef {
 
-  public final AbstractType ownerClassType;
+  public final ClassType ownerClassType;
   public final String name;
   public final int parameterCount;
   public final AbstractType[] parameterType;
@@ -13,7 +14,7 @@ public class MethodRef {
   public final boolean isConstructor;
 
   public MethodRef(
-      AbstractType ownerClassType,
+      ClassType ownerClassType,
       String name,
       int parameterCount,
       AbstractType[] parameterType,

@@ -7,6 +7,8 @@ import github.io.chaosunity.xikou.ast.ImplDecl;
 import github.io.chaosunity.xikou.ast.expr.ReturnExpr;
 import github.io.chaosunity.xikou.ast.stmt.ExprStmt;
 import github.io.chaosunity.xikou.ast.stmt.Statement;
+import github.io.chaosunity.xikou.resolver.FieldRef;
+import github.io.chaosunity.xikou.resolver.MethodRef;
 import github.io.chaosunity.xikou.resolver.types.PrimitiveType;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -65,6 +67,7 @@ public abstract class ClassFileGen {
   }
 
   protected void genFunctionDeclAndBody(ClassWriter cw, FnDecl fnDecl) {
+    MethodRef methodRef = fnDecl.resolvedMethodRef;
     int modifiers = fnDecl.fnModifiers;
 
     if (fnDecl.selfToken == null) {
@@ -74,8 +77,8 @@ public abstract class ClassFileGen {
     MethodVisitor mw =
         cw.visitMethod(
             modifiers,
-            fnDecl.nameToken.literal,
-            Utils.getMethodDescriptor(fnDecl.asMethodRef()),
+            methodRef.name,
+            Utils.getMethodDescriptor(methodRef),
             null,
             null);
 
@@ -120,11 +123,12 @@ public abstract class ClassFileGen {
 
   protected void genConstDecl(ClassWriter cw, ConstDecl constDecl) {
     MethodVisitor mw = genStaticCtor(cw);
+    FieldRef constRef = constDecl.resolvedFieldRef;
 
     cw.visitField(
         constDecl.modifiers | Opcodes.ACC_STATIC | Opcodes.ACC_FINAL,
-        constDecl.nameToken.literal,
-        constDecl.resolvedType.getDescriptor(),
+        constRef.name,
+        constRef.fieldType.getDescriptor(),
         null,
         null);
 
@@ -132,9 +136,9 @@ public abstract class ClassFileGen {
 
     mw.visitFieldInsn(
         Opcodes.PUTSTATIC,
-        constDecl.implDecl.boundDecl.getType().getInternalName(),
-        constDecl.nameToken.literal,
-        constDecl.resolvedType.getDescriptor());
+        constRef.ownerClassType.getInternalName(),
+        constRef.name,
+        constRef.fieldType.getDescriptor());
   }
 
   protected void finalizeWriters() {

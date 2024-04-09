@@ -4,7 +4,6 @@ import github.io.chaosunity.xikou.ast.stmt.Statement;
 import github.io.chaosunity.xikou.ast.types.AbstractTypeRef;
 import github.io.chaosunity.xikou.lexer.Token;
 import github.io.chaosunity.xikou.resolver.MethodRef;
-import github.io.chaosunity.xikou.resolver.Scope;
 import github.io.chaosunity.xikou.resolver.types.AbstractType;
 
 public final class FnDecl {
@@ -17,9 +16,9 @@ public final class FnDecl {
   public final AbstractTypeRef returnTypeRef;
   public final int statementCount;
   public final Statement[] statements;
-  public ImplDecl implDecl;
-  public Scope scope;
+  public AbstractType[] parameterTypes;
   public AbstractType returnType;
+  public MethodRef resolvedMethodRef;
 
   public FnDecl(
       int fnModifiers,
@@ -38,22 +37,5 @@ public final class FnDecl {
     this.returnTypeRef = returnTypeRef;
     this.statementCount = statementCount;
     this.statements = statements;
-  }
-
-  public MethodRef asMethodRef() {
-    AbstractType[] parameterTypes = new AbstractType[parameterCount];
-
-    for (int i = 0; i < parameterCount; i++) {
-      parameterTypes[i] = parameters[i].typeRef.getType();
-    }
-
-    return new MethodRef(
-        implDecl.boundDecl.getType(),
-        nameToken.literal,
-        parameterCount,
-        parameterTypes,
-        returnType,
-        selfToken == null,
-        false);
   }
 }
