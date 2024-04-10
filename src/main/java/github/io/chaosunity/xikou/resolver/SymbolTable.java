@@ -45,18 +45,15 @@ public class SymbolTable {
   public MethodRef getMethod(AbstractType ownerType, String name, AbstractType[] parameterTypes) {
     for (int i = 0; i < declCount; i++) {
       BoundableDecl decl = decls[i];
+      ClassType declType = decl.getType();
 
-      if (!decl.getType().equals(ownerType)) {
+      if (!declType.equals(ownerType)) {
         continue;
       }
 
       ImplDecl implDecl = decl.getImplDecl();
 
-      if (implDecl == null) {
-        return null;
-      }
-
-      if (decl instanceof ClassDecl) {
+      if (implDecl != null) {
         for (int j = 0; j < implDecl.functionCount; j++) {
           FnDecl fnDecl = implDecl.functionDecls[j];
 
@@ -77,11 +74,11 @@ public class SymbolTable {
             continue;
           }
 
-          return Utils.functionDeclAsMethodRef(decl.getType(), fnDecl);
+          return Utils.functionDeclAsMethodRef(declType, fnDecl);
         }
-      } else if (decl instanceof EnumDecl) {
-        // TODO: Support method decl in EnumDecl
       }
+
+      return getMethod(declType.getSuperclass(), name, parameterTypes);
     }
 
     try {
@@ -154,23 +151,11 @@ public class SymbolTable {
         }
       }
 
-      if (decl instanceof ClassDecl) {
-        ClassDecl classDecl = (ClassDecl) decl;
+      FieldRef resolvedFieldRef = getFieldRef(ownerType, name, decl);
 
-        return getFieldRef(classDecl.fieldCount, classDecl.fieldDecls, name);
-      } else if (decl instanceof EnumDecl) {
-        EnumDecl enumDecl = (EnumDecl) decl;
-
-        for (int j = 0; j < enumDecl.variantCount; j++) {
-          EnumVariantDecl variantDecl = enumDecl.enumVariantDecls[j];
-
-          if (variantDecl.name.literal.equals(name)) {
-            return new FieldRef(ownerType, true, false, name, enumDecl.enumType);
-          }
-        }
-
-        return getFieldRef(enumDecl.fieldCount, enumDecl.fieldDecls, name);
-      }
+      return resolvedFieldRef != null
+          ? resolvedFieldRef
+          : getField(ownerType.getSuperclass(), name);
     }
 
     try {
@@ -186,6 +171,32 @@ public class SymbolTable {
     }
 
     return null;
+  }
+
+  private FieldRef getFieldRef(ClassType ownerType, String name, BoundableDecl decl) {
+    FieldRef resolvedFieldRef = null;
+
+    if (decl instanceof ClassDecl) {
+      ClassDecl classDecl = (ClassDecl) decl;
+
+      resolvedFieldRef = getFieldRef(classDecl.fieldCount, classDecl.fieldDecls, name);
+    } else if (decl instanceof EnumDecl) {
+      EnumDecl enumDecl = (EnumDecl) decl;
+
+      for (int j = 0; j < enumDecl.variantCount; j++) {
+        EnumVariantDecl variantDecl = enumDecl.enumVariantDecls[j];
+
+        if (variantDecl.name.literal.equals(name)) {
+          resolvedFieldRef = new FieldRef(ownerType, true, false, name, enumDecl.enumType);
+          break;
+        }
+      }
+
+      if (resolvedFieldRef == null) {
+        resolvedFieldRef = getFieldRef(enumDecl.fieldCount, enumDecl.fieldDecls, name);
+      }
+    }
+    return resolvedFieldRef;
   }
 
   private FieldRef getConstRef(

@@ -24,6 +24,12 @@ impl Box {
             java::lang::System.out.println(i);
         }
 
+        for str in [Iota;] { Iota.Ios, Iota.Android } {
+            if str.ordinal() == 1 {
+                java::lang::System.out.println(str);
+            }
+        }
+
         let b = 0;
 
         java::lang::System.out.println(a[b]);
@@ -33,4 +39,9 @@ impl Box {
     pub(pkg) fn get2() -> i32 {
       return 2;
     }
+}
+
+enum Iota {
+    Ios,
+    Android
 }
