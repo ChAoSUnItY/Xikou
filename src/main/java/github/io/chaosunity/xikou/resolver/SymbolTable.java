@@ -302,6 +302,8 @@ public class SymbolTable {
       }
 
       throw new IllegalStateException("Unreachable");
+    } else if (clazz.isArray()) {
+      return new ArrayType(getTypeFromClass(clazz.getComponentType()));
     } else {
       String internalName = clazz.getCanonicalName().replace(".", "/");
       Class superClazz = clazz.getSuperclass();

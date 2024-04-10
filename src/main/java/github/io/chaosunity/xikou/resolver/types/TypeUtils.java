@@ -18,6 +18,11 @@ public class TypeUtils {
       return TypeUtils.isObjectInstanceOf((ClassType) fromType, (ClassType) targetType);
     }
 
+    if (fromType instanceof ArrayType && targetType instanceof ArrayType) {
+      return isInstanceOf(
+          ((ArrayType) fromType).getComponentType(), ((ArrayType) targetType).getComponentType());
+    }
+
     return false;
   }
 

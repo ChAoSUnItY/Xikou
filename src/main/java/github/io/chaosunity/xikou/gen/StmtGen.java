@@ -1,10 +1,12 @@
 package github.io.chaosunity.xikou.gen;
 
 import github.io.chaosunity.xikou.ast.expr.Expr;
+import github.io.chaosunity.xikou.ast.expr.MethodCallExpr;
 import github.io.chaosunity.xikou.ast.stmt.ExprStmt;
 import github.io.chaosunity.xikou.ast.stmt.Statement;
 import github.io.chaosunity.xikou.ast.stmt.VarDeclStmt;
 import github.io.chaosunity.xikou.resolver.types.AbstractType;
+import github.io.chaosunity.xikou.resolver.types.PrimitiveType;
 import org.objectweb.asm.MethodVisitor;
 
 public final class StmtGen {
@@ -19,7 +21,7 @@ public final class StmtGen {
     if (statement instanceof VarDeclStmt) {
       genVarDeclStatement(mw, (VarDeclStmt) statement);
     } else if (statement instanceof ExprStmt) {
-      genExprStatment(mw, (ExprStmt) statement);
+      genExprStatement(mw, (ExprStmt) statement);
     }
   }
 
@@ -34,7 +36,11 @@ public final class StmtGen {
     }
   }
 
-  private void genExprStatment(MethodVisitor mw, ExprStmt exprStmt) {
+  private void genExprStatement(MethodVisitor mw, ExprStmt exprStmt) {
     exprGen.genExpr(mw, exprStmt.expr);
+
+    if (exprStmt.expr instanceof MethodCallExpr && exprStmt.expr.getType() != PrimitiveType.VOID) {
+      mw.visitInsn(Utils.getPopOpcode(exprStmt.expr.getType()));
+    }
   }
 }

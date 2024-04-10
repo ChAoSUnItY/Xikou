@@ -595,7 +595,8 @@ public final class Resolver {
     if (methodRef == null) {
       throw new IllegalStateException(
           String.format(
-              "Type %s does not have method %s", expr.ownerExpr.getType(), expr.nameToken.literal));
+              "Type %s does not have method %s",
+              expr.ownerExpr.getType().getInternalName(), expr.nameToken.literal));
     }
 
     if (!methodRef.isStatic && expr.ownerExpr == null && !scope.isInInstance) {

@@ -163,6 +163,10 @@ public final class Utils {
     }
   }
 
+  static int getPopOpcode(AbstractType type) {
+    return type.getSize() == 2 ? Opcodes.POP2 : Opcodes.POP;
+  }
+
   static int getDupOpcode(AbstractType type) {
     return type.getSize() == 2 ? Opcodes.DUP2 : Opcodes.DUP;
   }

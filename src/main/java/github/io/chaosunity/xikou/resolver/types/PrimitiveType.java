@@ -3,6 +3,7 @@ package github.io.chaosunity.xikou.resolver.types;
 public enum PrimitiveType implements AbstractType {
   VOID("unit", "void", 'V'),
   CHAR("char", "char", 'C'),
+  BYTE("u8", "byte", 'B'),
   BOOL("bool", "boolean", 'Z'),
   INT("i32", "int", 'I'),
   LONG("i64", "long", 'J'),

@@ -144,7 +144,7 @@ public class Lexer {
     if (currentChar == '&') {
       if (peekChar(1) == '&') {
         readChar(2);
-        return new Token(TokenType.DoublePipe, "&&");
+        return new Token(TokenType.DoubleAmpersand, "&&");
       }
     }
 

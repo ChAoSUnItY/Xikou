@@ -45,7 +45,7 @@ impl Lexer {
     
     priv fn nextToken(self) -> Token {
       self.skipWhitespaces();
-      let ch = self.peekChar(0);
+      let mut ch = self.peekChar(0);
       
       if ch == '(' {
         self.readChar(1);
@@ -57,16 +57,220 @@ impl Lexer {
         return Token.self(TokenType.CloseParenthesis, ")");
       }
 
+      if ch == '{' {
+        self.readChar(1);
+        return Token.self(TokenType.OpenBrace, "{");
+      }
+
+      if ch == '}' {
+        self.readChar(1);
+        return Token.self(TokenType.CloseBrace, "}");
+      }
+
+      if ch == '[' {
+        self.readChar(1);
+        return Token.self(TokenType.OpenBracket, "[");
+      }
+
+      if ch == ']' {
+        self.readChar(1);
+        return Token.self(TokenType.CloseBracket, "]");
+      }
+
+      if ch == '.' {
+        self.readChar(1);
+        return Token.self(TokenType.Dot, ".");
+      }
+
+      if ch == ',' {
+        self.readChar(1);
+        return Token.self(TokenType.Comma, ",");
+      }
+
+      if ch == ';' {
+        self.readChar(1);
+        return Token.self(TokenType.SemiColon, ";");
+      }
+
+      if ch == ':' {
+        if self.peekChar(1) == ':' {
+          self.readChar(2);
+          return Token.self(TokenType.DoubleColon, "::");
+        }
+
+        self.readChar(1);
+        return Token.self(TokenType.Colon, ":");
+      }
+
+      if ch == '=' {
+        if self.peekChar(1) == '=' {
+          self.readChar(2);
+          return Token.self(TokenType.DoubleEqual, "==");
+        }
+
+        self.readChar(1);
+        return Token.self(TokenType.Equal, "=");
+      }
+
+      if ch == '!' {
+        if self.peekChar(1) == '=' {
+          self.readChar(2);
+          return Token.self(TokenType.NotEqual, "!=");
+        }
+      }
+
+      if ch == '>' {
+        if self.peekChar(1) == '=' {
+          self.readChar(2);
+          return Token.self(TokenType.GreaterEqual, ">=");
+        }
+
+        self.readChar(1);
+        return Token.self(TokenType.Greater, "=");
+      }
+
+      if ch == '<' {
+        if self.peekChar(1) == '=' {
+          self.readChar(2);
+          return Token.self(TokenType.LesserEqual, "<=");
+        }
+
+        self.readChar(1);
+        return Token.self(TokenType.Lesser, "<");
+      }
+
+      if ch == '&' {
+        if self.peekChar(1) == '&' {
+          self.readChar(2);
+          return Token.self(TokenType.DoubleAmpersand, "&&");
+        }
+      }
+
+      if ch == '|' {
+        if self.peekChar(1) == '|' {
+          self.readChar(2);
+          return Token.self(TokenType.DoublePipe, "||");
+        }
+      }
+
+      if ch == '+' {
+        if self.peekChar(1) == '=' {
+          self.readChar(2);
+          return Token.self(TokenType.PlusEqual, "+=");
+        }
+
+        self.readChar(1);
+        return Token.self(TokenType.Plus, "+");
+      }
+
+      if ch == '-' {
+        if self.peekChar(1) == '>' {
+          self.readChar(2);
+          return Token.self(TokenType.SlimArrow, "->");
+        }
+
+        if self.peekChar(1) == '=' {
+          self.readChar(2);
+          return Token.self(TokenType.MinusEqual, "-=");
+        }
+
+        self.readChar(1);
+        return Token.self(TokenType.Minus, "-");
+      }
+
+      if ch == '\'' {
+        ch = self.peekChar(1);
+
+        if ch == '\\' {
+          if ch == '0' {
+            ch = '\0';
+          } else if ch == 't' {
+            ch = '\t';
+          } else if ch == 'b' {
+            ch = '\b';
+          } else if ch == 'n' {
+            ch = '\n';
+          } else if ch == 'r' {
+            ch = '\r';
+          } else if ch == 'f' {
+            ch = '\f';
+          } else if ch == '\'' || ch == '"' || ch == '\\' {
+          } else {
+          }
+
+          self.readChar(3);
+        } else {
+          self.readChar(2);
+        }
+
+        if self.peekChar(0) != '\'' {
+        }
+
+        self.readChar(1);
+
+        return Token.self(TokenType.CharLiteral, java::lang::String.valueOf(ch));
+      }
+
+      if ch == '"' {
+        let builder = java::lang::StringBuilder.self();
+        let mut length = 0;
+
+        self.readChar(1);
+
+        ch = self.peekChar(length);
+        while ch != '"' && ch != '\0' {
+          if ch == '\\' {
+            ch = self.peekChar(length + 1);
+
+            if ch == '0' {
+              ch = '\0';
+            } else if ch == 't' {
+              ch = '\t';
+            } else if ch == 'b' {
+              ch = '\b';
+            } else if ch == 'n' {
+              ch = '\n';
+            } else if ch == 'r' {
+              ch = '\r';
+            } else if ch == 'f' {
+              ch = '\f';
+            } else if ch == '\'' || ch == '"' || ch == '\\' {
+            } else {
+            }
+
+            builder.append(ch);
+            length += 2;
+          } else {
+            builder.append(ch);
+            length += 1;
+          }
+
+          ch = self.peekChar(length);
+        }
+
+        if ch != '"' {
+        }
+
+        self.readChar(length + 1);
+        return Token.self(TokenType.StringLiteral, builder.toString());
+      }
+
       if isIdentStart(ch) {
         let mut length = 1;
 
-        while isIdent(ch) {
+        while isIdent(self.peekChar(length)) {
           length += 1;
         }
 
         let literal = self.source.substring(self.pos, self.pos + length);
-
         self.readChar(length);
+
+        for keyword in TokenType.KEYWORDS {
+          if keyword.toString().toLowerCase().equals(literal) {
+            return Token.self(keyword, literal);
+          }
+        }
+
         return Token.self(TokenType.Identifier, literal);
       }
 
@@ -91,11 +295,13 @@ impl Lexer {
     }
     
     pub fn main(args: [java::lang::String]) {
-      let lexer = Lexer.self("(4142))1231)\0");
+      let path = java::nio::file::Paths.get("../self_host/lexer.xk", [java::lang::String;0]);
+      let source = java::lang::String.self(java::nio::file::Files.readAllBytes(path));
+      let lexer = Lexer.self(source);
       let mut token = lexer.nextToken();
-      
+
       while token.type != TokenType.EOF {
-        java::lang::System.out.println(token.type);
+        java::lang::System.out.println(token);
         token = lexer.nextToken();
       }
     }
@@ -111,49 +317,92 @@ impl Token {
         self.type = type;
         self.literal = literal;
     }
+
+    pub fn toString(self) -> java::lang::String {
+      let builder = java::lang::StringBuilder.self();
+
+      builder.append("{ ");
+      builder.append(self.type);
+      builder.append(": `");
+      builder.append(self.literal);
+      builder.append("` }");
+
+      return builder.toString();
+    }
 }
 
 pub enum TokenType {
-    CharLiteral,
-    StringLiteral,
-    NumberLiteral,
-    Identifier,
-    OpenParenthesis,
-    CloseParenthesis,
-    OpenBrace,
-    CloseBrace,
-    Dot,
-    Comma,
-    SemiColon,
-    Colon,
-    DoubleColon,
-    Equal,
-    Pub,
-    Priv,
-    Mut,
-    Pkg,
-    Class,
-    Enum,
-    Fn,
-    Const,
-    Let,
-    Self,
-    Impl,
-    EOF
+  CharLiteral,
+  StringLiteral,
+  NumberLiteral,
+  Identifier,
+  OpenParenthesis,
+  CloseParenthesis,
+  OpenBrace,
+  CloseBrace,
+  OpenBracket,
+  CloseBracket,
+  Dot,
+  Comma,
+  SemiColon,
+  Colon,
+  DoubleColon,
+  Equal,
+  PlusEqual,
+  MinusEqual,
+  DoubleEqual,
+  NotEqual,
+  Greater,
+  GreaterEqual,
+  Lesser,
+  LesserEqual,
+  DoubleAmpersand,
+  DoublePipe,
+  Plus,
+  Minus,
+  SlimArrow,
+  Pub,
+  Priv,
+  Mut,
+  Pkg,
+  Class,
+  Enum,
+  Fn,
+  Const,
+  Let,
+  Self,
+  Impl,
+  Null,
+  Return,
+  As,
+  If,
+  Else,
+  While,
+  For,
+  In,
+  EOF
 }
 
 impl TokenType {
-    pub const KEYWORDS: [TokenType] = [TokenType;] {
-        TokenType.Pub,
-        TokenType.Priv,
-        TokenType.Mut,
-        TokenType.Pkg,
-        TokenType.Class,
-        TokenType.Enum,
-        TokenType.Fn,
-        TokenType.Const,
-        TokenType.Let,
-        TokenType.Self,
-        TokenType.Impl
-    };
+  pub const KEYWORDS: [TokenType] = [TokenType;] {
+      TokenType.Pub,
+      TokenType.Priv,
+      TokenType.Mut,
+      TokenType.Pkg,
+      TokenType.Class,
+      TokenType.Enum,
+      TokenType.Fn,
+      TokenType.Const,
+      TokenType.Let,
+      TokenType.Self,
+      TokenType.Impl,
+      TokenType.Null,
+      TokenType.Return,
+      TokenType.As,
+      TokenType.If,
+      TokenType.Else,
+      TokenType.While,
+      TokenType.For,
+      TokenType.In
+  };
 }

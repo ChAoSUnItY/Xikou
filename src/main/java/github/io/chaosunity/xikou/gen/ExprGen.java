@@ -135,20 +135,19 @@ public class ExprGen {
         {
           Label falseBranch = new Label(), endLabel = new Label();
 
-          genExpr(mw, condExpr.exprs[0]);
-
-          for (int i = 1; i < condExpr.exprCount; i++) {
-            mw.visitJumpInsn(Opcodes.IFEQ, falseBranch);
-
+          for (int i = 0; i < condExpr.exprCount; i++) {
             genExpr(mw, condExpr.exprs[i]);
+
+            mw.visitJumpInsn(Opcodes.IFEQ, falseBranch);
           }
 
-          mw.visitJumpInsn(Opcodes.IFEQ, endLabel);
           mw.visitInsn(Opcodes.ICONST_1);
           mw.visitJumpInsn(Opcodes.GOTO, endLabel);
           mw.visitLabel(falseBranch);
           mw.visitInsn(Opcodes.ICONST_0);
           mw.visitLabel(endLabel);
+
+          break;
         }
       case DoublePipe:
         {
@@ -169,6 +168,8 @@ public class ExprGen {
           mw.visitLabel(falseBranch);
           mw.visitInsn(Opcodes.ICONST_0);
           mw.visitLabel(endLabel);
+
+          break;
         }
     }
   }
@@ -389,17 +390,20 @@ public class ExprGen {
   }
 
   private void genIfExpr(MethodVisitor mw, IfExpr ifExpr) {
-    Label falseBranch = new Label();
+    Label falseBranch = new Label(), endLabel = new Label();
 
     genExpr(mw, ifExpr.condExpr);
 
     mw.visitJumpInsn(Opcodes.IFEQ, falseBranch);
     genExpr(mw, ifExpr.trueBranchExpr);
+    mw.visitJumpInsn(Opcodes.GOTO, endLabel);
     mw.visitLabel(falseBranch);
 
     if (ifExpr.falseBranchExpr != null) {
       genExpr(mw, ifExpr.falseBranchExpr);
     }
+
+    mw.visitLabel(endLabel);
   }
 
   private void genWhileExpr(MethodVisitor mw, WhileExpr whileExpr) {
