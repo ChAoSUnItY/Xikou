@@ -47,12 +47,14 @@ public enum TokenType {
   If,
   Else,
   While,
+  For,
+  In,
   EOF;
 
   public static final TokenType[] KEYWORDS =
       new TokenType[] {
-        Pub, Priv, Mut, Pkg, Class, Enum, Fn, Const, Let, Self, Impl, Null, Return, As, If, While,
-        Else
+        Pub, Priv, Mut, Pkg, Class, Enum, Fn, Const, Let, Self, Impl, Null, Return, As, If, Else,
+        While, For, In
       };
 
   public int getInfixPrecedence() {

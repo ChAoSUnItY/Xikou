@@ -1,28 +1,7 @@
 package github.io.chaosunity.xikou.parser;
 
 import github.io.chaosunity.xikou.ast.*;
-import github.io.chaosunity.xikou.ast.expr.ArithmeticExpr;
-import github.io.chaosunity.xikou.ast.expr.ArrayInitExpr;
-import github.io.chaosunity.xikou.ast.expr.AssignmentExpr;
-import github.io.chaosunity.xikou.ast.expr.BlockExpr;
-import github.io.chaosunity.xikou.ast.expr.CastExpr;
-import github.io.chaosunity.xikou.ast.expr.CharLiteralExpr;
-import github.io.chaosunity.xikou.ast.expr.CompareExpr;
-import github.io.chaosunity.xikou.ast.expr.CondExpr;
-import github.io.chaosunity.xikou.ast.expr.ConstructorCallExpr;
-import github.io.chaosunity.xikou.ast.expr.Expr;
-import github.io.chaosunity.xikou.ast.expr.FieldAccessExpr;
-import github.io.chaosunity.xikou.ast.expr.IfExpr;
-import github.io.chaosunity.xikou.ast.expr.IndexExpr;
-import github.io.chaosunity.xikou.ast.expr.IntegerLiteralExpr;
-import github.io.chaosunity.xikou.ast.expr.MethodCallExpr;
-import github.io.chaosunity.xikou.ast.expr.NameExpr;
-import github.io.chaosunity.xikou.ast.expr.NullLiteral;
-import github.io.chaosunity.xikou.ast.expr.ReturnExpr;
-import github.io.chaosunity.xikou.ast.expr.StringLiteralExpr;
-import github.io.chaosunity.xikou.ast.expr.TypeExpr;
-import github.io.chaosunity.xikou.ast.expr.TypeableExpr;
-import github.io.chaosunity.xikou.ast.expr.WhileExpr;
+import github.io.chaosunity.xikou.ast.expr.*;
 import github.io.chaosunity.xikou.ast.stmt.ExprStmt;
 import github.io.chaosunity.xikou.ast.stmt.Statement;
 import github.io.chaosunity.xikou.ast.stmt.VarDeclStmt;
@@ -778,6 +757,17 @@ public class Parser {
       BlockExpr iterExpr = parseBlockExpr();
 
       return new WhileExpr(condExpr, iterExpr);
+    }
+
+    if (lexer.acceptToken(TokenType.For)) {
+      NameExpr iterateVarNameExpr = parseNameExpr();
+
+      lexer.expectToken(TokenType.In);
+
+      Expr iteratableTargetExpr = parseExpr();
+      BlockExpr iterationBlock = parseBlockExpr();
+
+      return new ForExpr(iterateVarNameExpr, iteratableTargetExpr, iterationBlock);
     }
 
     if (lexer.peekToken(TokenType.OpenBrace)) {

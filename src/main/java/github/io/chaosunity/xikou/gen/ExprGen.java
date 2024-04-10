@@ -1,26 +1,6 @@
 package github.io.chaosunity.xikou.gen;
 
-import github.io.chaosunity.xikou.ast.expr.ArithmeticExpr;
-import github.io.chaosunity.xikou.ast.expr.ArrayInitExpr;
-import github.io.chaosunity.xikou.ast.expr.AssignmentExpr;
-import github.io.chaosunity.xikou.ast.expr.BlockExpr;
-import github.io.chaosunity.xikou.ast.expr.CastExpr;
-import github.io.chaosunity.xikou.ast.expr.CharLiteralExpr;
-import github.io.chaosunity.xikou.ast.expr.CompareExpr;
-import github.io.chaosunity.xikou.ast.expr.CondExpr;
-import github.io.chaosunity.xikou.ast.expr.ConstructorCallExpr;
-import github.io.chaosunity.xikou.ast.expr.Expr;
-import github.io.chaosunity.xikou.ast.expr.FieldAccessExpr;
-import github.io.chaosunity.xikou.ast.expr.IfExpr;
-import github.io.chaosunity.xikou.ast.expr.IndexExpr;
-import github.io.chaosunity.xikou.ast.expr.InfixExpr;
-import github.io.chaosunity.xikou.ast.expr.IntegerLiteralExpr;
-import github.io.chaosunity.xikou.ast.expr.MethodCallExpr;
-import github.io.chaosunity.xikou.ast.expr.NameExpr;
-import github.io.chaosunity.xikou.ast.expr.NullLiteral;
-import github.io.chaosunity.xikou.ast.expr.ReturnExpr;
-import github.io.chaosunity.xikou.ast.expr.StringLiteralExpr;
-import github.io.chaosunity.xikou.ast.expr.WhileExpr;
+import github.io.chaosunity.xikou.ast.expr.*;
 import github.io.chaosunity.xikou.lexer.TokenType;
 import github.io.chaosunity.xikou.resolver.FieldRef;
 import github.io.chaosunity.xikou.resolver.LocalVarRef;
@@ -64,6 +44,8 @@ public class ExprGen {
       genIfExpr(mw, (IfExpr) expr);
     } else if (expr instanceof WhileExpr) {
       genWhileExpr(mw, (WhileExpr) expr);
+    } else if (expr instanceof ForExpr) {
+      genForExpr(mw, (ForExpr) expr);
     } else if (expr instanceof CharLiteralExpr) {
       genCharLiteralExpr(mw, (CharLiteralExpr) expr);
     } else if (expr instanceof StringLiteralExpr) {
@@ -429,6 +411,59 @@ public class ExprGen {
     genExpr(mw, whileExpr.iterExpr);
     mw.visitJumpInsn(Opcodes.GOTO, condLabel);
     mw.visitLabel(endLabel);
+  }
+
+  private void genForExpr(MethodVisitor mw, ForExpr forExpr) {
+    AbstractType iterableType = forExpr.iterableTargetExpr.getType();
+
+    if (iterableType instanceof ArrayType) {
+      ArrayType arrayType = (ArrayType) iterableType;
+      AbstractType componentType = arrayType.getComponentType();
+      LocalVarRef immIterableTargetVarRef = forExpr.immIterableTargetVarRef,
+          indexVarRef = forExpr.indexVarRef,
+          iterateVarRef = forExpr.iterateVarNameExpr.localVarRef;
+      boolean isRhsImmediateValue = immIterableTargetVarRef != null;
+
+      if (isRhsImmediateValue) {
+        // Store it before for loop generation to avoid generation on
+        genExpr(mw, forExpr.iterableTargetExpr);
+        mw.visitVarInsn(Opcodes.ASTORE, immIterableTargetVarRef.index);
+      }
+
+      mw.visitInsn(Opcodes.ICONST_0);
+      mw.visitVarInsn(Opcodes.ISTORE, indexVarRef.index);
+
+      Label condLabel = new Label(), endLabel = new Label();
+
+      mw.visitLabel(condLabel);
+      mw.visitVarInsn(Opcodes.ILOAD, indexVarRef.index);
+
+      if (isRhsImmediateValue) {
+        mw.visitVarInsn(Opcodes.ALOAD, immIterableTargetVarRef.index);
+      } else {
+        genExpr(mw, forExpr.iterableTargetExpr);
+      }
+
+      mw.visitInsn(Opcodes.ARRAYLENGTH);
+      mw.visitJumpInsn(Opcodes.IF_ICMPGE, endLabel);
+
+      if (isRhsImmediateValue) {
+        mw.visitVarInsn(Opcodes.ALOAD, immIterableTargetVarRef.index);
+      } else {
+        genExpr(mw, forExpr.iterableTargetExpr);
+      }
+      mw.visitVarInsn(Opcodes.ILOAD, indexVarRef.index);
+      mw.visitInsn(Utils.getArrayLoadOpcode(componentType));
+      mw.visitVarInsn(Utils.getStoreOpcode(componentType), iterateVarRef.index);
+
+      genBlockExpr(mw, forExpr.iterationBlock);
+
+      mw.visitIincInsn(indexVarRef.index, 1);
+      mw.visitJumpInsn(Opcodes.GOTO, condLabel);
+      mw.visitLabel(endLabel);
+    }
+
+    // TODO: Implement `Iterator` based for loop iteration codegen
   }
 
   private void genCharLiteralExpr(MethodVisitor mw, CharLiteralExpr charLiteralExpr) {

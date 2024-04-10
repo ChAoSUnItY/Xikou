@@ -1,24 +1,7 @@
 package github.io.chaosunity.xikou.resolver;
 
 import github.io.chaosunity.xikou.ast.*;
-import github.io.chaosunity.xikou.ast.expr.ArithmeticExpr;
-import github.io.chaosunity.xikou.ast.expr.ArrayInitExpr;
-import github.io.chaosunity.xikou.ast.expr.AssignmentExpr;
-import github.io.chaosunity.xikou.ast.expr.BlockExpr;
-import github.io.chaosunity.xikou.ast.expr.CastExpr;
-import github.io.chaosunity.xikou.ast.expr.CompareExpr;
-import github.io.chaosunity.xikou.ast.expr.CondExpr;
-import github.io.chaosunity.xikou.ast.expr.ConstructorCallExpr;
-import github.io.chaosunity.xikou.ast.expr.Expr;
-import github.io.chaosunity.xikou.ast.expr.FieldAccessExpr;
-import github.io.chaosunity.xikou.ast.expr.IfExpr;
-import github.io.chaosunity.xikou.ast.expr.IndexExpr;
-import github.io.chaosunity.xikou.ast.expr.InfixExpr;
-import github.io.chaosunity.xikou.ast.expr.MethodCallExpr;
-import github.io.chaosunity.xikou.ast.expr.NameExpr;
-import github.io.chaosunity.xikou.ast.expr.ReturnExpr;
-import github.io.chaosunity.xikou.ast.expr.TypeableExpr;
-import github.io.chaosunity.xikou.ast.expr.WhileExpr;
+import github.io.chaosunity.xikou.ast.expr.*;
 import github.io.chaosunity.xikou.ast.stmt.ExprStmt;
 import github.io.chaosunity.xikou.ast.stmt.Statement;
 import github.io.chaosunity.xikou.ast.stmt.VarDeclStmt;
@@ -352,6 +335,8 @@ public final class Resolver {
       resolveIfExpr((IfExpr) expr, scope);
     } else if (expr instanceof WhileExpr) {
       resolveWhileExpr((WhileExpr) expr, scope);
+    } else if (expr instanceof ForExpr) {
+      resolveForExpr((ForExpr) expr, scope);
     }
   }
 
@@ -504,6 +489,32 @@ public final class Resolver {
     if (expr.condExpr.getType() != PrimitiveType.BOOL) {
       throw new IllegalStateException("While condition must be bool");
     }
+  }
+
+  private void resolveForExpr(ForExpr expr, Scope scope) {
+    resolveExpr(expr.iterableTargetExpr, scope);
+
+    Scope forLoopScope = scope.extend();
+    AbstractType iterableType = expr.iterableTargetExpr.getType();
+    AbstractType iterateType;
+
+    if (iterableType instanceof ArrayType) {
+      iterateType = ((ArrayType) iterableType).getComponentType();
+
+      if (expr.iterableTargetExpr instanceof ArrayInitExpr) {
+        expr.immIterableTargetVarRef = forLoopScope.addLocalVar("$immArrVar", false, iterableType);
+      }
+
+      expr.indexVarRef = forLoopScope.addLocalVar("$idx", true, PrimitiveType.INT);
+    } else {
+      throw new IllegalStateException(
+          String.format("Type %s is not iterable", iterableType.getInternalName()));
+    }
+
+    expr.iterateVarNameExpr.localVarRef =
+        forLoopScope.addLocalVar(expr.iterateVarNameExpr.varIdentifier.literal, false, iterateType);
+
+    resolveBlockExpr(expr.iterationBlock, forLoopScope);
   }
 
   private void resolveArrayInitExpr(ArrayInitExpr expr, Scope scope) {

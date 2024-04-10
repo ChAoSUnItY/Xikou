@@ -75,12 +75,7 @@ public abstract class ClassFileGen {
     }
 
     MethodVisitor mw =
-        cw.visitMethod(
-            modifiers,
-            methodRef.name,
-            Utils.getMethodDescriptor(methodRef),
-            null,
-            null);
+        cw.visitMethod(modifiers, methodRef.name, Utils.getMethodDescriptor(methodRef), null, null);
 
     mw.visitCode();
 

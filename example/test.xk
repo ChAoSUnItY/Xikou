@@ -2,7 +2,13 @@ pub class Box {
 }
 
 impl Box {
-    pub const a: i32 = 20;
+    pub const a: i32 = {
+        let mut i = 0;
+
+        i += 2;
+
+        i
+    };
 
     pub self() {
         let mut a = 1;
@@ -11,12 +17,16 @@ impl Box {
     }
 
     pub fn main(args: [java::lang::String]) {
-        let mut a = [i32;] { 1 };
+        let mut a = [i32;] { 1, 2, 3, 4, 5, 6 };
         a[0] = a[0] = Box.a;
-        while a.len == 0 {
-            java::lang::System.out.println(a.len);
+
+        for i in a {
+            java::lang::System.out.println(i);
         }
-        java::lang::System.out.println(a[0]);
+
+        let b = 0;
+
+        java::lang::System.out.println(a[b]);
         return {};
     }
 
