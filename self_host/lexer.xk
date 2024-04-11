@@ -295,7 +295,7 @@ impl Lexer {
     }
     
     pub fn main(args: [java::lang::String]) {
-      let path = java::nio::file::Paths.get("../self_host/lexer.xk", [java::lang::String;0]);
+      let path = java::nio::file::Paths.get("../self_host/lexer.xk");
       let source = java::lang::String.self(java::nio::file::Files.readAllBytes(path));
       let lexer = Lexer.self(source);
       let mut token = lexer.nextToken();

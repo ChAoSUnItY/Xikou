@@ -280,6 +280,24 @@ public class ExprGen {
       genExpr(mw, methodCallExpr.arguments[i]);
     }
 
+    if (methodCallExpr.argumentCount != methodRef.parameterCount) {
+      // Vararg synthetic parameter generation
+      ArrayType arrayType =
+          (ArrayType) methodRef.parameterType[methodCallExpr.resolvedMethodRef.parameterCount - 1];
+      AbstractType componentType = arrayType.getComponentType();
+
+      mw.visitInsn(Opcodes.ICONST_0);
+
+      if (componentType instanceof PrimitiveType) {
+        mw.visitIntInsn(Opcodes.NEWARRAY, Utils.getArrayTypeOperand((PrimitiveType) componentType));
+      } else if (componentType instanceof ClassType) {
+        mw.visitTypeInsn(Opcodes.ANEWARRAY, componentType.getInternalName());
+      } else {
+        // TODO: Implement multi array initialization
+        ArrayType componentArrayType = (ArrayType) componentType;
+      }
+    }
+
     mw.visitMethodInsn(
         opcode,
         methodRef.ownerClassType.getInternalName(),
@@ -350,7 +368,6 @@ public class ExprGen {
     } else if (componentType instanceof ClassType) {
       mw.visitTypeInsn(Opcodes.ANEWARRAY, componentType.getInternalName());
     } else {
-      // Must be array type
       // TODO: Implement multi array initialization
       ArrayType componentArrayType = (ArrayType) componentType;
     }

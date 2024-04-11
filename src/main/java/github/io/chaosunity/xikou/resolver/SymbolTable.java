@@ -95,15 +95,20 @@ public class SymbolTable {
         }
 
         Class[] parameterClazzes = method.getParameterTypes();
+        int requiredParameterResolutionCount;
         boolean resolutionFailure = false;
 
-        if (parameterClazzes.length != parameterTypes.length) {
+        if (parameterClazzes.length == parameterTypes.length) {
+          requiredParameterResolutionCount = parameterClazzes.length;
+        } else if (parameterClazzes.length - 1 == parameterTypes.length && method.isVarArgs()) {
+          requiredParameterResolutionCount = parameterClazzes.length - 1;
+        } else {
           continue;
         }
 
         AbstractType[] resolvedParameterTypes = new AbstractType[parameterClazzes.length];
 
-        for (int i = 0; i < parameterClazzes.length; i++) {
+        for (int i = 0; i < requiredParameterResolutionCount; i++) {
           AbstractType resolvedParameterType = getTypeFromClass(parameterClazzes[i]);
 
           if (!TypeUtils.isInstanceOf(parameterTypes[i], resolvedParameterType)) {
@@ -116,6 +121,18 @@ public class SymbolTable {
 
         if (resolutionFailure) {
           continue;
+        }
+
+        if (parameterClazzes.length != requiredParameterResolutionCount) {
+          // Vararg check
+          int lastIndex = parameterClazzes.length - 1;
+          AbstractType lastResolvedParameterType = getTypeFromClass(parameterClazzes[lastIndex]);
+
+          if (!(lastResolvedParameterType instanceof ArrayType)) {
+            continue;
+          }
+
+          resolvedParameterTypes[lastIndex] = lastResolvedParameterType;
         }
 
         return new MethodRef(
