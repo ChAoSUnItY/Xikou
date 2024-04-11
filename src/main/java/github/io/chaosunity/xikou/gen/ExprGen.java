@@ -290,11 +290,8 @@ public class ExprGen {
 
       if (componentType instanceof PrimitiveType) {
         mw.visitIntInsn(Opcodes.NEWARRAY, Utils.getArrayTypeOperand((PrimitiveType) componentType));
-      } else if (componentType instanceof ClassType) {
-        mw.visitTypeInsn(Opcodes.ANEWARRAY, componentType.getInternalName());
       } else {
-        // TODO: Implement multi array initialization
-        ArrayType componentArrayType = (ArrayType) componentType;
+        mw.visitTypeInsn(Opcodes.ANEWARRAY, componentType.getInternalName());
       }
     }
 

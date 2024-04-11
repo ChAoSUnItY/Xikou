@@ -14,6 +14,18 @@ public class ArrayType implements AbstractType {
     return componentType;
   }
 
+  public int getDimensions() {
+    int dimensions = 1;
+    AbstractType componentType = getComponentType();
+
+    while (componentType instanceof ArrayType) {
+      dimensions++;
+      componentType = ((ArrayType) componentType).getComponentType();
+    }
+
+    return dimensions;
+  }
+
   @Override
   public String getInternalName() {
     return "[" + componentType.getInternalName();
